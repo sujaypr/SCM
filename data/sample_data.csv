@@ -1,0 +1,25 @@
+business_name,business_type,business_scale,location,current_monthly_sales,forecast_month,projected_sales,actual_sales,growth_rate,seasonal_factor,festival_impact,confidence_score,generated_date
+Rajesh Electronics,Electronics Store,Small,Karnataka,50000,Oct 2025,72500,75200,45.0,1.45,0.8,0.89,2025-09-12
+Priya Grocery Mart,Grocery Store,Micro,Maharashtra,30000,Oct 2025,43500,42800,45.0,1.45,0.7,0.92,2025-09-12
+Fashion Hub,Clothing Store,Medium,Tamil Nadu,85000,Oct 2025,127500,130200,50.0,1.50,0.8,0.87,2025-09-12
+Amit Medical Store,Medical Store,Small,Gujarat,35000,Oct 2025,43750,44100,25.0,1.25,0.4,0.85,2025-09-12
+Beauty Corner,Cosmetics Store,Micro,Punjab,25000,Oct 2025,35000,36500,40.0,1.40,0.7,0.88,2025-09-12
+Spice Garden,Food & Beverage,Small,West Bengal,40000,Oct 2025,64000,62800,60.0,1.60,0.9,0.91,2025-09-12
+Tech World,Electronics Store,Medium,Delhi,120000,Nov 2025,210000,205600,75.0,1.75,1.0,0.86,2025-09-12
+Daily Needs Store,Grocery Store,Small,Uttar Pradesh,45000,Nov 2025,74250,76800,65.0,1.65,0.8,0.90,2025-09-12
+Style Mart,Clothing Store,Small,Rajasthan,55000,Nov 2025,93500,91200,70.0,1.70,0.9,0.88,2025-09-12
+Health Plus,Medical Store,Medium,Haryana,60000,Nov 2025,78000,79500,30.0,1.30,0.5,0.84,2025-09-12
+Glow Beauty,Cosmetics Store,Small,Madhya Pradesh,38000,Nov 2025,62700,64100,65.0,1.65,0.8,0.89,2025-09-12
+Food Express,Food & Beverage,Medium,Telangana,75000,Nov 2025,135000,138200,80.0,1.80,1.0,0.92,2025-09-12
+Mobile Hub,Electronics Store,Small,Odisha,42000,Dec 2025,60900,59800,45.0,1.45,0.7,0.87,2025-09-12
+Fresh Mart,Grocery Store,Micro,Kerala,28000,Dec 2025,37800,38900,35.0,1.35,0.6,0.91,2025-09-12
+Trendy Wear,Clothing Store,Small,Assam,48000,Dec 2025,67200,68500,40.0,1.40,0.7,0.86,2025-09-12
+Care Pharmacy,Medical Store,Small,Bihar,32000,Dec 2025,38400,39200,20.0,1.20,0.4,0.83,2025-09-12
+Glamour Store,Cosmetics Store,Medium,Jharkhand,52000,Dec 2025,70200,72100,35.0,1.35,0.6,0.88,2025-09-12
+Taste Buds,Food & Beverage,Small,Chhattisgarh,36000,Dec 2025,54000,55800,50.0,1.50,0.8,0.90,2025-09-12
+Gadget Zone,Electronics Store,Small,Goa,65000,Jan 2026,70200,68900,8.0,1.08,0.3,0.82,2025-09-12
+Super Market,Grocery Store,Small,Himachal Pradesh,38000,Jan 2026,41040,42300,8.0,1.08,0.3,0.85,2025-09-12
+Fashion Point,Clothing Store,Micro,Uttarakhand,22000,Jan 2026,25300,24800,15.0,1.15,0.4,0.87,2025-09-12
+Life Care,Medical Store,Small,Tripura,29000,Jan 2026,31320,32100,8.0,1.08,0.3,0.84,2025-09-12
+Beauty World,Cosmetics Store,Small,Manipur,31000,Jan 2026,35650,36200,15.0,1.15,0.4,0.86,2025-09-12
+Snack Corner,Food & Beverage,Micro,Nagaland,19000,Jan 2026,21850,22400,15.0,1.15,0.4,0.89,2025-09-12
