@@ -13,21 +13,27 @@ const Sidebar = ({ activeComponent, setActiveComponent }) => {
   ];
 
   return (
-    <div className="sidebar">
-      <div className="sidebar-header">
-        <h2>Supply Chain</h2>
+    <div className="w-[280px] bg-[--sidebar] text-[--sidebar-foreground] flex flex-col fixed h-screen z-[1000] border-r border-[--sidebar-border] py-6">
+      <div className="px-6 pb-6 mb-5">
+        <h2 className="text-[1.375rem] font-bold text-[--sidebar-primary]">Supply Chain</h2>
       </div>
-      <nav className="sidebar-nav">
-        {menuItems.map(item => (
-          <button
-            key={item.id}
-            className={`nav-item ${activeComponent === item.id ? 'active' : ''}`}
-            onClick={() => setActiveComponent(item.id)}
-          >
-            <span className="nav-icon">{item.icon}</span>
-            <span className="nav-label">{item.label}</span>
-          </button>
-        ))}
+      <nav className="flex-1 flex flex-col gap-1 px-3">
+        {menuItems.map(item => {
+          const active = activeComponent === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveComponent(item.id)}
+              className={[
+                'flex items-center gap-3 py-3 px-5 rounded-lg font-medium text-sm w-full text-left transition-all duration-300 ease-out',
+                active ? 'bg-[--sidebar-accent] text-[--sidebar-primary] border-l-4 border-[--primary]' : 'hover:bg-[--sidebar-accent] hover:text-[--sidebar-accent-foreground] hover:translate-x-1'
+              ].join(' ')}
+            >
+              <span className="flex items-center text-base w-5">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
     </div>
   );

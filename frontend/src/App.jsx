@@ -3,7 +3,7 @@ import { BusinessInfoProvider, useBusinessInfo } from './context/BusinessInfoCon
 import Sidebar from './components/Sidebar.jsx';
 import Content from './components/Content.jsx';
 import Navbar from './components/Navbar.jsx';
-import './styles.css';
+// Using Tailwind utilities from index.css
 
 function AppContent() {
   const [activeComponent, setActiveComponent] = useState('dashboard');
@@ -16,13 +16,14 @@ function AppContent() {
   }, [businessInfo]);
 
   return (
-    <div className="app">
+  <div className="flex min-h-screen bg-[--background] text-[--foreground]">
       <Sidebar 
         activeComponent={activeComponent} 
         setActiveComponent={setActiveComponent} 
       />
-      <div className="main-content">
-        <Navbar activeComponent={activeComponent} />
+       
+  <div className="flex-1 ml-[280px] flex flex-col">
+       <Navbar activeComponent={activeComponent} />
         <Content activeComponent={activeComponent} />
       </div>
     </div>

@@ -120,27 +120,25 @@ const DemandForecasting = () => {
 
 
   return (
-    <div className="demand-forecasting" style={{margin: 'auto', padding: '32px 16px', alignContent: 'center', maxWidth: 900 }}>
-      <div className="page-header" style={{ marginBottom: 32, textAlign: 'center' }}>
-        <h2 style={{ fontWeight: 600, fontSize: 28, marginBottom: 8, textAlign: 'center' }}>
-          Demand Forecasting
-        </h2>
+    <div className="max-w-[900px] mx-auto p-8">
+      <div className="mb-8 text-center">
+        <h2 className="font-semibold text-[28px] mb-2">Demand Forecasting</h2>
       </div>
 
-      <div style={{ marginBottom: 24 }}>
-        <label style={{ fontWeight: 500, marginRight: 12 }}>Forecast Period:</label>
-        <select value={forecastPeriod} onChange={e => setForecastPeriod(Number(e.target.value))} style={{ padding: 6, borderRadius: 4 }}>
+      <div className="mb-6">
+  <label className="font-medium mr-3">Forecast Period:</label>
+  <select className="px-2 py-1 rounded-md bg-[--sidebar] text-[--foreground] border border-[--border]" value={forecastPeriod} onChange={e => setForecastPeriod(Number(e.target.value))}>
           <option value={3}>3 Months</option>
           <option value={6}>6 Months</option>
           <option value={12}>12 Months</option>
         </select>
-        <button className="btn btn-primary" style={{ marginLeft: 16 }} onClick={handleForecast} disabled={loading}>
+        <button className="ml-4 px-4 py-2 rounded-md font-semibold bg-[--primary] text-[--primary-foreground] hover:-translate-y-0.5 transition inline-flex items-center gap-2" onClick={handleForecast} disabled={loading}>
           {loading ? <><i className="fas fa-spinner fa-spin"></i> Analyzing...</> : <>Generate Forecast</>}
         </button>
       </div>
 
       {forecast && (
-        <div className="card">
+  <div className="bg-[--sidebar] p-6 rounded-[var(--radius)] border border-[--border] shadow">
           {/* Forecast window summary */}
           <div style={{ marginBottom: 16, color: 'var(--muted-foreground)' }}>
             <div><strong>Window:</strong> {forecast.forecast_start} → {forecast.forecast_end}</div>
@@ -173,9 +171,9 @@ const DemandForecasting = () => {
           {tab === 1 && (
             <div>
               <h3>Festival Demand Increase (%)</h3>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                <button className="btn btn-sm" onClick={downloadFestivalChartCSV}>Download Festival Chart CSV</button>
-                <button className="btn btn-sm" onClick={downloadFestivalTopItemsCSV}>Download Festival Top Items CSV</button>
+              <div className="flex gap-2 mb-2">
+                <button className="px-3 py-2 rounded-md border text-sm" onClick={downloadFestivalChartCSV}>Download Festival Chart CSV</button>
+                <button className="px-3 py-2 rounded-md border text-sm" onClick={downloadFestivalTopItemsCSV}>Download Festival Top Items CSV</button>
               </div>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={forecast.festival_demands.chart} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
@@ -207,21 +205,21 @@ const DemandForecasting = () => {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-              <div className="demand-top-items">
+              <div className="mt-6">
                 <h4>Top 3 Items for Each Festival</h4>
                 {forecast.festival_demands.top_items && Object.entries(forecast.festival_demands.top_items).map(([festival, items]) => (
-                  <details key={festival} className="demand-item-details">
-                    <summary className="demand-item-summary">{festival}</summary>
-                    <div className="demand-item-content">
-                      <div className="demand-year-section">
-                        <span>This Year:</span>
-                        <ul className="demand-year-list">
+                  <details key={festival} className="mb-2">
+                    <summary className="cursor-pointer font-semibold">{festival}</summary>
+                    <div className="flex gap-8 mt-2">
+                      <div>
+                        <span className="font-medium">This Year:</span>
+                        <ul className="pl-4 m-0">
                           {items.this_year.map((item) => <li key={item}>{item}</li>)}
                         </ul>
                       </div>
-                      <div className="demand-year-section">
-                        <span>Last Year:</span>
-                        <ul className="demand-year-list">
+                      <div>
+                        <span className="font-medium">Last Year:</span>
+                        <ul className="pl-4 m-0">
                           {items.last_year.map((item) => <li key={item}>{item}</li>)}
                         </ul>
                       </div>
@@ -236,9 +234,9 @@ const DemandForecasting = () => {
           {tab === 2 && (
             <div>
               <h3>Seasonal Demand Surge (%)</h3>
-              <div className="demand-actions">
-                <button className="btn btn-sm" onClick={downloadSeasonalChartCSV}>Download Seasonal Chart CSV</button>
-                <button className="btn btn-sm" onClick={downloadSeasonalTopItemsCSV}>Download Seasonal Top Items CSV</button>
+              <div className="flex gap-2 mb-2">
+                <button className="px-3 py-2 rounded-md border text-sm" onClick={downloadSeasonalChartCSV}>Download Seasonal Chart CSV</button>
+                <button className="px-3 py-2 rounded-md border text-sm" onClick={downloadSeasonalTopItemsCSV}>Download Seasonal Top Items CSV</button>
               </div>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={forecast.seasonal_demands.chart} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
@@ -270,21 +268,21 @@ const DemandForecasting = () => {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-              <div className="demand-top-items">
+              <div className="mt-6">
                 <h4>Top 3 Items for Each Season</h4>
                 {forecast.seasonal_demands.top_items && Object.entries(forecast.seasonal_demands.top_items).map(([season, items]) => (
-                  <details key={season} className="demand-item-details">
-                    <summary className="demand-item-summary">{season}</summary>
-                    <div className="demand-item-content">
-                      <div className="demand-year-section">
-                        <span>This Year:</span>
-                        <ul className="demand-year-list">
+                  <details key={season} className="mb-2">
+                    <summary className="cursor-pointer font-semibold">{season}</summary>
+                    <div className="flex gap-8 mt-2">
+                      <div>
+                        <span className="font-medium">This Year:</span>
+                        <ul className="pl-4 m-0">
                           {items.this_year.map((item) => <li key={item}>{item}</li>)}
                         </ul>
                       </div>
-                      <div className="demand-year-section">
-                        <span>Last Year:</span>
-                        <ul className="demand-year-list">
+                      <div>
+                        <span className="font-medium">Last Year:</span>
+                        <ul className="pl-4 m-0">
                           {items.last_year.map((item) => <li key={item}>{item}</li>)}
                         </ul>
                       </div>

@@ -44,20 +44,19 @@ const Navbar = ({ activeComponent }) => {
   };
 
   return (
-    <div className="navbar">
+    <div className="bg-[--sidebar] px-8 py-5 border-b border-[--sidebar-border] flex justify-between items-center shadow-[0_2px_12px_rgba(0,0,0,0.15)] backdrop-blur">
       <div className="navbar-left">
-        <h1>{currentPage.title}</h1>
-        {/* <span className="navbar-subtitle">{currentPage.subtitle}</span> */}
+        <h1 className="text-[--foreground] font-bold text-[1.625rem] tracking-[-.025em] mb-1">{currentPage.title}</h1>
       </div>
-        <div className="navbar-actions">
-          <button 
-            className="btn btn-icon" 
-            onClick={toggleDarkMode}
-            title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
-          >
-            <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
-          </button>
-        </div>
+      {/* <div className="flex items-center gap-6">
+        <button
+          className="relative overflow-hidden inline-flex items-center justify-center gap-2 px-3 py-3 rounded-md text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 bg-transparent border border-[--border] text-[--foreground]"
+          onClick={toggleDarkMode}
+          title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+        >
+          <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+        </button>
+      </div> */}
     </div>
   );
 };

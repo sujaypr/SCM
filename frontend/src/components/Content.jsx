@@ -30,7 +30,7 @@ const Content = ({ activeComponent }) => {
   };
 
   return (
-    <div className="content">
+    <div className="flex-1 p-8 overflow-y-auto">
       {renderContent()}
     </div>
   );
