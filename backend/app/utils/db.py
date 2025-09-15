@@ -4,8 +4,16 @@ from sqlalchemy.pool import StaticPool
 from contextlib import contextmanager
 import os
 from typing import Generator
-from app.models.db_models import Base, Business, DemandForecast, InventoryItem, Shipment, SeasonalPattern
+from app.models.db_models import (
+    Base,
+    Business,
+    DemandForecast,
+    InventoryItem,
+    Shipment,
+    SeasonalPattern,
+)
 from app.utils.config import get_config
+
 
 class DatabaseManager:
     """Database connection and session management"""
@@ -19,26 +27,40 @@ class DatabaseManager:
     def _initialize_database(self):
         """Initialize database connection"""
 
-        database_url = os.getenv('DATABASE_URL', 'sqlite:///ai_supplychain.db')
+        database_url = os.getenv("DATABASE_URL", "sqlite:///ai_supplychain.db")
 
-        if database_url.startswith('sqlite'):
-            # SQLite configuration for development
-            self.engine = create_engine(
-                database_url,
-                connect_args={"check_same_thread": False},
-                poolclass=StaticPool,
-                echo=os.getenv('SQL_ECHO', 'false').lower() == 'true'
+        if database_url.startswith("sqlite"):
+            # SQLite configuration
+            is_memory = database_url.endswith(":memory:") or database_url.endswith(
+                ":///:memory:"
             )
+            if is_memory:
+                # In-memory DB: single connection shared, disable thread check
+                self.engine = create_engine(
+                    database_url,
+                    connect_args={"check_same_thread": False},
+                    poolclass=StaticPool,
+                    echo=os.getenv("SQL_ECHO", "false").lower() == "true",
+                )
+            else:
+                # File-based DB: use default pooling, disable thread check
+                self.engine = create_engine(
+                    database_url,
+                    connect_args={"check_same_thread": False},
+                    echo=os.getenv("SQL_ECHO", "false").lower() == "true",
+                )
         else:
             # PostgreSQL configuration for production
             self.engine = create_engine(
                 database_url,
-                pool_size=int(os.getenv('DB_POOL_SIZE', 10)),
-                max_overflow=int(os.getenv('DB_MAX_OVERFLOW', 20)),
-                echo=os.getenv('SQL_ECHO', 'false').lower() == 'true'
+                pool_size=int(os.getenv("DB_POOL_SIZE", 10)),
+                max_overflow=int(os.getenv("DB_MAX_OVERFLOW", 20)),
+                echo=os.getenv("SQL_ECHO", "false").lower() == "true",
             )
 
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self.SessionLocal = sessionmaker(
+            autocommit=False, autoflush=False, bind=self.engine
+        )
 
         print(f"✅ Database configured: {database_url.split('://')[0]}")
 
@@ -117,16 +139,16 @@ class DatabaseManager:
                         location="Karnataka",
                         owner_name="Rajesh Kumar",
                         contact_email="rajesh@electronics.com",
-                        contact_phone="9876543210"
+                        contact_phone="9876543210",
                     ),
                     Business(
                         name="Priya Grocery Mart",
-                        type="Grocery Store", 
+                        type="Grocery Store",
                         scale="Micro",
                         location="Maharashtra",
                         owner_name="Priya Sharma",
                         contact_email="priya@grocerymart.com",
-                        contact_phone="9876543211"
+                        contact_phone="9876543211",
                     ),
                     Business(
                         name="Fashion Hub",
@@ -135,8 +157,8 @@ class DatabaseManager:
                         location="Tamil Nadu",
                         owner_name="Arjun Menon",
                         contact_email="arjun@fashionhub.com",
-                        contact_phone="9876543212"
-                    )
+                        contact_phone="9876543212",
+                    ),
                 ]
 
                 for business in businesses:
@@ -156,7 +178,7 @@ class DatabaseManager:
                         max_stock_level=50,
                         unit_cost=15000.0,
                         selling_price=18000.0,
-                        supplier="Electronics Distributor"
+                        supplier="Electronics Distributor",
                     ),
                     InventoryItem(
                         business_id=businesses[1].id,
@@ -168,7 +190,7 @@ class DatabaseManager:
                         max_stock_level=200,
                         unit_cost=80.0,
                         selling_price=120.0,
-                        supplier="Local Rice Supplier"
+                        supplier="Local Rice Supplier",
                     ),
                     InventoryItem(
                         business_id=businesses[2].id,
@@ -180,8 +202,8 @@ class DatabaseManager:
                         max_stock_level=100,
                         unit_cost=800.0,
                         selling_price=1500.0,
-                        supplier="Textile Manufacturer"
-                    )
+                        supplier="Textile Manufacturer",
+                    ),
                 ]
 
                 for item in inventory_items:
@@ -196,7 +218,7 @@ class DatabaseManager:
                         seasonal_factor=1.6,
                         demand_pattern="high",
                         festival_impact=0.7,
-                        major_festivals=["Dussehra", "Diwali"]
+                        major_festivals=["Dussehra", "Diwali"],
                     ),
                     SeasonalPattern(
                         business_type="Grocery Store",
@@ -205,8 +227,8 @@ class DatabaseManager:
                         seasonal_factor=1.8,
                         demand_pattern="high",
                         festival_impact=0.8,
-                        major_festivals=["Diwali", "Regional Festivals"]
-                    )
+                        major_festivals=["Diwali", "Regional Festivals"],
+                    ),
                 ]
 
                 for pattern in seasonal_patterns:
@@ -222,26 +244,36 @@ class DatabaseManager:
             print(f"❌ Error seeding sample data: {e}")
             raise
 
+
 # Global database manager instance
 db_manager = DatabaseManager()
+
 
 def init_database():
     """Initialize database tables"""
     return db_manager.create_tables()
 
+
 def seed_sample_data():
     """Seed database with sample data"""
     return db_manager.seed_sample_data()
+
 
 def get_database_session():
     """Get database session (FastAPI dependency)"""
     return db_manager.get_session_dependency()
 
+
 def test_database_connection():
     """Test database connection"""
     return db_manager.test_connection()
 
+
 # FastAPI database dependency
 def get_db() -> Generator[Session, None, None]:
-    """FastAPI database dependency"""
-    return db_manager.get_session_dependency()
+    """FastAPI database dependency that yields a Session"""
+    db = db_manager.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

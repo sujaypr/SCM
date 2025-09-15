@@ -972,62 +972,7 @@ body {
   margin-bottom: 0.5rem;
 }
 
-/* Chart Styling - Global for all Recharts */
-.recharts-wrapper {
-  background: transparent !important;
-}
-
-.recharts-cartesian-grid-horizontal line,
-.recharts-cartesian-grid-vertical line {
-  stroke: var(--border) !important;
-}
-
-.recharts-text {
-  fill: var(--foreground) !important;
-  paint-order: stroke;
-  stroke: rgba(0,0,0,0.2);
-  stroke-width: 0.4px;
-}
-
-.recharts-legend-wrapper {
-  color: var(--foreground) !important;
-}
-
-.recharts-default-tooltip {
-  background-color: var(--sidebar) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius) !important;
-  color: var(--foreground) !important;
-  box-shadow: var(--shadow-md) !important;
-  padding: 10px 12px !important;
-}
-
-.recharts-tooltip-wrapper {
-  background-color: var(--sidebar) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius) !important;
-  color: var(--foreground) !important;
-}
-
-.recharts-tooltip-item {
-  color: var(--foreground) !important;
-}
-
-.recharts-tooltip-label {
-  color: var(--foreground) !important;
-}
-
-/* Chart Container Backgrounds */
-.recharts-responsive-container {
-  background: transparent !important;
-}
-
-/* Rounded bars */
-.recharts-bar-rectangle path,
-.recharts-rectangle path {
-  rx: 6;
-  ry: 6;
-}
+/* Chart.js tooltips and legend are styled via options using CSS variables in code */
 
 /* MUI Tabs Dark Theme */
 .MuiTab-root {
