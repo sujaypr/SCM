@@ -5,6 +5,7 @@ from app.services.inventory_service import InventoryService
 
 router = APIRouter()
 
+
 class InventoryItem(BaseModel):
     name: str = Field(..., description="Item name")
     category: str = Field(..., description="Item category")
@@ -13,8 +14,11 @@ class InventoryItem(BaseModel):
     min_stock_level: int = Field(..., ge=0, description="Minimum stock level")
     max_stock_level: int = Field(..., ge=1, description="Maximum stock level")
     unit_cost: Optional[float] = Field(None, ge=0, description="Unit cost in INR")
-    selling_price: Optional[float] = Field(None, ge=0, description="Selling price in INR")
+    selling_price: Optional[float] = Field(
+        None, ge=0, description="Selling price in INR"
+    )
     supplier: Optional[str] = Field(None, description="Supplier name")
+
 
 class InventoryResponse(BaseModel):
     success: bool
@@ -23,11 +27,12 @@ class InventoryResponse(BaseModel):
     error: Optional[str] = None
     message: Optional[str] = None
 
+
 @router.get("/", response_model=InventoryResponse)
 async def get_inventory(
     category: Optional[str] = Query(None, description="Filter by category"),
     status: Optional[str] = Query(None, description="Filter by stock status"),
-    search: Optional[str] = Query(None, description="Search term")
+    search: Optional[str] = Query(None, description="Search term"),
 ):
     """
     Get inventory items with optional filtering
@@ -36,18 +41,14 @@ async def get_inventory(
     try:
         inventory_service = InventoryService()
 
-        filters = {
-            "category": category,
-            "status": status,
-            "search": search
-        }
+        filters = {"category": category, "status": status, "search": search}
 
         inventory_items = inventory_service.get_inventory(filters)
 
         return InventoryResponse(
             success=True,
             inventory=inventory_items,
-            message=f"Retrieved {len(inventory_items)} inventory items"
+            message=f"Retrieved {len(inventory_items)} inventory items",
         )
 
     except Exception as e:
@@ -56,9 +57,10 @@ async def get_inventory(
             detail={
                 "success": False,
                 "error": "Failed to retrieve inventory",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @router.post("/", response_model=InventoryResponse)
 async def add_inventory_item(item: InventoryItem):
@@ -72,9 +74,7 @@ async def add_inventory_item(item: InventoryItem):
         new_item = inventory_service.add_item(item.dict())
 
         return InventoryResponse(
-            success=True,
-            item=new_item,
-            message="Inventory item added successfully"
+            success=True, item=new_item, message="Inventory item added successfully"
         )
 
     except Exception as e:
@@ -83,9 +83,10 @@ async def add_inventory_item(item: InventoryItem):
             detail={
                 "success": False,
                 "error": "Failed to add inventory item",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @router.put("/{item_id}")
 async def update_inventory_item(item_id: int, item: InventoryItem):
@@ -104,14 +105,14 @@ async def update_inventory_item(item_id: int, item: InventoryItem):
                 detail={
                     "success": False,
                     "error": "Item not found",
-                    "message": f"Inventory item with ID {item_id} not found"
-                }
+                    "message": f"Inventory item with ID {item_id} not found",
+                },
             )
 
         return {
             "success": True,
             "item": updated_item,
-            "message": "Inventory item updated successfully"
+            "message": "Inventory item updated successfully",
         }
 
     except HTTPException:
@@ -122,9 +123,10 @@ async def update_inventory_item(item_id: int, item: InventoryItem):
             detail={
                 "success": False,
                 "error": "Failed to update inventory item",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @router.delete("/{item_id}")
 async def delete_inventory_item(item_id: int):
@@ -143,14 +145,11 @@ async def delete_inventory_item(item_id: int):
                 detail={
                     "success": False,
                     "error": "Item not found",
-                    "message": f"Inventory item with ID {item_id} not found"
-                }
+                    "message": f"Inventory item with ID {item_id} not found",
+                },
             )
 
-        return {
-            "success": True,
-            "message": "Inventory item deleted successfully"
-        }
+        return {"success": True, "message": "Inventory item deleted successfully"}
 
     except HTTPException:
         raise
@@ -160,9 +159,10 @@ async def delete_inventory_item(item_id: int):
             detail={
                 "success": False,
                 "error": "Failed to delete inventory item",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @router.get("/low-stock")
 async def get_low_stock_items():
@@ -179,7 +179,7 @@ async def get_low_stock_items():
             "success": True,
             "items": low_stock_items,
             "count": len(low_stock_items),
-            "message": f"Found {len(low_stock_items)} items with low stock"
+            "message": f"Found {len(low_stock_items)} items with low stock",
         }
 
     except Exception as e:
@@ -188,9 +188,10 @@ async def get_low_stock_items():
             detail={
                 "success": False,
                 "error": "Failed to retrieve low stock items",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @router.get("/analytics")
 async def get_inventory_analytics():
@@ -206,7 +207,7 @@ async def get_inventory_analytics():
         return {
             "success": True,
             "analytics": analytics,
-            "message": "Inventory analytics retrieved successfully"
+            "message": "Inventory analytics retrieved successfully",
         }
 
     except Exception as e:
@@ -215,6 +216,6 @@ async def get_inventory_analytics():
             detail={
                 "success": False,
                 "error": "Failed to retrieve inventory analytics",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )

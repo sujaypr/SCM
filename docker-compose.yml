@@ -1,8 +1,6 @@
 # Docker Compose configuration for AI Supply Chain Management Platform
-version: '3.8'
-
 services:
-  # Backend Service (FastAPI)
+  # Backend Service (FastAPI) - SQLite only
   backend:
     build:
       context: ./backend
@@ -12,18 +10,15 @@ services:
       - "8000:8000"
     environment:
       - FASTAPI_ENV=production
-      - DATABASE_URL=postgresql://supplychain:supplychain123@postgres:5432/ai_supplychain
+      - DATABASE_URL=sqlite:////app/ai_supplychain.db
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
       - SECRET_KEY=${SECRET_KEY:-ai-supplychain-default-secret}
-      - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./backend/logs:/app/logs
       - ./data:/app/data
       - ./models:/app/models
-    depends_on:
-      - postgres
-      - redis
+      - ./backend/ai_supplychain.db:/app/ai_supplychain.db
     networks:
       - supplychain-network
     restart: unless-stopped
@@ -33,6 +28,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
 
   # Frontend Service (React.js)
   frontend:
@@ -55,73 +51,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: ai-supplychain-postgres
-    environment:
-      - POSTGRES_DB=ai_supplychain
-      - POSTGRES_USER=supplychain
-      - POSTGRES_PASSWORD=supplychain123
-      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
-    networks:
-      - supplychain-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U supplychain -d ai_supplychain"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    container_name: ai-supplychain-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - supplychain-network
-    restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass redis123
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-
-  # Nginx Reverse Proxy (Optional)
-  nginx:
-    image: nginx:alpine
-    container_name: ai-supplychain-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl
-    depends_on:
-      - frontend
-      - backend
-    networks:
-      - supplychain-network
-    restart: unless-stopped
-    profiles:
-      - production  # Only start with --profile production
-
-# Named Volumes
-volumes:
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
 
 # Networks
 networks:

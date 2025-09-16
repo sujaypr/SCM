@@ -28,6 +28,7 @@ if genai is not None:
         print(f"❌ Gemini configuration failed: {e}")
         genai = None
 
+
 class LogisticsService:
     """Service for logistics and shipment management"""
 
@@ -40,15 +41,23 @@ class LogisticsService:
         # Simple per-endpoint last-call timestamps for rudimentary rate-limiting
         self._last_called = {}
 
+<<<<<<< HEAD
     def get_shipments(self, status_filter: Optional[str] = None, transport_mode: Optional[str] = None, priority: Optional[str] = None) -> List[Dict[str, Any]]:
         """Get all shipments with enhanced filtering options"""
+=======
+    def get_shipments(
+        self, status_filter: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Get all shipments with optional status filter"""
+>>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
 
         shipments = self._mock_shipments.copy()
 
         if status_filter:
             shipments = [
-                shipment for shipment in shipments 
-                if shipment['status'].lower() == status_filter.lower()
+                shipment
+                for shipment in shipments
+                if shipment["status"].lower() == status_filter.lower()
             ]
         
         if transport_mode:
@@ -75,6 +84,7 @@ class LogisticsService:
         # Generate shipment ID
         shipment_id = f"SHP-{uuid.uuid4().hex[:8].upper()}"
 
+<<<<<<< HEAD
         # Calculate estimated delivery with transport mode consideration
         transport_mode = shipment_data.get('transport_mode', 'road')
         estimated_days = self._calculate_delivery_time(transport_mode, shipment_data.get('estimated_days', 4))
@@ -134,6 +144,42 @@ class LogisticsService:
                     'message': 'Shipment created and processing'
                 }]
             }
+=======
+        # Calculate estimated delivery
+        estimated_days = shipment_data.get("estimated_days", 4)
+        estimated_delivery = (datetime.now() + timedelta(days=estimated_days)).date()
+
+        # Calculate estimated cost
+        weight = shipment_data.get("weight", 10.0)
+        items_count = shipment_data.get("items_count", 1)
+        distance_cost = self._calculate_distance_cost(
+            shipment_data.get("origin", "Bangalore"), shipment_data["destination"]
+        )
+        shipping_cost = self._calculate_shipping_cost(
+            weight, items_count, distance_cost
+        )
+
+        new_shipment = {
+            "id": shipment_id,
+            "origin": shipment_data.get("origin", "Bangalore Distribution Center"),
+            "destination": shipment_data["destination"],
+            "status": "Processing",
+            "items_count": items_count,
+            "total_weight": weight,
+            "cost": shipping_cost,
+            "created_date": datetime.now().strftime("%Y-%m-%d"),
+            "shipped_date": None,
+            "eta": estimated_delivery.strftime("%Y-%m-%d"),
+            "actual_delivery": None,
+            "tracking_info": {
+                "last_update": datetime.now().isoformat(),
+                "location": shipment_data.get("origin", "Bangalore"),
+                "next_checkpoint": self._get_next_checkpoint(
+                    shipment_data.get("origin", "Bangalore"),
+                    shipment_data["destination"],
+                ),
+            },
+>>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
         }
 
         self._mock_shipments.append(new_shipment)
@@ -143,6 +189,7 @@ class LogisticsService:
         """Get specific shipment by ID with enhanced details"""
 
         for shipment in self._mock_shipments:
+<<<<<<< HEAD
             if shipment['id'] == shipment_id:
                 # Add real-time updates for in-transit shipments
                 if shipment['status'] == 'In Transit':
@@ -158,25 +205,35 @@ class LogisticsService:
                         progress = min(90, max(10, (elapsed_duration / total_duration) * 100))
                         shipment['tracking_info']['progress_percentage'] = int(progress)
                 
+=======
+            if shipment["id"] == shipment_id:
+>>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
                 return shipment
 
         return None
 
+<<<<<<< HEAD
     def update_shipment_status(self, shipment_id: str, new_status: str, location: str = None, message: str = None) -> Optional[Dict[str, Any]]:
         """Update shipment status with enhanced tracking"""
+=======
+    def update_shipment_status(
+        self, shipment_id: str, new_status: str
+    ) -> Optional[Dict[str, Any]]:
+        """Update shipment status"""
+>>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
 
         for shipment in self._mock_shipments:
-            if shipment['id'] == shipment_id:
-                old_status = shipment['status']
-                shipment['status'] = new_status
+            if shipment["id"] == shipment_id:
+                old_status = shipment["status"]
+                shipment["status"] = new_status
 
                 # Update dates based on status
                 now = datetime.now()
 
-                if new_status == 'In Transit' and old_status == 'Processing':
-                    shipment['shipped_date'] = now.strftime('%Y-%m-%d')
-                elif new_status == 'Delivered':
-                    shipment['actual_delivery'] = now.strftime('%Y-%m-%d')
+                if new_status == "In Transit" and old_status == "Processing":
+                    shipment["shipped_date"] = now.strftime("%Y-%m-%d")
+                elif new_status == "Delivered":
+                    shipment["actual_delivery"] = now.strftime("%Y-%m-%d")
 
                 # Update progress percentage
                 progress_map = {
@@ -188,6 +245,7 @@ class LogisticsService:
                 }
                 
                 # Update tracking info
+<<<<<<< HEAD
                 tracking_info = shipment.get('tracking_info', {})
                 tracking_info['last_update'] = now.isoformat()
                 tracking_info['progress_percentage'] = progress_map.get(new_status, 50)
@@ -207,6 +265,22 @@ class LogisticsService:
                 })
                 
                 shipment['tracking_info'] = tracking_info
+=======
+                shipment["tracking_info"]["last_update"] = now.isoformat()
+                shipment["tracking_info"]["status_history"] = shipment.get(
+                    "tracking_info", {}
+                ).get("status_history", [])
+                shipment["tracking_info"]["status_history"].append(
+                    {
+                        "status": new_status,
+                        "timestamp": now.isoformat(),
+                        "location": shipment["tracking_info"].get(
+                            "location", "Unknown"
+                        ),
+                    }
+                )
+
+>>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
                 return shipment
 
         return None
@@ -589,28 +663,29 @@ Consider:
         estimated_cost = self._calculate_route_cost(optimized_order)
 
         return {
-            'optimized_route': optimized_order,
-            'total_destinations': len(destinations),
-            'total_distance_km': total_distance,
-            'estimated_time_hours': estimated_time,
-            'estimated_cost': estimated_cost,
-            'savings': {
-                'distance_saved_km': total_distance * 0.15,  # 15% optimization
-                'time_saved_hours': estimated_time * 0.20,   # 20% time saving
-                'cost_saved': estimated_cost * 0.15          # 15% cost saving
+            "optimized_route": optimized_order,
+            "total_destinations": len(destinations),
+            "total_distance_km": total_distance,
+            "estimated_time_hours": estimated_time,
+            "estimated_cost": estimated_cost,
+            "savings": {
+                "distance_saved_km": total_distance * 0.15,  # 15% optimization
+                "time_saved_hours": estimated_time * 0.20,  # 20% time saving
+                "cost_saved": estimated_cost * 0.15,  # 15% cost saving
             },
-            'route_details': [
+            "route_details": [
                 {
-                    'sequence': i + 1,
-                    'destination': dest,
-                    'estimated_arrival': self._calculate_arrival_time(i, optimized_order),
-                    'distance_from_previous': self._get_distance_between(
-                        optimized_order[i-1] if i > 0 else 'Origin',
-                        dest
-                    )
+                    "sequence": i + 1,
+                    "destination": dest,
+                    "estimated_arrival": self._calculate_arrival_time(
+                        i, optimized_order
+                    ),
+                    "distance_from_previous": self._get_distance_between(
+                        optimized_order[i - 1] if i > 0 else "Origin", dest
+                    ),
                 }
                 for i, dest in enumerate(optimized_order)
-            ]
+            ],
         }
 
     # New integrations and helper methods
@@ -1362,7 +1437,7 @@ Consider:
         # Status breakdown
         status_counts = {}
         for shipment in self._mock_shipments:
-            status = shipment['status']
+            status = shipment["status"]
             status_counts[status] = status_counts.get(status, 0) + 1
 
         # Transport mode breakdown
@@ -1380,29 +1455,44 @@ Consider:
             priority_counts[priority] = priority_counts.get(priority, 0) + 1
 
         # Calculate on-time delivery rate
-        delivered_shipments = [s for s in self._mock_shipments if s['status'] == 'Delivered']
+        delivered_shipments = [
+            s for s in self._mock_shipments if s["status"] == "Delivered"
+        ]
         on_time_count = 0
 
         for shipment in delivered_shipments:
-            if shipment.get('actual_delivery') and shipment.get('eta'):
-                actual = datetime.strptime(shipment['actual_delivery'], '%Y-%m-%d').date()
-                expected = datetime.strptime(shipment['eta'], '%Y-%m-%d').date()
+            if shipment.get("actual_delivery") and shipment.get("eta"):
+                actual = datetime.strptime(
+                    shipment["actual_delivery"], "%Y-%m-%d"
+                ).date()
+                expected = datetime.strptime(shipment["eta"], "%Y-%m-%d").date()
                 if actual <= expected:
                     on_time_count += 1
 
-        on_time_rate = (on_time_count / len(delivered_shipments) * 100) if delivered_shipments else 0
+        on_time_rate = (
+            (on_time_count / len(delivered_shipments) * 100)
+            if delivered_shipments
+            else 0
+        )
 
         # Calculate average delivery time
         total_delivery_days = 0
         for shipment in delivered_shipments:
-            if shipment.get('shipped_date') and shipment.get('actual_delivery'):
-                shipped = datetime.strptime(shipment['shipped_date'], '%Y-%m-%d').date()
-                delivered = datetime.strptime(shipment['actual_delivery'], '%Y-%m-%d').date()
+            if shipment.get("shipped_date") and shipment.get("actual_delivery"):
+                shipped = datetime.strptime(shipment["shipped_date"], "%Y-%m-%d").date()
+                delivered = datetime.strptime(
+                    shipment["actual_delivery"], "%Y-%m-%d"
+                ).date()
                 total_delivery_days += (delivered - shipped).days
 
-        avg_delivery_time = (total_delivery_days / len(delivered_shipments)) if delivered_shipments else 4.2
+        avg_delivery_time = (
+            (total_delivery_days / len(delivered_shipments))
+            if delivered_shipments
+            else 4.2
+        )
 
         # Cost analytics
+<<<<<<< HEAD
         total_cost = sum(shipment.get('cost', 0) for shipment in self._mock_shipments)
         avg_cost_per_shipment = total_cost / total_shipments if total_shipments > 0 else 0
         
@@ -1430,6 +1520,27 @@ Consider:
                 }
             },
             'recommendations': self._generate_recommendations()
+=======
+        total_cost = sum(shipment.get("cost", 0) for shipment in self._mock_shipments)
+        avg_cost_per_shipment = (
+            total_cost / total_shipments if total_shipments > 0 else 0
+        )
+
+        return {
+            "total_shipments": total_shipments,
+            "status_breakdown": status_counts,
+            "on_time_delivery_rate": round(on_time_rate, 1),
+            "average_delivery_time_days": round(avg_delivery_time, 1),
+            "total_shipping_cost": total_cost,
+            "average_cost_per_shipment": round(avg_cost_per_shipment, 2),
+            "performance_trends": {
+                "last_30_days": {
+                    "shipments": total_shipments,
+                    "on_time_rate": round(on_time_rate, 1),
+                    "avg_cost": round(avg_cost_per_shipment, 2),
+                }
+            },
+>>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
         }
     
     def _generate_recommendations(self) -> List[str]:
@@ -1465,12 +1576,12 @@ Consider:
 
         # Simplified distance calculation
         distance_map = {
-            ('Bangalore', 'Mumbai'): 980,
-            ('Bangalore', 'Delhi'): 2150,
-            ('Bangalore', 'Chennai'): 350,
-            ('Bangalore', 'Hyderabad'): 570,
-            ('Bangalore', 'Pune'): 840,
-            ('Bangalore', 'Kolkata'): 1880,
+            ("Bangalore", "Mumbai"): 980,
+            ("Bangalore", "Delhi"): 2150,
+            ("Bangalore", "Chennai"): 350,
+            ("Bangalore", "Hyderabad"): 570,
+            ("Bangalore", "Pune"): 840,
+            ("Bangalore", "Kolkata"): 1880,
         }
 
         key = (origin, destination)
@@ -1481,8 +1592,15 @@ Consider:
         # ₹5 per km base rate
         return distance * 5.0
 
+<<<<<<< HEAD
     def _calculate_shipping_cost(self, weight: float, items_count: int, distance_cost: float, transport_mode: str = 'road') -> float:
         """Calculate total shipping cost with transport mode consideration"""
+=======
+    def _calculate_shipping_cost(
+        self, weight: float, items_count: int, distance_cost: float
+    ) -> float:
+        """Calculate total shipping cost"""
+>>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
 
         base_cost = 100  # Base handling charge
         weight_cost = weight * 15  # ₹15 per kg
@@ -1518,16 +1636,16 @@ Consider:
         """Get next checkpoint for shipment"""
 
         route_map = {
-            ('Bangalore', 'Mumbai'): 'Pune Hub',
-            ('Bangalore', 'Delhi'): 'Hyderabad Hub',
-            ('Bangalore', 'Chennai'): 'Direct Route',
-            ('Bangalore', 'Hyderabad'): 'Direct Route',
-            ('Bangalore', 'Pune'): 'Mumbai Hub',
-            ('Bangalore', 'Kolkata'): 'Hyderabad Hub',
+            ("Bangalore", "Mumbai"): "Pune Hub",
+            ("Bangalore", "Delhi"): "Hyderabad Hub",
+            ("Bangalore", "Chennai"): "Direct Route",
+            ("Bangalore", "Hyderabad"): "Direct Route",
+            ("Bangalore", "Pune"): "Mumbai Hub",
+            ("Bangalore", "Kolkata"): "Hyderabad Hub",
         }
 
         key = (origin, destination)
-        return route_map.get(key, 'Regional Hub')
+        return route_map.get(key, "Regional Hub")
 
     def _simple_route_optimization(self, destinations: List[str]) -> List[str]:
         """Simple route optimization algorithm"""
@@ -1535,7 +1653,7 @@ Consider:
         # For demo purposes, just sort alphabetically with some logic
         # In reality, this would use sophisticated algorithms like TSP solvers
 
-        priority_cities = ['Mumbai', 'Delhi', 'Chennai', 'Hyderabad']
+        priority_cities = ["Mumbai", "Delhi", "Chennai", "Hyderabad"]
 
         prioritized = []
         others = []
@@ -1556,7 +1674,7 @@ Consider:
         """Calculate total distance for route"""
 
         total = 0
-        previous = 'Bangalore'  # Starting point
+        previous = "Bangalore"  # Starting point
 
         for destination in route:
             total += self._get_distance_between(previous, destination)
@@ -1581,16 +1699,16 @@ Consider:
         """Get distance between two cities"""
 
         distance_map = {
-            ('Bangalore', 'Mumbai'): 980,
-            ('Bangalore', 'Delhi'): 2150,
-            ('Bangalore', 'Chennai'): 350,
-            ('Bangalore', 'Hyderabad'): 570,
-            ('Bangalore', 'Pune'): 840,
-            ('Bangalore', 'Kolkata'): 1880,
-            ('Mumbai', 'Delhi'): 1400,
-            ('Mumbai', 'Chennai'): 1340,
-            ('Delhi', 'Chennai'): 2180,
-            ('Delhi', 'Hyderabad'): 1580,
+            ("Bangalore", "Mumbai"): 980,
+            ("Bangalore", "Delhi"): 2150,
+            ("Bangalore", "Chennai"): 350,
+            ("Bangalore", "Hyderabad"): 570,
+            ("Bangalore", "Pune"): 840,
+            ("Bangalore", "Kolkata"): 1880,
+            ("Mumbai", "Delhi"): 1400,
+            ("Mumbai", "Chennai"): 1340,
+            ("Delhi", "Chennai"): 2180,
+            ("Delhi", "Hyderabad"): 1580,
         }
 
         key = (origin, destination)
@@ -1605,7 +1723,7 @@ Consider:
         start_time = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
 
         total_hours = 0
-        previous = 'Bangalore'
+        previous = "Bangalore"
 
         for i in range(index + 1):
             destination = route[i]
@@ -1615,13 +1733,14 @@ Consider:
             previous = destination
 
         arrival_time = start_time + timedelta(hours=total_hours)
-        return arrival_time.strftime('%H:%M on %Y-%m-%d')
+        return arrival_time.strftime("%H:%M on %Y-%m-%d")
 
     def _get_mock_shipments(self) -> List[Dict[str, Any]]:
         """Get mock shipment data"""
 
         return [
             {
+<<<<<<< HEAD
                 'id': 'SHP-A1B2C3D4',
                 'origin': 'Bangalore Distribution Center',
                 'destination': 'Mumbai',
@@ -1774,3 +1893,77 @@ Consider:
                 }
             }
         ]
+=======
+                "id": "SHP-A1B2C3D4",
+                "origin": "Bangalore Distribution Center",
+                "destination": "Mumbai",
+                "status": "Delivered",
+                "items_count": 25,
+                "total_weight": 45.5,
+                "cost": 4250.0,
+                "created_date": "2025-09-08",
+                "shipped_date": "2025-09-09",
+                "eta": "2025-09-12",
+                "actual_delivery": "2025-09-11",
+                "tracking_info": {
+                    "last_update": "2025-09-11T18:30:00",
+                    "location": "Mumbai",
+                    "status": "Delivered",
+                },
+            },
+            {
+                "id": "SHP-E5F6G7H8",
+                "origin": "Bangalore Distribution Center",
+                "destination": "Chennai",
+                "status": "In Transit",
+                "items_count": 12,
+                "total_weight": 20.0,
+                "cost": 1950.0,
+                "created_date": "2025-09-11",
+                "shipped_date": "2025-09-11",
+                "eta": "2025-09-13",
+                "actual_delivery": None,
+                "tracking_info": {
+                    "last_update": "2025-09-12T14:20:00",
+                    "location": "En Route to Chennai",
+                    "next_checkpoint": "Chennai Hub",
+                },
+            },
+            {
+                "id": "SHP-I9J0K1L2",
+                "origin": "Bangalore Distribution Center",
+                "destination": "Delhi",
+                "status": "Processing",
+                "items_count": 35,
+                "total_weight": 80.0,
+                "cost": 6500.0,
+                "created_date": "2025-09-12",
+                "shipped_date": None,
+                "eta": "2025-09-16",
+                "actual_delivery": None,
+                "tracking_info": {
+                    "last_update": "2025-09-12T10:00:00",
+                    "location": "Bangalore Warehouse",
+                    "status": "Packaging in progress",
+                },
+            },
+            {
+                "id": "SHP-M3N4O5P6",
+                "origin": "Bangalore Distribution Center",
+                "destination": "Hyderabad",
+                "status": "Delivered",
+                "items_count": 18,
+                "total_weight": 30.5,
+                "cost": 2850.0,
+                "created_date": "2025-09-09",
+                "shipped_date": "2025-09-09",
+                "eta": "2025-09-11",
+                "actual_delivery": "2025-09-10",
+                "tracking_info": {
+                    "last_update": "2025-09-10T16:45:00",
+                    "location": "Hyderabad",
+                    "status": "Delivered",
+                },
+            },
+        ]
+>>>>>>> dd13e359edf8315579d074f38944983b2ae3d396

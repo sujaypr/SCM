@@ -103,3 +103,53 @@
   --shadow-xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 8px 10px -1px hsl(0 0% 0% / 0.10);
   --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.25);
 }
+.page-enter {
+  position: relative;
+  z-index: 1;
+  animation: pageEnter 380ms ease-out;
+}
+.page-leave {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  animation: pageLeave 420ms ease-in forwards;
+}
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.995);
+    filter: saturate(0.96) brightness(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: none;
+  }
+}
+@keyframes pageLeave {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.995);
+    filter: saturate(0.92) brightness(0.98);
+  }
+}
+
+#recent-forecasts {
+  background-color: #1C2433;
+  color: var(--sidebar-foreground);
+  border-color: var(--sidebar-border);
+}
+#recent-forecasts option {
+  background-color: #1C2433;
+  color: var(--sidebar-foreground);
+}
+#recent-forecasts:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--sidebar-ring);
+}

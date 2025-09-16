@@ -13,6 +13,7 @@ from app.main import app
 # Test client
 client = TestClient(app)
 
+
 class TestDemandEndpoints:
     """Test demand forecasting endpoints"""
 
@@ -76,7 +77,7 @@ class TestDemandEndpoints:
             "businessType": "Electronics Store",
             "businessScale": "Small",
             "location": "Karnataka",
-            "currentSales": 50000
+            "currentSales": 50000,
         }
 
         response = client.post("/api/demand/forecast", json=request_data)
@@ -93,8 +94,8 @@ class TestDemandEndpoints:
         request_data = {
             "businessType": "Invalid Store Type",
             "businessScale": "Small",
-            "location": "Karnataka", 
-            "currentSales": 50000
+            "location": "Karnataka",
+            "currentSales": 50000,
         }
 
         response = client.post("/api/demand/forecast", json=request_data)
@@ -114,7 +115,9 @@ class TestDemandEndpoints:
     def test_seasonal_patterns_endpoint(self):
         """Test seasonal patterns endpoint"""
 
-        response = client.get("/api/demand/seasonal-patterns?type=Grocery Store&location=Karnataka")
+        response = client.get(
+            "/api/demand/seasonal-patterns?type=Grocery Store&location=Karnataka"
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -143,6 +146,7 @@ class TestDemandEndpoints:
         assert "business_types" in data
         assert "business_scales" in data
         assert "locations" in data
+
 
 class TestInventoryEndpoints:
     """Test inventory management endpoints"""
@@ -176,7 +180,7 @@ class TestInventoryEndpoints:
             "min_stock_level": 20,
             "max_stock_level": 200,
             "unit_cost": 500.0,
-            "selling_price": 750.0
+            "selling_price": 750.0,
         }
 
         response = client.post("/api/inventory/", json=item_data)
@@ -194,7 +198,7 @@ class TestInventoryEndpoints:
             "category": "Electronics",
             "current_stock": -5,  # Invalid negative stock
             "min_stock_level": 20,
-            "max_stock_level": 200
+            "max_stock_level": 200,
         }
 
         response = client.post("/api/inventory/", json=item_data)
@@ -209,6 +213,7 @@ class TestInventoryEndpoints:
         data = response.json()
         assert data["success"] is True
         assert "items" in data
+
 
 class TestLogisticsEndpoints:
     """Test logistics management endpoints"""
@@ -226,11 +231,7 @@ class TestLogisticsEndpoints:
     def test_create_shipment_valid(self):
         """Test creating valid shipment"""
 
-        shipment_data = {
-            "destination": "Mumbai",
-            "items_count": 10,
-            "weight": 25.5
-        }
+        shipment_data = {"destination": "Mumbai", "items_count": 10, "weight": 25.5}
 
         response = client.post("/api/logistics/shipments", json=shipment_data)
 
@@ -244,7 +245,7 @@ class TestLogisticsEndpoints:
 
         shipment_data = {
             "destination": "",  # Invalid empty destination
-            "items_count": -1   # Invalid negative count
+            "items_count": -1,  # Invalid negative count
         }
 
         response = client.post("/api/logistics/shipments", json=shipment_data)
@@ -262,6 +263,7 @@ class TestLogisticsEndpoints:
         assert data["success"] is True
         assert "routes" in data
 
+
 class TestScenariosEndpoints:
     """Test scenario analysis endpoints"""
 
@@ -273,7 +275,7 @@ class TestScenariosEndpoints:
             "priceChange": -10,
             "marketingSpend": 25000,
             "seasonalFactor": 1.2,
-            "competitorAction": "aggressive"
+            "competitorAction": "aggressive",
         }
 
         response = client.post("/api/scenarios/analyze", json=scenario_data)
@@ -289,7 +291,7 @@ class TestScenariosEndpoints:
         scenario_data = {
             "baseSales": -1000,  # Invalid negative sales
             "priceChange": 200,  # Invalid price change > 100%
-            "competitorAction": "invalid_action"  # Invalid action
+            "competitorAction": "invalid_action",  # Invalid action
         }
 
         response = client.post("/api/scenarios/analyze", json=scenario_data)
@@ -304,6 +306,7 @@ class TestScenariosEndpoints:
         data = response.json()
         assert data["success"] is True
         assert "templates" in data
+
 
 class TestReportsEndpoints:
     """Test reporting endpoints"""
@@ -348,6 +351,7 @@ class TestReportsEndpoints:
         assert data["success"] is True
         assert "report" in data
 
+
 class TestHealthEndpoints:
     """Test health and status endpoints"""
 
@@ -372,6 +376,7 @@ class TestHealthEndpoints:
         assert "status" in data
         assert data["status"] == "healthy"
 
+
 class TestErrorHandling:
     """Test error handling and edge cases"""
 
@@ -393,14 +398,15 @@ class TestErrorHandling:
         response = client.post(
             "/api/demand/forecast",
             data="invalid json data",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 422
+
 
 class TestAIModelIntegration:
     """Test AI model integration"""
 
-    @patch('app.models.ai_models.GeminiAIModel.generate_demand_forecast')
+    @patch("app.models.ai_models.GeminiAIModel.generate_demand_forecast")
     def test_gemini_ai_integration(self, mock_generate):
         """Test Gemini AI integration with mock"""
 
@@ -412,14 +418,14 @@ class TestAIModelIntegration:
                 {"month": "Oct 2025", "sales": 60000, "growth": "+20%"}
             ],
             "recommendations": ["Test recommendation"],
-            "confidence_score": 0.85
+            "confidence_score": 0.85,
         }
 
         request_data = {
             "businessType": "Electronics Store",
             "businessScale": "Small",
             "location": "Karnataka",
-            "currentSales": 50000
+            "currentSales": 50000,
         }
 
         response = client.post("/api/demand/forecast", json=request_data)
@@ -432,12 +438,12 @@ class TestAIModelIntegration:
     def test_ai_fallback_system(self):
         """Test AI fallback when Gemini is unavailable"""
 
-        with patch.object(client.app.state, 'gemini_available', False):
+        with patch.object(client.app.state, "gemini_available", False):
             request_data = {
                 "businessType": "Grocery Store",
                 "businessScale": "Micro",
                 "location": "Maharashtra",
-                "currentSales": 30000
+                "currentSales": 30000,
             }
 
             response = client.post("/api/demand/forecast", json=request_data)
@@ -446,6 +452,7 @@ class TestAIModelIntegration:
             data = response.json()
             assert data["success"] is True
             # Should use fallback statistical model
+
 
 # Test fixtures and utilities
 @pytest.fixture
@@ -456,8 +463,9 @@ def sample_business_data():
         "businessType": "Electronics Store",
         "businessScale": "Small",
         "location": "Karnataka",
-        "currentSales": 75000
+        "currentSales": 75000,
     }
+
 
 @pytest.fixture
 def sample_inventory_item():
@@ -471,8 +479,9 @@ def sample_inventory_item():
         "max_stock_level": 100,
         "unit_cost": 200.0,
         "selling_price": 300.0,
-        "supplier": "Test Supplier"
+        "supplier": "Test Supplier",
     }
+
 
 @pytest.fixture
 def sample_shipment_data():
@@ -482,8 +491,9 @@ def sample_shipment_data():
         "origin": "Bangalore",
         "items_count": 15,
         "weight": 30.5,
-        "estimated_days": 5
+        "estimated_days": 5,
     }
+
 
 # Performance tests
 class TestPerformance:
@@ -519,6 +529,7 @@ class TestPerformance:
         # All requests should succeed
         for result in results:
             assert result.status_code == 200
+
 
 # Integration tests
 class TestIntegration:
@@ -564,6 +575,7 @@ class TestIntegration:
         assert response.status_code == 200
 
         assert item_data["success"] is True
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

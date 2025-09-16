@@ -1,4 +1,14 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey, JSON
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    DateTime,
+    Boolean,
+    Text,
+    ForeignKey,
+    JSON,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -7,10 +17,11 @@ import uuid
 
 Base = declarative_base()
 
+
 class Business(Base):
     """Business entity model"""
 
-    __tablename__ = 'businesses'
+    __tablename__ = "businesses"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
@@ -34,15 +45,18 @@ class Business(Base):
     shipments = relationship("Shipment", back_populates="business")
 
     def __repr__(self):
-        return f"<Business(name='{self.name}', type='{self.type}', scale='{self.scale}')>"
+        return (
+            f"<Business(name='{self.name}', type='{self.type}', scale='{self.scale}')>"
+        )
+
 
 class DemandForecast(Base):
     """Demand forecast model"""
 
-    __tablename__ = 'demand_forecasts'
+    __tablename__ = "demand_forecasts"
 
     id = Column(Integer, primary_key=True, index=True)
-    business_id = Column(Integer, ForeignKey('businesses.id'), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id"), nullable=False)
 
     # Forecast parameters
     forecast_period_months = Column(Integer, default=6)
@@ -56,8 +70,10 @@ class DemandForecast(Base):
     confidence_score = Column(Float, nullable=True)
 
     # Metadata
-    model_used = Column(String(100), nullable=True)  # 'Gemini 2.5 Pro' or 'Statistical Model'
-    generated_by = Column(String(50), default='AI')
+    model_used = Column(
+        String(100), nullable=True
+    )  # 'Gemini 2.5 Pro' or 'Statistical Model'
+    generated_by = Column(String(50), default="AI")
     forecast_date = Column(DateTime(timezone=True), server_default=func.now())
 
     # Tracking accuracy
@@ -74,13 +90,14 @@ class DemandForecast(Base):
     def __repr__(self):
         return f"<DemandForecast(business_id={self.business_id}, confidence={self.confidence_score})>"
 
+
 class InventoryItem(Base):
     """Inventory item model"""
 
-    __tablename__ = 'inventory_items'
+    __tablename__ = "inventory_items"
 
     id = Column(Integer, primary_key=True, index=True)
-    business_id = Column(Integer, ForeignKey('businesses.id'), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id"), nullable=False)
 
     # Item details
     name = Column(String(255), nullable=False, index=True)
@@ -118,29 +135,32 @@ class InventoryItem(Base):
     def stock_status(self):
         """Calculate stock status"""
         if self.current_stock <= self.min_stock_level * 0.5:
-            return 'critical'
+            return "critical"
         elif self.current_stock <= self.min_stock_level:
-            return 'low'
+            return "low"
         elif self.current_stock >= self.max_stock_level * 1.2:
-            return 'overstock'
+            return "overstock"
         else:
-            return 'healthy'
+            return "healthy"
 
     def __repr__(self):
         return f"<InventoryItem(name='{self.name}', stock={self.current_stock}, status='{self.stock_status}')>"
 
+
 class Shipment(Base):
     """Shipment tracking model"""
 
-    __tablename__ = 'shipments'
+    __tablename__ = "shipments"
 
     id = Column(String(20), primary_key=True, index=True)  # SHP-XXXXXXXX format
-    business_id = Column(Integer, ForeignKey('businesses.id'), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id"), nullable=False)
 
     # Shipment details
     origin = Column(String(255), nullable=False)
     destination = Column(String(255), nullable=False)
-    status = Column(String(50), nullable=False, default='Processing')  # Processing, In Transit, Delivered, Cancelled
+    status = Column(
+        String(50), nullable=False, default="Processing"
+    )  # Processing, In Transit, Delivered, Cancelled
 
     # Package information
     items_count = Column(Integer, nullable=True)
@@ -171,13 +191,14 @@ class Shipment(Base):
     def __repr__(self):
         return f"<Shipment(id='{self.id}', status='{self.status}', destination='{self.destination}')>"
 
+
 class ForecastAccuracy(Base):
     """Track forecast accuracy over time"""
 
-    __tablename__ = 'forecast_accuracy'
+    __tablename__ = "forecast_accuracy"
 
     id = Column(Integer, primary_key=True, index=True)
-    forecast_id = Column(Integer, ForeignKey('demand_forecasts.id'), nullable=False)
+    forecast_id = Column(Integer, ForeignKey("demand_forecasts.id"), nullable=False)
 
     # Accuracy metrics
     predicted_sales = Column(Float, nullable=False)
@@ -201,13 +222,14 @@ class ForecastAccuracy(Base):
     def __repr__(self):
         return f"<ForecastAccuracy(forecast_id={self.forecast_id}, accuracy={self.accuracy_percentage}%)>"
 
+
 class BusinessMetrics(Base):
     """Business performance metrics"""
 
-    __tablename__ = 'business_metrics'
+    __tablename__ = "business_metrics"
 
     id = Column(Integer, primary_key=True, index=True)
-    business_id = Column(Integer, ForeignKey('businesses.id'), nullable=False)
+    business_id = Column(Integer, ForeignKey("businesses.id"), nullable=False)
 
     # Sales metrics
     monthly_sales = Column(Float, nullable=True)
@@ -225,7 +247,9 @@ class BusinessMetrics(Base):
     customer_acquisition_cost = Column(Float, nullable=True)
 
     # Period
-    metric_period = Column(String(20), nullable=False)  # 'monthly', 'quarterly', 'yearly'
+    metric_period = Column(
+        String(20), nullable=False
+    )  # 'monthly', 'quarterly', 'yearly'
     period_start = Column(DateTime(timezone=True), nullable=False)
     period_end = Column(DateTime(timezone=True), nullable=False)
 
@@ -235,10 +259,11 @@ class BusinessMetrics(Base):
     def __repr__(self):
         return f"<BusinessMetrics(business_id={self.business_id}, period='{self.metric_period}')>"
 
+
 class SeasonalPattern(Base):
     """Seasonal demand patterns for different business types"""
 
-    __tablename__ = 'seasonal_patterns'
+    __tablename__ = "seasonal_patterns"
 
     id = Column(Integer, primary_key=True, index=True)
 
@@ -269,15 +294,16 @@ class SeasonalPattern(Base):
     def __repr__(self):
         return f"<SeasonalPattern(type='{self.business_type}', month={self.month}, factor={self.seasonal_factor})>"
 
+
 class UserSession(Base):
     """User session tracking (for future authentication)"""
 
-    __tablename__ = 'user_sessions'
+    __tablename__ = "user_sessions"
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(String(100), nullable=False, unique=True, index=True)
     user_identifier = Column(String(255), nullable=True)  # Email or username
-    business_id = Column(Integer, ForeignKey('businesses.id'), nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id"), nullable=True)
 
     # Session data
     session_data = Column(JSON, nullable=True)
@@ -294,11 +320,13 @@ class UserSession(Base):
     def __repr__(self):
         return f"<UserSession(session_id='{self.session_id[:8]}...', active={self.is_active})>"
 
+
 # Database utility functions
 def create_all_tables(engine):
     """Create all database tables"""
     Base.metadata.create_all(bind=engine)
     print("✅ All database tables created successfully")
+
 
 def drop_all_tables(engine):
     """Drop all database tables (for testing/reset)"""
