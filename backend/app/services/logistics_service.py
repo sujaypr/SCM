@@ -1,6 +1,32 @@
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 import uuid
+import requests
+import os
+try:
+    import google.generativeai as genai
+except Exception:
+    genai = None
+
+import threading
+import time
+
+# API keys (loaded from environment where possible)
+NEWS_API_KEY = os.getenv('NEWS_API_KEY', '27e521566a6e46a597ba8bdc6f74a86a')
+OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY', 'a84144b278bdeac6c181b514a15e5db3')  # Will use Open-Meteo as fallback
+ORS_API_KEY = os.getenv('ORS_API_KEY', '')
+# Gemini defaults (use provided key if env not set)
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyCkIfYPDPy2Cid027BAEyAXcfnC84DA_l0')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')
+
+# configure genai if available
+if genai is not None:
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        print(f"✅ Gemini configured with model: {GEMINI_MODEL}")
+    except Exception as e:
+        print(f"❌ Gemini configuration failed: {e}")
+        genai = None
 
 class LogisticsService:
     """Service for logistics and shipment management"""
@@ -8,24 +34,33 @@ class LogisticsService:
     def __init__(self): 
         # In a real application, this would connect to database
         self._mock_shipments = self._get_mock_shipments()
+        # Simple in-memory cache for external calls
+        self._cache = {}
+        self._cache_lock = threading.Lock()
+        # Simple per-endpoint last-call timestamps for rudimentary rate-limiting
+        self._last_called = {}
 
-    def get_shipments(self, status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Get all shipments with optional status filter"""
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
+    def get_shipments(self, status_filter: Optional[str] = None, transport_mode: Optional[str] = None, priority: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get all shipments with enhanced filtering options"""
 
         shipments = self._mock_shipments.copy()
 
         if status_filter:
             shipments = [
-                shipment
-                for shipment in shipments
-                if shipment["status"].lower() == status_filter.lower()
+                shipment for shipment in shipments 
+                if shipment['status'].lower() == status_filter.lower()
             ]
         
         if transport_mode:
             shipments = [
                 shipment for shipment in shipments 
-                if shipment['status'].lower() == status_filter.lower()
+                if shipment.get('transport_mode', '').lower() == transport_mode.lower()
+            ]
+        
+        if priority:
+            shipments = [
+                shipment for shipment in shipments 
+                if shipment.get('priority', '').lower() == priority.lower()
             ]
 
         return shipments
@@ -40,38 +75,64 @@ class LogisticsService:
         # Generate shipment ID
         shipment_id = f"SHP-{uuid.uuid4().hex[:8].upper()}"
 
-        # Calculate estimated delivery
-        estimated_days = shipment_data.get('estimated_days', 4)
+        # Calculate estimated delivery with transport mode consideration
+        transport_mode = shipment_data.get('transport_mode', 'road')
+        estimated_days = self._calculate_delivery_time(transport_mode, shipment_data.get('estimated_days', 4))
         estimated_delivery = (datetime.now() + timedelta(days=estimated_days)).date()
 
-        # Calculate estimated cost
+        # Calculate costs with mode-specific pricing
         weight = shipment_data.get('weight', 10.0)
         items_count = shipment_data.get('items_count', 1)
-        distance_cost = self._calculate_distance_cost(
-            shipment_data.get('origin', 'Bangalore'), 
-            shipment_data['destination']
-        )
-        shipping_cost = self._calculate_shipping_cost(weight, items_count, distance_cost)
+        origin = shipment_data.get('origin', 'Bangalore Distribution Center')
+        destination = shipment_data['destination']
+        
+        # Get precise distance and AI predictions
+        precise_data = self.get_precise_distance_and_predictions(origin, destination, transport_mode, weight)
+        
+        if 'error' not in precise_data:
+            shipping_cost = precise_data['ai_predictions']['estimated_cost_inr']
+            estimated_days = max(1, int(precise_data['ai_predictions']['estimated_time_hours'] / 24))
+        else:
+            # Fallback to original calculation
+            distance_cost = self._calculate_distance_cost(origin, destination)
+            shipping_cost = self._calculate_shipping_cost(weight, items_count, distance_cost, transport_mode)
+        
+        # Priority handling
+        priority = shipment_data.get('priority', 'standard')
+        if priority == 'express':
+            shipping_cost *= 1.5
+            estimated_days = max(1, estimated_days - 1)
+        elif priority == 'urgent':
+            shipping_cost *= 2.0
+            estimated_days = max(1, estimated_days - 2)
 
         new_shipment = {
             'id': shipment_id,
-            'origin': shipment_data.get('origin', 'Bangalore Distribution Center'),
-            'destination': shipment_data['destination'],
+            'origin': origin,
+            'destination': destination,
             'status': 'Processing',
             'items_count': items_count,
             'total_weight': weight,
             'cost': shipping_cost,
+            'transport_mode': transport_mode,
+            'priority': priority,
             'created_date': datetime.now().strftime('%Y-%m-%d'),
             'shipped_date': None,
             'eta': estimated_delivery.strftime('%Y-%m-%d'),
             'actual_delivery': None,
+            'items': shipment_data.get('items', []),
+            'notes': shipment_data.get('notes', ''),
             'tracking_info': {
                 'last_update': datetime.now().isoformat(),
-                'location': shipment_data.get('origin', 'Bangalore'),
-                'next_checkpoint': self._get_next_checkpoint(
-                    shipment_data.get('origin', 'Bangalore'), 
-                    shipment_data['destination']
-                )
+                'location': origin,
+                'next_checkpoint': self._get_next_checkpoint(origin, destination),
+                'progress_percentage': 0,
+                'status_history': [{
+                    'status': 'Processing',
+                    'timestamp': datetime.now().isoformat(),
+                    'location': origin,
+                    'message': 'Shipment created and processing'
+                }]
             }
         }
 
@@ -83,18 +144,31 @@ class LogisticsService:
 
         for shipment in self._mock_shipments:
             if shipment['id'] == shipment_id:
+                # Add real-time updates for in-transit shipments
+                if shipment['status'] == 'In Transit':
+                    # Simulate progress updates
+                    created = datetime.strptime(shipment['created_date'], '%Y-%m-%d')
+                    eta = datetime.strptime(shipment['eta'], '%Y-%m-%d')
+                    now = datetime.now()
+                    
+                    total_duration = (eta - created).days
+                    elapsed_duration = (now.date() - created.date()).days
+                    
+                    if total_duration > 0:
+                        progress = min(90, max(10, (elapsed_duration / total_duration) * 100))
+                        shipment['tracking_info']['progress_percentage'] = int(progress)
+                
                 return shipment
 
         return None
 
-    def update_shipment_status(self, shipment_id: str, new_status: str) -> Optional[Dict[str, Any]]:
-        """Update shipment status"""
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
+    def update_shipment_status(self, shipment_id: str, new_status: str, location: str = None, message: str = None) -> Optional[Dict[str, Any]]:
+        """Update shipment status with enhanced tracking"""
 
         for shipment in self._mock_shipments:
-            if shipment["id"] == shipment_id:
-                old_status = shipment["status"]
-                shipment["status"] = new_status
+            if shipment['id'] == shipment_id:
+                old_status = shipment['status']
+                shipment['status'] = new_status
 
                 # Update dates based on status
                 now = datetime.now()
@@ -104,15 +178,35 @@ class LogisticsService:
                 elif new_status == 'Delivered':
                     shipment['actual_delivery'] = now.strftime('%Y-%m-%d')
 
+                # Update progress percentage
+                progress_map = {
+                    'Processing': 10,
+                    'In Transit': 50,
+                    'Out for Delivery': 90,
+                    'Delivered': 100,
+                    'Cancelled': 0
+                }
+                
                 # Update tracking info
-                shipment['tracking_info']['last_update'] = now.isoformat()
-                shipment['tracking_info']['status_history'] = shipment.get('tracking_info', {}).get('status_history', [])
-                shipment['tracking_info']['status_history'].append({
+                tracking_info = shipment.get('tracking_info', {})
+                tracking_info['last_update'] = now.isoformat()
+                tracking_info['progress_percentage'] = progress_map.get(new_status, 50)
+                
+                if location:
+                    tracking_info['location'] = location
+                
+                # Add to status history
+                if 'status_history' not in tracking_info:
+                    tracking_info['status_history'] = []
+                
+                tracking_info['status_history'].append({
                     'status': new_status,
                     'timestamp': now.isoformat(),
-                    'location': shipment['tracking_info'].get('location', 'Unknown')
+                    'location': location or tracking_info.get('location', 'Unknown'),
+                    'message': message or f'Status updated to {new_status}'
                 })
-
+                
+                shipment['tracking_info'] = tracking_info
                 return shipment
 
         return None
@@ -128,6 +222,372 @@ class LogisticsService:
         total_distance = self._calculate_total_distance(optimized_order)
         estimated_time = self._calculate_total_time(optimized_order)
         
+        return {
+            'optimized_order': optimized_order,
+            'total_distance_km': total_distance,
+            'estimated_time_hours': estimated_time,
+            'fuel_savings': f'{total_distance * 0.15:.1f}L',
+            'cost_savings': f'₹{total_distance * 12:.0f}'
+        }
+
+    def get_dynamic_trip_analysis(self, origin: str, destination: str) -> Dict[str, Any]:
+        """Get dynamic trip analysis using Gemini AI for distance, time, and cost estimation"""
+        try:
+            if not genai:
+                return self._fallback_trip_analysis(origin, destination)
+            
+            model = genai.GenerativeModel(GEMINI_MODEL)
+            
+            prompt = f"""
+You are a logistics expert. Analyze the route from {origin} to {destination} and provide precise estimates.
+
+Consider:
+- Real-world distance between these locations
+- Current traffic patterns and road conditions
+- Fuel costs (₹100/L diesel, 12km/L efficiency)
+- Driver wages (₹500/day)
+- Toll charges on highways
+- Vehicle maintenance costs
+- Weather impact on delivery time
+- Regional logistics challenges
+
+Provide response in this exact JSON format:
+{{
+  "distance_km": <actual_distance_number>,
+  "estimated_hours": <realistic_travel_time>,
+  "estimated_cost_inr": <total_cost_including_all_factors>,
+  "fuel_cost": <fuel_cost_only>,
+  "other_costs": <tolls_driver_maintenance>,
+  "risk_level": "low|medium|high",
+  "summary": "Brief explanation of the route and cost factors"
+}}
+
+Be realistic and accurate for Indian logistics.
+"""
+            
+            response = model.generate_content(prompt)
+            
+            # Extract JSON from response
+            import json
+            import re
+            
+            text = response.text
+            json_match = re.search(r'\{.*\}', text, re.DOTALL)
+            
+            if json_match:
+                try:
+                    result = json.loads(json_match.group())
+                    return {
+                        'distance_info': {
+                            'distance_km': result.get('distance_km', 500),
+                            'duration_hours': result.get('estimated_hours', 8)
+                        },
+                        'stats': {
+                            'distance': int(result.get('distance_km', 500)),
+                            'estimated_hours': int(result.get('estimated_hours', 8)),
+                            'average_cost': int(result.get('estimated_cost_inr', 4000)),
+                            'risk_level': result.get('risk_level', 'low')
+                        },
+                        'gemini_summary': result.get('summary', f'Route analysis for {origin} to {destination}'),
+                        'cost_breakdown': {
+                            'fuel_cost': result.get('fuel_cost', 2000),
+                            'other_costs': result.get('other_costs', 2000)
+                        }
+                    }
+                except json.JSONDecodeError:
+                    pass
+            
+            return self._fallback_trip_analysis(origin, destination)
+            
+        except Exception as e:
+            print(f"Gemini trip analysis error: {e}")
+            return self._fallback_trip_analysis(origin, destination)
+    
+    def _fallback_trip_analysis(self, origin: str, destination: str) -> Dict[str, Any]:
+        """Fallback trip analysis when Gemini is unavailable"""
+        # Simple distance estimation based on coordinates
+        origin_coords = self._geocode_place(origin)
+        dest_coords = self._geocode_place(destination)
+        
+        if origin_coords and dest_coords:
+            distance_km = self._haversine_distance(
+                origin_coords['lat'], origin_coords['lon'],
+                dest_coords['lat'], dest_coords['lon']
+            )
+        else:
+            distance_km = 500  # Default
+        
+        # Calculate estimates
+        hours = max(4, distance_km / 60)  # 60 km/h average
+        fuel_cost = (distance_km / 12) * 100  # 12km/L, ₹100/L
+        other_costs = distance_km * 3 + 1000  # Tolls, driver, maintenance
+        total_cost = fuel_cost + other_costs
+        
+        return {
+            'distance_info': {
+                'distance_km': round(distance_km, 1),
+                'duration_hours': round(hours, 1)
+            },
+            'stats': {
+                'distance': int(distance_km),
+                'estimated_hours': int(hours),
+                'average_cost': int(total_cost),
+                'risk_level': 'low'
+            },
+            'gemini_summary': f'Route from {origin} to {destination}: {distance_km:.0f}km, estimated {hours:.1f}h travel time.',
+            'cost_breakdown': {
+                'fuel_cost': int(fuel_cost),
+                'other_costs': int(other_costs)
+            }
+        }
+
+    def get_precise_distance_and_predictions(self, origin: str, destination: str, transport_mode: str = 'road', weight: float = 10.0) -> Dict[str, Any]:
+        """Get precise distance using mapping API and AI predictions for time/cost"""
+        try:
+            # Get coordinates
+            origin_coords = self._geocode_place(origin)
+            dest_coords = self._geocode_place(destination)
+            
+            if not origin_coords or not dest_coords:
+                return {'error': 'Could not geocode locations'}
+            
+            # Get precise distance using OpenRouteService or fallback
+            distance_data = self._get_precise_route_distance(origin_coords, dest_coords, transport_mode)
+            
+            # Use Gemini AI for intelligent predictions
+            ai_predictions = self._get_ai_transport_predictions(origin, destination, distance_data, transport_mode, weight)
+            
+            return {
+                'distance_km': distance_data['distance_km'],
+                'duration_hours': distance_data['duration_hours'],
+                'route_geometry': distance_data.get('geometry'),
+                'ai_predictions': ai_predictions,
+                'transport_mode': transport_mode,
+                'weight_kg': weight
+            }
+            
+        except Exception as e:
+            print(f"Error in precise distance calculation: {e}")
+            return {'error': str(e)}
+    
+    def _get_precise_route_distance(self, origin_coords: Dict, dest_coords: Dict, transport_mode: str) -> Dict[str, Any]:
+        """Get precise route distance using mapping services"""
+        try:
+            # Try OpenRouteService first if API key available
+            if ORS_API_KEY:
+                return self._get_ors_route_data(origin_coords, dest_coords, transport_mode)
+            
+            # Fallback to Haversine distance with estimated duration
+            distance_km = self._haversine_distance(
+                origin_coords['lat'], origin_coords['lon'],
+                dest_coords['lat'], dest_coords['lon']
+            )
+            
+            # Estimate duration based on transport mode
+            speed_map = {'road': 60, 'rail': 80, 'air': 500, 'sea': 25}
+            avg_speed = speed_map.get(transport_mode, 60)
+            duration_hours = distance_km / avg_speed
+            
+            return {
+                'distance_km': round(distance_km, 2),
+                'duration_hours': round(duration_hours, 2),
+                'method': 'haversine_fallback'
+            }
+            
+        except Exception as e:
+            print(f"Route distance calculation error: {e}")
+            return {'distance_km': 500, 'duration_hours': 8, 'method': 'fallback'}
+    
+    def _get_ors_route_data(self, origin_coords: Dict, dest_coords: Dict, transport_mode: str) -> Dict[str, Any]:
+        """Get route data from OpenRouteService"""
+        try:
+            profile_map = {
+                'road': 'driving-car',
+                'rail': 'driving-car',  # Approximate with car
+                'air': 'driving-car',   # Direct distance
+                'sea': 'driving-car'    # Approximate
+            }
+            
+            profile = profile_map.get(transport_mode, 'driving-car')
+            
+            url = f"https://api.openrouteservice.org/v2/directions/{profile}"
+            headers = {'Authorization': ORS_API_KEY}
+            
+            data = {
+                'coordinates': [
+                    [origin_coords['lon'], origin_coords['lat']],
+                    [dest_coords['lon'], dest_coords['lat']]
+                ],
+                'format': 'json'
+            }
+            
+            response = requests.post(url, json=data, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                result = response.json()
+                route = result['routes'][0]
+                
+                return {
+                    'distance_km': round(route['summary']['distance'] / 1000, 2),
+                    'duration_hours': round(route['summary']['duration'] / 3600, 2),
+                    'geometry': route.get('geometry'),
+                    'method': 'openrouteservice'
+                }
+            
+        except Exception as e:
+            print(f"ORS API error: {e}")
+        
+        # Fallback to Haversine
+        return self._get_precise_route_distance(origin_coords, dest_coords, transport_mode)
+    
+    def _get_ai_transport_predictions(self, origin: str, destination: str, distance_data: Dict, transport_mode: str, weight: float) -> Dict[str, Any]:
+        """Use Gemini AI to predict transport time and cost"""
+        try:
+            if not genai:
+                return self._fallback_transport_predictions(distance_data, transport_mode, weight)
+            
+            model = genai.GenerativeModel(GEMINI_MODEL)
+            
+            prompt = f"""
+As a logistics expert, analyze this shipment and provide precise predictions:
+
+Route: {origin} to {destination}
+Distance: {distance_data['distance_km']} km
+Transport Mode: {transport_mode}
+Weight: {weight} kg
+Base Duration: {distance_data.get('duration_hours', 'unknown')} hours
+
+Provide predictions in this exact JSON format:
+{{
+  "estimated_time_hours": <number>,
+  "estimated_cost_inr": <number>,
+  "fuel_cost_inr": <number>,
+  "driver_cost_inr": <number>,
+  "toll_cost_inr": <number>,
+  "risk_factors": ["factor1", "factor2"],
+  "cost_breakdown_explanation": "brief explanation",
+  "time_factors": "factors affecting delivery time"
+}}
+
+Consider:
+- Indian road conditions and traffic
+- Fuel prices (₹100/L diesel)
+- Driver wages (₹500/day)
+- Toll charges
+- Weight impact on speed and fuel
+- Seasonal factors
+- Route complexity
+"""
+            
+            response = model.generate_content(prompt)
+            
+            # Try to extract JSON from response
+            import json
+            import re
+            
+            text = response.text
+            json_match = re.search(r'\{.*\}', text, re.DOTALL)
+            
+            if json_match:
+                try:
+                    predictions = json.loads(json_match.group())
+                    return predictions
+                except json.JSONDecodeError:
+                    pass
+            
+            # If JSON parsing fails, use fallback
+            return self._fallback_transport_predictions(distance_data, transport_mode, weight)
+            
+        except Exception as e:
+            print(f"AI prediction error: {e}")
+            return self._fallback_transport_predictions(distance_data, transport_mode, weight)
+    
+    def _fallback_transport_predictions(self, distance_data: Dict, transport_mode: str, weight: float) -> Dict[str, Any]:
+        """Fallback predictions when AI is unavailable"""
+        distance_km = distance_data.get('distance_km', 500)
+        
+        # Base calculations
+        fuel_efficiency = max(8, 12 - (weight / 1000))  # km/L, decreases with weight
+        fuel_needed = distance_km / fuel_efficiency
+        fuel_cost = fuel_needed * 100  # ₹100/L
+        
+        # Driver cost (₹500/day, assuming 8 hours driving per day)
+        driving_hours = distance_data.get('duration_hours', distance_km / 60)
+        driver_cost = (driving_hours / 8) * 500
+        
+        # Toll cost (approximate ₹2/km for highways)
+        toll_cost = distance_km * 2
+        
+        # Total cost
+        total_cost = fuel_cost + driver_cost + toll_cost + (weight * 5)  # ₹5/kg handling
+        
+        return {
+            'estimated_time_hours': round(driving_hours * 1.2, 1),  # 20% buffer
+            'estimated_cost_inr': round(total_cost),
+            'fuel_cost_inr': round(fuel_cost),
+            'driver_cost_inr': round(driver_cost),
+            'toll_cost_inr': round(toll_cost),
+            'risk_factors': ['traffic_delays', 'weather_conditions'],
+            'cost_breakdown_explanation': f'Fuel: ₹{fuel_cost:.0f}, Driver: ₹{driver_cost:.0f}, Tolls: ₹{toll_cost:.0f}',
+            'time_factors': 'Traffic conditions and route complexity considered'
+        }
+    
+    def _haversine_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        """Calculate distance between two points using Haversine formula"""
+        import math
+        
+        R = 6371  # Earth's radius in kilometers
+        
+        lat1_rad = math.radians(lat1)
+        lat2_rad = math.radians(lat2)
+        delta_lat = math.radians(lat2 - lat1)
+        delta_lon = math.radians(lon2 - lon1)
+        
+        a = (math.sin(delta_lat / 2) ** 2 + 
+             math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon / 2) ** 2)
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        
+        return R * c
+    
+    def _geocode_place(self, place_name: str) -> Optional[Dict[str, float]]:
+        """Get coordinates for a place name using Nominatim (free)"""
+        try:
+            cache_key = f"geocode_{place_name.lower()}"
+            
+            with self._cache_lock:
+                if cache_key in self._cache:
+                    return self._cache[cache_key]
+            
+            url = "https://nominatim.openstreetmap.org/search"
+            params = {
+                'q': place_name,
+                'format': 'json',
+                'limit': 1,
+                'countrycodes': 'in'  # Restrict to India
+            }
+            
+            headers = {'User-Agent': 'SCM-Logistics/1.0'}
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    result = {
+                        'lat': float(data[0]['lat']),
+                        'lon': float(data[0]['lon'])
+                    }
+                    
+                    with self._cache_lock:
+                        self._cache[cache_key] = result
+                    
+                    return result
+            
+        except Exception as e:
+            print(f"Geocoding error for {place_name}: {e}")
+        
+        return Nonelate_total_time(optimized_order)
+        estimated_cost = self._calculate_route_cost(optimized_order)
+
         return {
             'optimized_route': optimized_order,
             'total_destinations': len(destinations),
@@ -150,7 +610,7 @@ class LogisticsService:
                     )
                 }
                 for i, dest in enumerate(optimized_order)
-            ],
+            ]
         }
 
     # New integrations and helper methods
@@ -902,7 +1362,7 @@ class LogisticsService:
         # Status breakdown
         status_counts = {}
         for shipment in self._mock_shipments:
-            status = shipment["status"]
+            status = shipment['status']
             status_counts[status] = status_counts.get(status, 0) + 1
 
         # Transport mode breakdown
@@ -920,73 +1380,97 @@ class LogisticsService:
             priority_counts[priority] = priority_counts.get(priority, 0) + 1
 
         # Calculate on-time delivery rate
-        delivered_shipments = [
-            s for s in self._mock_shipments if s["status"] == "Delivered"
-        ]
+        delivered_shipments = [s for s in self._mock_shipments if s['status'] == 'Delivered']
         on_time_count = 0
 
         for shipment in delivered_shipments:
-            if shipment.get("actual_delivery") and shipment.get("eta"):
-                actual = datetime.strptime(
-                    shipment["actual_delivery"], "%Y-%m-%d"
-                ).date()
-                expected = datetime.strptime(shipment["eta"], "%Y-%m-%d").date()
+            if shipment.get('actual_delivery') and shipment.get('eta'):
+                actual = datetime.strptime(shipment['actual_delivery'], '%Y-%m-%d').date()
+                expected = datetime.strptime(shipment['eta'], '%Y-%m-%d').date()
                 if actual <= expected:
                     on_time_count += 1
 
-        on_time_rate = (
-            (on_time_count / len(delivered_shipments) * 100)
-            if delivered_shipments
-            else 0
-        )
+        on_time_rate = (on_time_count / len(delivered_shipments) * 100) if delivered_shipments else 0
 
         # Calculate average delivery time
         total_delivery_days = 0
         for shipment in delivered_shipments:
-            if shipment.get("shipped_date") and shipment.get("actual_delivery"):
-                shipped = datetime.strptime(shipment["shipped_date"], "%Y-%m-%d").date()
-                delivered = datetime.strptime(
-                    shipment["actual_delivery"], "%Y-%m-%d"
-                ).date()
+            if shipment.get('shipped_date') and shipment.get('actual_delivery'):
+                shipped = datetime.strptime(shipment['shipped_date'], '%Y-%m-%d').date()
+                delivered = datetime.strptime(shipment['actual_delivery'], '%Y-%m-%d').date()
                 total_delivery_days += (delivered - shipped).days
 
-        avg_delivery_time = (
-            (total_delivery_days / len(delivered_shipments))
-            if delivered_shipments
-            else 4.2
-        )
+        avg_delivery_time = (total_delivery_days / len(delivered_shipments)) if delivered_shipments else 4.2
 
         # Cost analytics
         total_cost = sum(shipment.get('cost', 0) for shipment in self._mock_shipments)
         avg_cost_per_shipment = total_cost / total_shipments if total_shipments > 0 else 0
+        
+        # Calculate cost efficiency by mode
+        cost_efficiency = {}
+        for mode, cost in mode_costs.items():
+            count = mode_counts.get(mode, 1)
+            cost_efficiency[mode] = round(cost / count, 2)
 
         return {
             'total_shipments': total_shipments,
             'status_breakdown': status_counts,
+            'transport_mode_breakdown': mode_counts,
+            'priority_breakdown': priority_counts,
             'on_time_delivery_rate': round(on_time_rate, 1),
             'average_delivery_time_days': round(avg_delivery_time, 1),
             'total_shipping_cost': total_cost,
             'average_cost_per_shipment': round(avg_cost_per_shipment, 2),
+            'cost_efficiency_by_mode': cost_efficiency,
             'performance_trends': {
                 'last_30_days': {
                     'shipments': total_shipments,
                     'on_time_rate': round(on_time_rate, 1),
                     'avg_cost': round(avg_cost_per_shipment, 2)
                 }
-            }
+            },
+            'recommendations': self._generate_recommendations()
         }
+    
+    def _generate_recommendations(self) -> List[str]:
+        """Generate logistics recommendations based on current data"""
+        recommendations = []
+        
+        # Analyze delivery performance
+        delivered = [s for s in self._mock_shipments if s['status'] == 'Delivered']
+        if delivered:
+            on_time = sum(1 for s in delivered if s.get('actual_delivery') and s.get('eta') and 
+                         datetime.strptime(s['actual_delivery'], '%Y-%m-%d').date() <= 
+                         datetime.strptime(s['eta'], '%Y-%m-%d').date())
+            rate = (on_time / len(delivered)) * 100
+            
+            if rate < 80:
+                recommendations.append("Consider optimizing delivery routes to improve on-time performance")
+            if rate > 95:
+                recommendations.append("Excellent delivery performance - maintain current standards")
+        
+        # Analyze transport modes
+        modes = {}
+        for s in self._mock_shipments:
+            mode = s.get('transport_mode', 'road')
+            modes[mode] = modes.get(mode, 0) + 1
+        
+        if modes.get('road', 0) > len(self._mock_shipments) * 0.8:
+            recommendations.append("Consider diversifying transport modes for better cost efficiency")
+        
+        return recommendations[:3]  # Return top 3 recommendations
 
     def _calculate_distance_cost(self, origin: str, destination: str) -> float:
         """Calculate distance-based cost"""
 
         # Simplified distance calculation
         distance_map = {
-            ("Bangalore", "Mumbai"): 980,
-            ("Bangalore", "Delhi"): 2150,
-            ("Bangalore", "Chennai"): 350,
-            ("Bangalore", "Hyderabad"): 570,
-            ("Bangalore", "Pune"): 840,
-            ("Bangalore", "Kolkata"): 1880,
+            ('Bangalore', 'Mumbai'): 980,
+            ('Bangalore', 'Delhi'): 2150,
+            ('Bangalore', 'Chennai'): 350,
+            ('Bangalore', 'Hyderabad'): 570,
+            ('Bangalore', 'Pune'): 840,
+            ('Bangalore', 'Kolkata'): 1880,
         }
 
         key = (origin, destination)
@@ -997,9 +1481,8 @@ class LogisticsService:
         # ₹5 per km base rate
         return distance * 5.0
 
-    def _calculate_shipping_cost(self, weight: float, items_count: int, distance_cost: float) -> float:
-        """Calculate total shipping cost"""
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
+    def _calculate_shipping_cost(self, weight: float, items_count: int, distance_cost: float, transport_mode: str = 'road') -> float:
+        """Calculate total shipping cost with transport mode consideration"""
 
         base_cost = 100  # Base handling charge
         weight_cost = weight * 15  # ₹15 per kg
@@ -1035,16 +1518,16 @@ class LogisticsService:
         """Get next checkpoint for shipment"""
 
         route_map = {
-            ("Bangalore", "Mumbai"): "Pune Hub",
-            ("Bangalore", "Delhi"): "Hyderabad Hub",
-            ("Bangalore", "Chennai"): "Direct Route",
-            ("Bangalore", "Hyderabad"): "Direct Route",
-            ("Bangalore", "Pune"): "Mumbai Hub",
-            ("Bangalore", "Kolkata"): "Hyderabad Hub",
+            ('Bangalore', 'Mumbai'): 'Pune Hub',
+            ('Bangalore', 'Delhi'): 'Hyderabad Hub',
+            ('Bangalore', 'Chennai'): 'Direct Route',
+            ('Bangalore', 'Hyderabad'): 'Direct Route',
+            ('Bangalore', 'Pune'): 'Mumbai Hub',
+            ('Bangalore', 'Kolkata'): 'Hyderabad Hub',
         }
 
         key = (origin, destination)
-        return route_map.get(key, "Regional Hub")
+        return route_map.get(key, 'Regional Hub')
 
     def _simple_route_optimization(self, destinations: List[str]) -> List[str]:
         """Simple route optimization algorithm"""
@@ -1052,7 +1535,7 @@ class LogisticsService:
         # For demo purposes, just sort alphabetically with some logic
         # In reality, this would use sophisticated algorithms like TSP solvers
 
-        priority_cities = ["Mumbai", "Delhi", "Chennai", "Hyderabad"]
+        priority_cities = ['Mumbai', 'Delhi', 'Chennai', 'Hyderabad']
 
         prioritized = []
         others = []
@@ -1073,7 +1556,7 @@ class LogisticsService:
         """Calculate total distance for route"""
 
         total = 0
-        previous = "Bangalore"  # Starting point
+        previous = 'Bangalore'  # Starting point
 
         for destination in route:
             total += self._get_distance_between(previous, destination)
@@ -1098,16 +1581,16 @@ class LogisticsService:
         """Get distance between two cities"""
 
         distance_map = {
-            ("Bangalore", "Mumbai"): 980,
-            ("Bangalore", "Delhi"): 2150,
-            ("Bangalore", "Chennai"): 350,
-            ("Bangalore", "Hyderabad"): 570,
-            ("Bangalore", "Pune"): 840,
-            ("Bangalore", "Kolkata"): 1880,
-            ("Mumbai", "Delhi"): 1400,
-            ("Mumbai", "Chennai"): 1340,
-            ("Delhi", "Chennai"): 2180,
-            ("Delhi", "Hyderabad"): 1580,
+            ('Bangalore', 'Mumbai'): 980,
+            ('Bangalore', 'Delhi'): 2150,
+            ('Bangalore', 'Chennai'): 350,
+            ('Bangalore', 'Hyderabad'): 570,
+            ('Bangalore', 'Pune'): 840,
+            ('Bangalore', 'Kolkata'): 1880,
+            ('Mumbai', 'Delhi'): 1400,
+            ('Mumbai', 'Chennai'): 1340,
+            ('Delhi', 'Chennai'): 2180,
+            ('Delhi', 'Hyderabad'): 1580,
         }
 
         key = (origin, destination)
@@ -1122,7 +1605,7 @@ class LogisticsService:
         start_time = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
 
         total_hours = 0
-        previous = "Bangalore"
+        previous = 'Bangalore'
 
         for i in range(index + 1):
             destination = route[i]
@@ -1132,7 +1615,7 @@ class LogisticsService:
             previous = destination
 
         arrival_time = start_time + timedelta(hours=total_hours)
-        return arrival_time.strftime("%H:%M on %Y-%m-%d")
+        return arrival_time.strftime('%H:%M on %Y-%m-%d')
 
     def _get_mock_shipments(self) -> List[Dict[str, Any]]:
         """Get mock shipment data"""
@@ -1146,14 +1629,27 @@ class LogisticsService:
                 'items_count': 25,
                 'total_weight': 45.5,
                 'cost': 4250.0,
+                'transport_mode': 'road',
+                'priority': 'standard',
                 'created_date': '2025-09-08',
                 'shipped_date': '2025-09-09',
                 'eta': '2025-09-12',
                 'actual_delivery': '2025-09-11',
+                'items': [
+                    {'description': 'Electronics Package', 'quantity': 15, 'weight': 30.0},
+                    {'description': 'Textile Items', 'quantity': 10, 'weight': 15.5}
+                ],
+                'notes': 'Handle with care - fragile items',
                 'tracking_info': {
                     'last_update': '2025-09-11T18:30:00',
                     'location': 'Mumbai',
-                    'status': 'Delivered'
+                    'progress_percentage': 100,
+                    'status_history': [
+                        {'status': 'Processing', 'timestamp': '2025-09-08T10:00:00', 'location': 'Bangalore', 'message': 'Order received'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-09T08:00:00', 'location': 'Bangalore Hub', 'message': 'Shipment dispatched'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-10T14:30:00', 'location': 'Pune Hub', 'message': 'In transit via Pune'},
+                        {'status': 'Delivered', 'timestamp': '2025-09-11T18:30:00', 'location': 'Mumbai', 'message': 'Successfully delivered'}
+                    ]
                 }
             },
             {
@@ -1164,14 +1660,27 @@ class LogisticsService:
                 'items_count': 12,
                 'total_weight': 20.0,
                 'cost': 1950.0,
+                'transport_mode': 'road',
+                'priority': 'express',
                 'created_date': '2025-09-11',
                 'shipped_date': '2025-09-11',
                 'eta': '2025-09-13',
                 'actual_delivery': None,
+                'items': [
+                    {'description': 'Medical Supplies', 'quantity': 8, 'weight': 12.0},
+                    {'description': 'Documents', 'quantity': 4, 'weight': 8.0}
+                ],
+                'notes': 'Express delivery - time sensitive',
                 'tracking_info': {
                     'last_update': '2025-09-12T14:20:00',
                     'location': 'En Route to Chennai',
-                    'next_checkpoint': 'Chennai Hub'
+                    'next_checkpoint': 'Chennai Hub',
+                    'progress_percentage': 65,
+                    'status_history': [
+                        {'status': 'Processing', 'timestamp': '2025-09-11T09:00:00', 'location': 'Bangalore', 'message': 'Express order received'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-11T11:00:00', 'location': 'Bangalore Hub', 'message': 'Dispatched for express delivery'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-12T14:20:00', 'location': 'Highway Checkpoint', 'message': 'En route to Chennai'}
+                    ]
                 }
             },
             {
@@ -1182,14 +1691,25 @@ class LogisticsService:
                 'items_count': 35,
                 'total_weight': 80.0,
                 'cost': 6500.0,
+                'transport_mode': 'rail',
+                'priority': 'standard',
                 'created_date': '2025-09-12',
                 'shipped_date': None,
                 'eta': '2025-09-16',
                 'actual_delivery': None,
+                'items': [
+                    {'description': 'Bulk Grocery Items', 'quantity': 20, 'weight': 50.0},
+                    {'description': 'Household Products', 'quantity': 15, 'weight': 30.0}
+                ],
+                'notes': 'Bulk shipment - rail transport for cost efficiency',
                 'tracking_info': {
                     'last_update': '2025-09-12T10:00:00',
                     'location': 'Bangalore Warehouse',
-                    'status': 'Packaging in progress'
+                    'next_checkpoint': 'Railway Station',
+                    'progress_percentage': 15,
+                    'status_history': [
+                        {'status': 'Processing', 'timestamp': '2025-09-12T10:00:00', 'location': 'Bangalore Warehouse', 'message': 'Order received - packaging in progress'}
+                    ]
                 }
             },
             {
@@ -1200,14 +1720,57 @@ class LogisticsService:
                 'items_count': 18,
                 'total_weight': 30.5,
                 'cost': 2850.0,
+                'transport_mode': 'road',
+                'priority': 'urgent',
                 'created_date': '2025-09-09',
                 'shipped_date': '2025-09-09',
                 'eta': '2025-09-11',
                 'actual_delivery': '2025-09-10',
+                'items': [
+                    {'description': 'Pharmaceutical Products', 'quantity': 10, 'weight': 15.0},
+                    {'description': 'Medical Equipment', 'quantity': 8, 'weight': 15.5}
+                ],
+                'notes': 'Urgent medical supplies - priority delivery',
                 'tracking_info': {
                     'last_update': '2025-09-10T16:45:00',
                     'location': 'Hyderabad',
-                    'status': 'Delivered'
+                    'progress_percentage': 100,
+                    'status_history': [
+                        {'status': 'Processing', 'timestamp': '2025-09-09T08:00:00', 'location': 'Bangalore', 'message': 'Urgent order received'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-09T10:00:00', 'location': 'Bangalore Hub', 'message': 'Priority dispatch'},
+                        {'status': 'Delivered', 'timestamp': '2025-09-10T16:45:00', 'location': 'Hyderabad', 'message': 'Delivered ahead of schedule'}
+                    ]
+                }
+            },
+            {
+                'id': 'SHP-Q7R8S9T0',
+                'origin': 'Bangalore Distribution Center',
+                'destination': 'Kolkata',
+                'status': 'In Transit',
+                'items_count': 22,
+                'total_weight': 55.0,
+                'cost': 8750.0,
+                'transport_mode': 'air',
+                'priority': 'express',
+                'created_date': '2025-09-13',
+                'shipped_date': '2025-09-13',
+                'eta': '2025-09-14',
+                'actual_delivery': None,
+                'items': [
+                    {'description': 'Electronic Components', 'quantity': 12, 'weight': 25.0},
+                    {'description': 'Precision Instruments', 'quantity': 10, 'weight': 30.0}
+                ],
+                'notes': 'Air freight - high value items',
+                'tracking_info': {
+                    'last_update': '2025-09-13T16:00:00',
+                    'location': 'In Flight',
+                    'next_checkpoint': 'Kolkata Airport',
+                    'progress_percentage': 75,
+                    'status_history': [
+                        {'status': 'Processing', 'timestamp': '2025-09-13T08:00:00', 'location': 'Bangalore', 'message': 'Express air shipment processed'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-13T12:00:00', 'location': 'Bangalore Airport', 'message': 'Loaded for air transport'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-13T16:00:00', 'location': 'In Flight', 'message': 'En route to Kolkata'}
+                    ]
                 }
             }
         ]

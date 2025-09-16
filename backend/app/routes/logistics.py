@@ -6,24 +6,16 @@ from app.services.logistics_service import LogisticsService
 
 router = APIRouter()
 
-
 class ShipmentCreate(BaseModel):
     destination: str = Field(..., description="Destination address")
     origin: Optional[str] = Field(None, description="Origin address")
     items_count: Optional[int] = Field(None, ge=1, description="Number of items")
     weight: Optional[float] = Field(None, ge=0.1, description="Total weight in kg")
-<<<<<<< HEAD
     estimated_days: Optional[int] = Field(None, ge=1, le=30, description="Estimated delivery days")
     transport_mode: Optional[str] = Field('road', description="Transport mode: road, rail, air, sea")
     priority: Optional[str] = Field('standard', description="Priority: standard, express, urgent")
     items: Optional[List[Dict[str, Any]]] = Field([], description="List of items in shipment")
     notes: Optional[str] = Field('', description="Additional notes")
-=======
-    estimated_days: Optional[int] = Field(
-        None, ge=1, le=30, description="Estimated delivery days"
-    )
-
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
 
 class ShipmentResponse(BaseModel):
     success: bool
@@ -32,19 +24,10 @@ class ShipmentResponse(BaseModel):
     error: Optional[str] = None
     message: Optional[str] = None
 
-<<<<<<< HEAD
 class StatusUpdate(BaseModel):
     status: str = Field(..., description="New status")
     location: Optional[str] = Field(None, description="Current location")
     message: Optional[str] = Field(None, description="Status update message")
-=======
-
-@router.get("/shipments", response_model=ShipmentResponse)
-async def get_shipments(status: Optional[str] = None):
-    """
-    Get all shipments with optional status filter
-    """
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
 
 class LocationPair(BaseModel):
     origin: str
@@ -70,7 +53,7 @@ async def get_shipments(
         return ShipmentResponse(
             success=True,
             shipments=shipments,
-            message=f"Retrieved {len(shipments)} shipments",
+            message=f"Retrieved {len(shipments)} shipments"
         )
     except Exception as e:
         raise HTTPException(
@@ -78,28 +61,20 @@ async def get_shipments(
             detail={
                 "success": False,
                 "error": "Failed to retrieve shipments",
-                "message": str(e),
-            },
+                "message": str(e)
+            }
         )
-
 
 @router.post("/shipments", response_model=ShipmentResponse)
 async def create_shipment(shipment: ShipmentCreate):
     """Create a new shipment"""
     try:
         logistics_service = LogisticsService()
-<<<<<<< HEAD
         new_shipment = logistics_service.create_shipment(shipment.dict())
-=======
-        payload = shipment.model_dump()
-        # Ensure estimated_days has a sensible default to avoid timedelta(None)
-        if payload.get("estimated_days") is None:
-            payload["estimated_days"] = 4
-        new_shipment = logistics_service.create_shipment(payload)
-
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
         return ShipmentResponse(
-            success=True, shipment=new_shipment, message="Shipment created successfully"
+            success=True,
+            shipment=new_shipment,
+            message="Shipment created successfully"
         )
     except Exception as e:
         raise HTTPException(
@@ -107,10 +82,9 @@ async def create_shipment(shipment: ShipmentCreate):
             detail={
                 "success": False,
                 "error": "Failed to create shipment",
-                "message": str(e),
-            },
+                "message": str(e)
+            }
         )
-
 
 @router.get("/shipments/{shipment_id}")
 async def get_shipment(shipment_id: str):
@@ -125,14 +99,14 @@ async def get_shipment(shipment_id: str):
                 detail={
                     "success": False,
                     "error": "Shipment not found",
-                    "message": f"Shipment with ID {shipment_id} not found",
-                },
+                    "message": f"Shipment with ID {shipment_id} not found"
+                }
             )
 
         return {
             "success": True,
             "shipment": shipment,
-            "message": "Shipment details retrieved successfully",
+            "message": "Shipment details retrieved successfully"
         }
     except HTTPException:
         raise
@@ -142,10 +116,9 @@ async def get_shipment(shipment_id: str):
             detail={
                 "success": False,
                 "error": "Failed to retrieve shipment",
-                "message": str(e),
-            },
+                "message": str(e)
+            }
         )
-
 
 @router.put("/shipments/{shipment_id}/status")
 async def update_shipment_status(shipment_id: str, update: StatusUpdate):
@@ -158,8 +131,8 @@ async def update_shipment_status(shipment_id: str, update: StatusUpdate):
             detail={
                 "success": False,
                 "error": "Invalid status",
-                "message": f"Status must be one of: {', '.join(valid_statuses)}",
-            },
+                "message": f"Status must be one of: {', '.join(valid_statuses)}"
+            }
         )
 
     try:
@@ -174,18 +147,14 @@ async def update_shipment_status(shipment_id: str, update: StatusUpdate):
                 detail={
                     "success": False,
                     "error": "Shipment not found",
-                    "message": f"Shipment with ID {shipment_id} not found",
-                },
+                    "message": f"Shipment with ID {shipment_id} not found"
+                }
             )
 
         return {
             "success": True,
             "shipment": updated_shipment,
-<<<<<<< HEAD
             "message": f"Shipment status updated to {update.status}"
-=======
-            "message": f"Shipment status updated to {status}",
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
         }
     except HTTPException:
         raise
@@ -195,10 +164,9 @@ async def update_shipment_status(shipment_id: str, update: StatusUpdate):
             detail={
                 "success": False,
                 "error": "Failed to update shipment status",
-                "message": str(e),
-            },
+                "message": str(e)
+            }
         )
-
 
 @router.post("/routes/optimize")
 async def optimize_routes(destinations: List[str]):
@@ -209,8 +177,8 @@ async def optimize_routes(destinations: List[str]):
             detail={
                 "success": False,
                 "error": "Invalid destinations",
-                "message": "At least 2 destinations are required for route optimization",
-            },
+                "message": "At least 2 destinations are required for route optimization"
+            }
         )
 
     try:
@@ -221,7 +189,7 @@ async def optimize_routes(destinations: List[str]):
             "routes": optimized_routes,
             "total_destinations": len(destinations),
             "estimated_savings": "15-25% time reduction",
-            "message": "Routes optimized successfully",
+            "message": "Routes optimized successfully"
         }
     except Exception as e:
         raise HTTPException(
@@ -229,23 +197,13 @@ async def optimize_routes(destinations: List[str]):
             detail={
                 "success": False,
                 "error": "Failed to optimize routes",
-                "message": str(e),
-            },
+                "message": str(e)
+            }
         )
 
-<<<<<<< HEAD
 @router.post('/shipments/estimate')
 async def estimate_transport(data: dict):
     """Dynamic trip analysis with Gemini AI for distance, time, and cost estimation"""
-=======
-
-@router.get("/analytics")
-async def get_logistics_analytics():
-    """
-    Get logistics performance analytics
-    """
-
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
     try:
         logistics_service = LogisticsService()
         
@@ -434,11 +392,7 @@ async def get_logistics_analytics():
         return {
             "success": True,
             "analytics": analytics,
-<<<<<<< HEAD
             "message": "Enhanced logistics analytics retrieved successfully"
-=======
-            "message": "Logistics analytics retrieved successfully",
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
         }
     except Exception as e:
         raise HTTPException(
@@ -446,7 +400,6 @@ async def get_logistics_analytics():
             detail={
                 "success": False,
                 "error": "Failed to retrieve logistics analytics",
-<<<<<<< HEAD
                 "message": str(e)
             }
         )
@@ -584,8 +537,3 @@ async def get_shipment_weather_analysis(shipment_id: str):
                 'message': str(e)
             }
         )
-=======
-                "message": str(e),
-            },
-        )
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396

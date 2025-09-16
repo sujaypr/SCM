@@ -1,7 +1,6 @@
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
-
 class InventoryService:
     """Service for inventory management and optimization"""
 
@@ -69,9 +68,7 @@ class InventoryService:
         self._mock_inventory.append(new_item)
         return new_item
 
-    def update_item(
-        self, item_id: int, item_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    def update_item(self, item_id: int, item_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Update existing inventory item"""
 
         for i, item in enumerate(self._mock_inventory):
@@ -152,19 +149,17 @@ class InventoryService:
             )[:5],
         }
 
-    def _calculate_status(
-        self, current_stock: int, min_level: int, max_level: int
-    ) -> str:
+    def _calculate_status(self, current_stock: int, min_level: int, max_level: int) -> str:
         """Calculate stock status based on levels"""
 
         if current_stock <= min_level * 0.5:
             return "critical"
         elif current_stock <= min_level:
             return "low"
-        elif current_stock >= max_level * 1.2:
+        elif current_stock >= max_level:
             return "overstock"
         else:
-            return "healthy"
+            return "normal"
 
     def _get_mock_inventory(self) -> List[Dict[str, Any]]:
         """Get mock inventory data"""
@@ -172,92 +167,77 @@ class InventoryService:
         return [
             {
                 "id": 1,
-                "name": "Basmati Rice 1kg",
-                "category": "Grocery",
-                "sku": "GRC-001",
-                "current_stock": 150,
-                "min_stock_level": 50,
-                "max_stock_level": 200,
-                "unit_cost": 80.0,
-                "selling_price": 120.0,
-                "supplier": "Local Rice Supplier",
-                "status": "healthy",
-                "created_at": "2025-09-01T10:00:00",
-                "updated_at": "2025-09-12T10:00:00",
+                "name": "Wireless Headphones",
+                "category": "Electronics",
+                "sku": "SKU-0001",
+                "current_stock": 45,
+                "min_stock_level": 20,
+                "max_stock_level": 100,
+                "unit_cost": 2500.0,
+                "selling_price": 4999.0,
+                "supplier": "TechCorp Ltd",
+                "status": "normal",
+                "created_at": "2024-01-15T10:30:00",
+                "updated_at": "2024-01-20T14:45:00",
             },
             {
                 "id": 2,
-                "name": "Samsung Galaxy A54",
-                "category": "Electronics",
-                "sku": "ELE-001",
-                "current_stock": 15,
-                "min_stock_level": 20,
-                "max_stock_level": 50,
-                "unit_cost": 15000.0,
-                "selling_price": 18000.0,
-                "supplier": "Electronics Distributor",
-                "status": "low",
-                "created_at": "2025-09-01T10:00:00",
-                "updated_at": "2025-09-12T10:00:00",
+                "name": "Cotton T-Shirt",
+                "category": "Clothing",
+                "sku": "SKU-0002",
+                "current_stock": 8,
+                "min_stock_level": 15,
+                "max_stock_level": 80,
+                "unit_cost": 300.0,
+                "selling_price": 799.0,
+                "supplier": "Fashion Hub",
+                "status": "critical",
+                "created_at": "2024-01-10T09:15:00",
+                "updated_at": "2024-01-22T11:20:00",
             },
             {
                 "id": 3,
-                "name": "Festival Kurta Set",
-                "category": "Clothing",
-                "sku": "CLT-001",
-                "current_stock": 80,
-                "min_stock_level": 30,
-                "max_stock_level": 100,
-                "unit_cost": 800.0,
-                "selling_price": 1500.0,
-                "supplier": "Textile Manufacturer",
-                "status": "healthy",
-                "created_at": "2025-09-01T10:00:00",
-                "updated_at": "2025-09-12T10:00:00",
+                "name": "Office Chair",
+                "category": "Furniture",
+                "sku": "SKU-0003",
+                "current_stock": 12,
+                "min_stock_level": 10,
+                "max_stock_level": 30,
+                "unit_cost": 8000.0,
+                "selling_price": 15999.0,
+                "supplier": "Comfort Seating",
+                "status": "normal",
+                "created_at": "2024-01-08T16:00:00",
+                "updated_at": "2024-01-18T13:30:00",
             },
             {
                 "id": 4,
-                "name": "Paracetamol 500mg",
-                "category": "Medical",
-                "sku": "MED-001",
-                "current_stock": 8,
-                "min_stock_level": 25,
-                "max_stock_level": 100,
-                "unit_cost": 2.0,
-                "selling_price": 3.5,
-                "supplier": "Medical Distributor",
-                "status": "critical",
-                "created_at": "2025-09-01T10:00:00",
-                "updated_at": "2025-09-12T10:00:00",
+                "name": "Smartphone Case",
+                "category": "Electronics",
+                "sku": "SKU-0004",
+                "current_stock": 150,
+                "min_stock_level": 50,
+                "max_stock_level": 120,
+                "unit_cost": 150.0,
+                "selling_price": 499.0,
+                "supplier": "Mobile Accessories Inc",
+                "status": "overstock",
+                "created_at": "2024-01-12T12:45:00",
+                "updated_at": "2024-01-21T10:15:00",
             },
             {
                 "id": 5,
-                "name": "Lakme Lipstick",
-                "category": "Cosmetics",
-                "sku": "COS-001",
-                "current_stock": 120,
-                "min_stock_level": 40,
-                "max_stock_level": 80,
-                "unit_cost": 250.0,
-                "selling_price": 350.0,
-                "supplier": "Beauty Distributor",
-                "status": "overstock",
-                "created_at": "2025-09-01T10:00:00",
-                "updated_at": "2025-09-12T10:00:00",
+                "name": "Coffee Mug",
+                "category": "Home & Kitchen",
+                "sku": "SKU-0005",
+                "current_stock": 25,
+                "min_stock_level": 30,
+                "max_stock_level": 100,
+                "unit_cost": 200.0,
+                "selling_price": 599.0,
+                "supplier": "Kitchen Essentials",
+                "status": "low",
+                "created_at": "2024-01-14T08:20:00",
+                "updated_at": "2024-01-19T15:10:00",
             },
-            {
-                'id': 6,
-                'name': 'Masala Chai Mix',
-                'category': 'Food & Beverage',
-                'sku': 'F&B-001',
-                'current_stock': 45,
-                'min_stock_level': 50,
-                'max_stock_level': 120,
-                'unit_cost': 150.0,
-                'selling_price': 200.0,
-                'supplier': 'Local Tea Supplier',
-                'status': 'low',
-                'created_at': '2025-09-01T10:00:00',
-                'updated_at': '2025-09-12T10:00:00'
-            }
         ]
