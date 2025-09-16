@@ -129,7 +129,7 @@ const Reports = () => {
   );
 
   return (
-    <div className="max-w-[1000px] mx-auto p-8">
+    <div className="max-w-[1000px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6">
       <div className="mb-8 text-left">
         <h2 className="flex items-center gap-2 text-[28px] font-semibold mb-1">
           <i className="fas fa-file-alt text-[--primary]"></i>

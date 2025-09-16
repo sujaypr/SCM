@@ -1,7 +1,7 @@
 import React from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-const Sidebar = ({ activeComponent, setActiveComponent }) => {
+const Sidebar = ({ activeComponent, setActiveComponent, isOpen = false, onClose }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <i className="fas fa-tachometer-alt"></i> },
     { id: 'demand-forecasting', label: 'Demand Forecasting', icon: <i className="fas fa-chart-line"></i> },
@@ -13,9 +13,26 @@ const Sidebar = ({ activeComponent, setActiveComponent }) => {
   ];
 
   return (
-    <div className="w-[280px] bg-[--sidebar] text-[--sidebar-foreground] flex flex-col fixed h-screen z-[1000] border-r border-[--sidebar-border] py-6">
+    <aside
+      className={[
+        'w-[280px] bg-[--sidebar] text-[--sidebar-foreground] flex flex-col fixed h-screen z-[1000] border-r border-[--sidebar-border] py-6',
+        'transition-transform duration-300 ease-out',
+        'lg:translate-x-0',
+        isOpen ? 'translate-x-0' : '-translate-x-full',
+      ].join(' ')}
+      aria-label="Sidebar navigation"
+    >
       <div className="px-6 pb-6 mb-5">
-        <h2 className="text-[1.375rem] font-bold text-[--sidebar-primary]">Supply Chain</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-[1.375rem] font-bold text-[--sidebar-primary]">Supply Chain</h2>
+          <button
+            className="lg:hidden text-[--sidebar-foreground] p-2 rounded hover:bg-[--sidebar-accent]"
+            onClick={onClose}
+            aria-label="Close menu"
+          >
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
       </div>
       <nav className="flex-1 flex flex-col gap-1 px-3">
         {menuItems.map(item => {
@@ -35,7 +52,7 @@ const Sidebar = ({ activeComponent, setActiveComponent }) => {
           );
         })}
       </nav>
-    </div>
+    </aside>
   );
 };
 

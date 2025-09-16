@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-const Navbar = ({ activeComponent }) => {
+const Navbar = ({ activeComponent, onToggleSidebar }) => {
   const [dfPeriod, setDfPeriod] = useState(6);
   const [dfLoading, setDfLoading] = useState(false);
 
@@ -40,14 +40,21 @@ const Navbar = ({ activeComponent }) => {
   // Theme toggling UI removed; keeping persisted theme from effect
 
   return (
-    <div className="bg-[--sidebar] px-8 py-5 border-b border-[--sidebar-border] flex justify-between items-center shadow-[0_2px_12px_rgba(0,0,0,0.15)] backdrop-blur">
-      <div className="navbar-left">
-        <h1 className="text-[--foreground] font-bold text-[1.625rem] tracking-[-.025em] mb-1">{currentPage.title}</h1>
+    <div className="bg-[--sidebar] px-4 md:px-6 lg:px-8 py-4 md:py-5 border-b border-[--sidebar-border] flex flex-wrap items-center justify-between gap-3 shadow-[0_2px_12px_rgba(0,0,0,0.15)] backdrop-blur">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <button
+          className="lg:hidden p-2 rounded text-[--foreground] hover:bg-[--sidebar-accent]"
+          onClick={onToggleSidebar}
+          aria-label="Open menu"
+        >
+          <i className="fas fa-bars"></i>
+        </button>
+        <h1 className="truncate text-[--foreground] font-bold text-xl md:text-[1.625rem] tracking-[-.025em]">{currentPage.title}</h1>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-end w-full lg:w-auto">
         {activeComponent === 'demand-forecasting' && (
-          <div className="flex items-center">
-            <label className="font-medium mr-3">Forecast Period:</label>
+          <div className="flex items-center flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
+            <label className="font-medium">Forecast Period:</label>
             <select
               className="px-2 py-1 rounded-md bg-[--sidebar] text-[--foreground] border border-[--border]"
               value={dfPeriod}
@@ -61,7 +68,7 @@ const Navbar = ({ activeComponent }) => {
               <option value={12}>12 Months</option>
             </select>
             <button
-              className="ml-4 px-4 py-2 rounded-md font-semibold bg-[--primary] text-[--primary-foreground] hover:-translate-y-0.5 transition inline-flex items-center gap-2 disabled:opacity-70"
+              className="px-3 sm:px-4 py-2 rounded-md font-semibold bg-[--primary] text-[--primary-foreground] hover:-translate-y-0.5 transition inline-flex items-center gap-2 disabled:opacity-70 w-full sm:w-auto"
               onClick={() => {
                 window.dispatchEvent(new CustomEvent('demandForecast:trigger', { detail: { forecastPeriod: dfPeriod } }));
               }}

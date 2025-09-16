@@ -64,11 +64,39 @@ const bottomLabelsPlugin = {
 
 ChartJS.register(bottomLabelsPlugin);
 
+// Draw vertical guide lines at festival dates on time charts
+const festivalGuidesPlugin = {
+  id: 'festivalGuides',
+  afterDatasetsDraw(chart, args, pluginOptions) {
+    const { ctx, scales } = chart;
+    const xScale = scales?.x;
+    const yScale = scales?.y;
+    const dates = pluginOptions?.dates || [];
+    if (!xScale || !yScale || !dates.length) return;
+    const border = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#374151';
+    const color = pluginOptions?.color || border + '66';
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    dates.forEach((ts) => {
+      const x = xScale.getPixelForValue(ts);
+      if (Number.isFinite(x)) {
+        ctx.beginPath();
+        ctx.moveTo(x, yScale.top);
+        ctx.lineTo(x, yScale.bottom);
+        ctx.stroke();
+      }
+    });
+    ctx.restore();
+  }
+};
+
+ChartJS.register(festivalGuidesPlugin);
+
 const SuggestionPanel = ({ suggestions }) => {
   const items = Array.isArray(suggestions) ? suggestions.slice(0, 4) : [];
   return (
     <div>
-      <p className="text-sm text-[--muted-foreground] mb-2">AI-powered, tailored to your profile</p>
       <ul className="list-disc pl-5 space-y-2">
         {items.map((s, i) => (
           <li key={i}>{s}</li>
@@ -135,6 +163,24 @@ const DemandForecasting = () => {
       return String(d);
     }
   };
+  const toLocalDate = (d) => {
+    if (!d) return null;
+    if (d instanceof Date) {
+      const dt = new Date(d.getTime());
+      dt.setHours(0, 0, 0, 0);
+      return dt;
+    }
+    if (typeof d === 'string') {
+      const m = d.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})/);
+      if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    }
+    try {
+      const t = new Date(d);
+      return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    } catch {
+      return null;
+    }
+  };
   const historyOptionLabel = (h, isLatest = false) => {
     const date = fmtDateShort(h?.forecast_date);
     const parts = [
@@ -185,13 +231,13 @@ const DemandForecasting = () => {
     if (!forecast) return null;
     const seasons = (forecast.seasonal_demands?.chart || []).map((s) => ({
       name: s.season,
-      start: new Date(s.start),
-      end: new Date(s.end),
+      start: toLocalDate(s.start),
+      end: toLocalDate(s.end),
     }));
     const seasonNames = Array.from(new Set(seasons.map((s) => s.name)));
     const festivals = (forecast.festival_demands?.chart || []).map((f) => ({
       label: f.festival,
-      date: new Date(f.date),
+      date: toLocalDate(f.date),
       inc: Number(f.demand_increase) || 0,
     }));
     const minDate = new Date(
@@ -200,7 +246,7 @@ const DemandForecasting = () => {
           ...seasons.map((s) => s.start.getTime()),
           ...seasons.map((s) => s.end.getTime()),
           ...festivals.map((f) => f.date.getTime()),
-          new Date(forecast.forecast_start).getTime(),
+          toLocalDate(forecast.forecast_start)?.getTime?.() || 0,
         ],
       ),
     );
@@ -209,7 +255,7 @@ const DemandForecasting = () => {
         ...[
           ...seasons.map((s) => s.end.getTime()),
           ...festivals.map((f) => f.date.getTime()),
-          new Date(forecast.forecast_end).getTime(),
+          toLocalDate(forecast.forecast_end)?.getTime?.() || 0,
         ],
       ),
     );
@@ -219,29 +265,31 @@ const DemandForecasting = () => {
 
   const coordinationSeries = React.useMemo(() => {
     if (!forecast) return null;
-    const start = new Date(forecast.forecast_start);
-    const end = new Date(forecast.forecast_end);
+    const start = toLocalDate(forecast.forecast_start);
+    const end = toLocalDate(forecast.forecast_end);
     if (!(start.getTime() < end.getTime())) return null;
 
     const weeks = [];
     let cursor = new Date(start);
+    cursor.setHours(0, 0, 0, 0);
     while (cursor <= end) {
       weeks.push(new Date(cursor));
       cursor = new Date(cursor.getTime() + 7 * 24 * 60 * 60 * 1000);
     }
 
     const seasons = (forecast.seasonal_demands?.chart || []).map((s) => ({
-      start: new Date(s.start).getTime(),
-      end: new Date(s.end).getTime(),
+      start: toLocalDate(s.start)?.getTime?.() || 0,
+      end: toLocalDate(s.end)?.getTime?.() || 0,
       surge: Number(s.demand_surge) || 0,
     }));
 
     const festivals = (forecast.festival_demands?.chart || []).map((f) => ({
-      date: new Date(f.date).getTime(),
+      date: toLocalDate(f.date)?.getTime?.() || 0,
       inc: Number(f.demand_increase) || 0,
     }));
 
     const weekLabels = weeks.map((d) => d);
+    const DAY_MS = 24 * 60 * 60 * 1000;
 
     const seasonVals = weeks.map((w) => {
       const wStart = w.getTime();
@@ -265,26 +313,9 @@ const DemandForecasting = () => {
     });
     const festVals = festValsRaw.map((v) => Math.max(0, Math.min(100, v)));
 
-    const smooth = (arr, window = 3) => {
-      const half = Math.floor(window / 2);
-      return arr.map((_, i) => {
-        let sum = 0;
-        let cnt = 0;
-        for (let j = i - half; j <= i + half; j++) {
-          if (j >= 0 && j < arr.length) {
-            sum += arr[j];
-            cnt++;
-          }
-        }
-        return cnt ? sum / cnt : arr[i];
-      });
-    };
+    const mids = weekLabels.map((w) => w.getTime() + 3.5 * DAY_MS);
 
-    const seasonSm = smooth(seasonVals, 3);
-    const festSm = smooth(festVals, 3);
-    const coordIndex = seasonSm.map((v, i) => Math.min(v, festSm[i] ?? 0));
-
-    return { labels: weekLabels, seasonVals: seasonSm, festVals: festSm, coordIndex };
+    return { labels: weekLabels, seasonVals, festVals, mids };
   }, [forecast]);
 
   
@@ -421,7 +452,7 @@ const DemandForecasting = () => {
         body: JSON.stringify({ ...businessInfo, forecastPeriod: period })
       });
       const result = await response.json();
-      if (result.success) {
+      if (response.ok && result.success) {
         setForecast(result.forecast);
   try { if (result.forecastId) sessionStorage.setItem('lastForecastId', String(result.forecastId)); } catch { /* ignore storage */ }
         try {
@@ -438,11 +469,13 @@ const DemandForecasting = () => {
   } catch { /* ignore history refresh error */ }
         setLastUpdated(new Date());
       } else {
-        setError(result.error || 'Unknown error');
+        setError(result?.detail?.message || result?.error || 'Unable to generate forecast');
+        setForecast(null);
       }
     } catch (error) {
       console.error('Error generating forecast:', error);
       setError(error?.message || 'Network error');
+      setForecast(null);
     } finally {
       setLoading(false);
       setOverlayLoading(false);
@@ -519,7 +552,16 @@ const DemandForecasting = () => {
     );
   }
 
-  const festivalItems = (forecast?.festival_demands?.chart || []);
+  // Compute in-window festivals and sort by date
+  const allFestivals = (forecast?.festival_demands?.chart || []).map((d) => ({
+    ...d,
+    _ts: (() => { try { return new Date(d.date).getTime(); } catch { return NaN; } })(),
+  }));
+  const windowStart = forecast?.forecast_start ? new Date(forecast.forecast_start).getTime() : NaN;
+  const windowEnd = forecast?.forecast_end ? new Date(forecast.forecast_end).getTime() : NaN;
+  const festivalItems = allFestivals
+    .filter((d) => Number.isFinite(d._ts) && (!Number.isFinite(windowStart) || d._ts >= windowStart) && (!Number.isFinite(windowEnd) || d._ts <= windowEnd))
+    .sort((a, b) => a._ts - b._ts);
   const festivalLabels = festivalItems.map((d) => d.festival || '');
   const festivalLabelsTrunc = festivalLabels.map((l) => truncate(l, 14));
 
@@ -564,8 +606,8 @@ const DemandForecasting = () => {
       {forecast && (
         <>
           <div className="bg-[--sidebar] p-4 rounded-[var(--radius)] border border-[--border] shadow mb-4">
-            <div style={{ color: 'var(--muted-foreground)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
+            <div className="text-[--muted-foreground] flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
                 <div>
                   <strong>Forecast of {forecastPeriod} Months from </strong>
                   {fmtDate(forecast.forecast_start)}
@@ -581,12 +623,12 @@ const DemandForecasting = () => {
                   )}
                 </div>
               </div>
-              <div className="flex gap-2">
-                <div>
+              <div className="flex gap-2 flex-wrap justify-end w-full lg:w-auto">
+                <div className="w-full sm:w-auto">
                   <label htmlFor="recent-forecasts" className="sr-only">Recent Forecasts</label>
                   <select
                     id="recent-forecasts"
-                    className="px-2 py-2 rounded-md bg-transparent border border-[--border] text-[--foreground]"
+                    className="w-full sm:w-auto px-2 py-2 rounded-md bg-transparent border border-[--border] text-[--foreground] max-w-full"
                     onChange={(e) => {
                       const id = e.target.value;
                       if (id) loadForecastById(id);
@@ -606,7 +648,7 @@ const DemandForecasting = () => {
                     })}
                   </select>
                 </div>
-                <button className="px-4 py-2 rounded-md font-semibold bg-[--primary] text-[--primary-foreground] hover:-translate-y-0.5 transition" onClick={downloadEntireForecastPDF}>
+                <button className="px-4 py-2 rounded-md font-semibold bg-[--primary] text-[--primary-foreground] hover:-translate-y-0.5 transition w-full sm:w-auto" onClick={downloadEntireForecastPDF}>
                   Download Forecast PDF
                 </button>
               </div>
@@ -616,7 +658,7 @@ const DemandForecasting = () => {
           <div className="bg-[--sidebar] p-4 rounded-[var(--radius)] border border-[--border] shadow">
             <h3>Festival Demand Increase (%)</h3>
             <div style={{ width: '100%', height: 260 }}>
-              <Bar
+                <Bar
                 data={{
                   labels: festivalLabelsTrunc,
                   datasets: [
@@ -630,6 +672,8 @@ const DemandForecasting = () => {
                       borderSkipped: false,
                       hoverBackgroundColor: festivalItems.map((_, i) => palette.hoverBg(i)),
                       hoverBorderWidth: 3,
+                      categoryPercentage: 0.8,
+                      barPercentage: 0.7,
                     },
                   ],
                 }}
@@ -686,7 +730,7 @@ const DemandForecasting = () => {
                         font: { size: 11 }
                       },
                       grid: { 
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--border') + '40' || '#37415140',
+                        color: (() => { const b = getComputedStyle(document.documentElement).getPropertyValue('--border').trim(); return b ? (b + '40') : '#37415140'; })(),
                         drawBorder: false,
                       },
                       border: { display: false },
@@ -700,7 +744,7 @@ const DemandForecasting = () => {
                         }
                       },
                       grid: { 
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--border') + '40' || '#37415140',
+                        color: (() => { const b = getComputedStyle(document.documentElement).getPropertyValue('--border').trim(); return b ? (b + '40') : '#37415140'; })(),
                         drawBorder: false,
                       },
                       border: { display: false },
@@ -780,8 +824,8 @@ const DemandForecasting = () => {
                       datasets: [
                         {
                           type: 'line',
-                          label: 'Seasonal Intensity',
-                          data: coordinationSeries.seasonVals.map((v, i) => ({ x: coordinationSeries.labels[i]?.getTime?.() ? coordinationSeries.labels[i].getTime() : coordinationSeries.labels[i], y: v })),
+                          label: 'Seasonal Demand (%)',
+                          data: coordinationSeries.seasonVals.map((v, i) => ({ x: (coordinationSeries.labels[i]?.getTime?.() ? coordinationSeries.labels[i].getTime() : coordinationSeries.labels[i]) + (3.5 * 24 * 60 * 60 * 1000), y: v })),
                           parsing: false,
                           borderColor: palette.solid(3),
                           backgroundColor: (context) => makeVerticalGradient(context, palette.solid(3), 0.55, 0.12),
@@ -796,8 +840,8 @@ const DemandForecasting = () => {
                         },
                         {
                           type: 'line',
-                          label: 'Festival Intensity',
-                          data: coordinationSeries.festVals.map((v, i) => ({ x: coordinationSeries.labels[i]?.getTime?.() ? coordinationSeries.labels[i].getTime() : coordinationSeries.labels[i], y: v })),
+                          label: 'Festival Demand (%)',
+                          data: coordinationSeries.festVals.map((v, i) => ({ x: (coordinationSeries.labels[i]?.getTime?.() ? coordinationSeries.labels[i].getTime() : coordinationSeries.labels[i]) + (3.5 * 24 * 60 * 60 * 1000), y: v })),
                           parsing: false,
                           borderColor: palette.solid(1),
                           backgroundColor: (context) => makeVerticalGradient(context, palette.solid(1), 0.55, 0.12),
@@ -810,6 +854,44 @@ const DemandForecasting = () => {
                           borderCapStyle: 'round',
                           order: 0,
                         },
+                        // Scatter markers for each festival date
+                        ...(Array.isArray(timelineData?.festivals) && timelineData.festivals.length && coordinationSeries
+                          ? [{
+                              type: 'scatter',
+                              label: 'Festival markers',
+                              data: (() => {
+                                const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+                                const starts = coordinationSeries.labels.map((w) => w.getTime());
+                                return timelineData.festivals.map((f) => {
+                                  const ts = f.date?.getTime?.() || 0;
+                                  let idx = -1;
+                                  for (let i = 0; i < starts.length; i++) {
+                                    const s = starts[i];
+                                    if (ts >= s && ts <= s + WEEK_MS - 1) { idx = i; break; }
+                                  }
+                                  if (idx === -1) {
+                                    // fallback to nearest week
+                                    let best = 0, bestDiff = Infinity;
+                                    for (let i = 0; i < starts.length; i++) {
+                                      const diff = Math.abs(ts - (starts[i] + WEEK_MS / 2));
+                                      if (diff < bestDiff) { bestDiff = diff; best = i; }
+                                    }
+                                    idx = best;
+                                  }
+                                  const x = coordinationSeries.mids?.[idx] ?? (starts[idx] + WEEK_MS / 2);
+                                  const y = coordinationSeries.festVals?.[idx] ?? Math.min(100, Math.max(0, f.inc || 0));
+                                  return { x, y, label: f.label, inc: Number(f.inc) || 0, originalTs: ts };
+                                });
+                              })(),
+                              parsing: false,
+                              pointRadius: 3,
+                              pointHoverRadius: 6,
+                              showLine: false,
+                              borderColor: palette.solid(1),
+                              backgroundColor: palette.solid(1),
+                              order: 2,
+                            }]
+                          : []),
                       ],
                     }}
                     options={{
@@ -820,11 +902,11 @@ const DemandForecasting = () => {
                         x: {
                           type: 'time',
                           distribution: 'linear',
-                          time: { unit: 'week', stepSize: 1, round: 'week', tooltipFormat: 'PP' },
-                          ticks: { source: 'data', color: getComputedStyle(document.documentElement).getPropertyValue('--foreground') || '#e5e7eb', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+                          time: { unit: 'day', stepSize: 1, tooltipFormat: 'PP' },
+                          ticks: { source: 'auto', color: getComputedStyle(document.documentElement).getPropertyValue('--foreground') || '#e5e7eb', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
                           offset: false,
                           bounds: 'data',
-                          grid: { color: (getComputedStyle(document.documentElement).getPropertyValue('--border') + '30') || '#37415130', drawBorder: false },
+                          grid: { color: (() => { const b = getComputedStyle(document.documentElement).getPropertyValue('--border').trim(); return b ? (b + '30') : '#37415130'; })(), drawBorder: false },
                           border: { display: false },
                         },
                         y: {
@@ -832,7 +914,7 @@ const DemandForecasting = () => {
                           suggestedMax: 100,
                           max: 100,
                           ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--foreground') || '#e5e7eb', callback: (v) => v + '%' },
-                          grid: { color: (getComputedStyle(document.documentElement).getPropertyValue('--border') + '30') || '#37415130', drawBorder: false },
+                          grid: { color: (() => { const b = getComputedStyle(document.documentElement).getPropertyValue('--border').trim(); return b ? (b + '30') : '#37415130'; })(), drawBorder: false },
                           border: { display: false },
                         },
                       },
@@ -863,15 +945,34 @@ const DemandForecasting = () => {
                             title: function(items) {
                               try {
                                 const ts = items?.[0]?.parsed?.x ?? items?.[0]?.raw?.x;
-                                return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                                if (!Number.isFinite(ts)) return '';
+                                // Show week bucket for line datasets
+                                const d = new Date(ts);
+                                const start = new Date(d.getTime() - (3.5 * 24 * 60 * 60 * 1000));
+                                const end = new Date(d.getTime() + (3.5 * 24 * 60 * 60 * 1000));
+                                const fmt = (dd) => dd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                                return `${fmt(start)} – ${fmt(end)}`;
                               } catch {
                                 return '';
                               }
                             },
                             label: function(ctx) {
+                              if (ctx.dataset.type === 'scatter') {
+                                try {
+                                  const raw = ctx?.raw || {};
+                                  const name = raw.label || 'Festival';
+                                  const inc = Math.round(raw.inc ?? ctx.parsed.y);
+                                  return `${name}: ${inc}%`;
+                                } catch {
+                                  return `Festival: ${Math.round(ctx.parsed.y)}%`;
+                                }
+                              }
                               return `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%`;
                             },
                           },
+                        },
+                        festivalGuides: {
+                          dates: (timelineData?.festivals || []).map((f) => f.date?.getTime?.() || 0).filter(Number.isFinite),
                         },
                         datalabels: { display: false },
                       },

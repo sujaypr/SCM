@@ -20,7 +20,7 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="max-w-[1200px] mx-auto p-8">
+    <div className="max-w-[1200px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6">
       <div className="mb-8 text-left">
         <h2 className="flex items-center gap-2 text-2xl font-semibold text-[--foreground] mb-1">
           <i className="fas fa-tachometer-alt text-[--primary]"></i>

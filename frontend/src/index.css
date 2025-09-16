@@ -55,6 +55,18 @@
 .app, body, html {
   background: var(--background);
   color: var(--foreground);
+  overflow-x: hidden;
+}
+
+/* (Removed custom scrollbar hiding utility to use default styling) */
+/* Utility: hide scrollbars but keep scroll behavior */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar { /* Chrome, Safari and Opera */
+  width: 0px;
+  height: 0px;
 }
 
 .dark {

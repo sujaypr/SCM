@@ -36,7 +36,7 @@ const Logistics = () => {
   };
 
   return (
-    <div className="max-w-[1100px] mx-auto p-8">
+    <div className="max-w-[1100px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6">
       <div className="mb-8 text-center">
         <h2 className="font-semibold text-[28px] mb-2">
           <i className="fas fa-truck mr-2 text-[--primary]"></i>
@@ -90,8 +90,8 @@ const Logistics = () => {
       {loading ? (
         <div className="text-center p-8 text-[--muted-foreground]">Loading shipments...</div>
       ) : (
-        <div className="overflow-hidden rounded-[var(--radius)] border border-[--border] shadow">
-          <table className="w-full bg-[--sidebar]">
+        <div className="overflow-x-auto rounded-[var(--radius)] border border-[--border] shadow">
+          <table className="min-w-full bg-[--sidebar]">
             <thead>
               <tr>
                 <th className="bg-[--muted] p-4 text-left font-semibold text-[--foreground] border-b border-[--border]">Shipment ID</th>

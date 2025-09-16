@@ -28,6 +28,7 @@ class Business(Base):
     type = Column(String(100), nullable=False, index=True)
     scale = Column(String(50), nullable=False)  # Micro, Small, Medium
     location = Column(String(100), nullable=False, index=True)
+    state = Column(String(100), nullable=True, index=True)
     owner_name = Column(String(255), nullable=True)
     contact_email = Column(String(255), nullable=True)
     contact_phone = Column(String(20), nullable=True)

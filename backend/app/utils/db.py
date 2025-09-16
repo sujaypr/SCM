@@ -68,6 +68,16 @@ class DatabaseManager:
         """Create all database tables"""
         try:
             Base.metadata.create_all(bind=self.engine)
+            # Lightweight migration: add missing columns for SQLite
+            try:
+                if str(self.engine.url).startswith("sqlite"):
+                    with self.engine.connect() as conn:
+                        cols = [r[1] for r in conn.execute(text("PRAGMA table_info(businesses)"))]
+                        if "state" not in cols:
+                            conn.execute(text("ALTER TABLE businesses ADD COLUMN state VARCHAR(100)"))
+                            print("✅ Migrated: added 'state' column to businesses")
+            except Exception as mig_e:
+                print(f"⚠️ Migration warning: {mig_e}")
             print("✅ Database tables created successfully")
             return True
         except Exception as e:

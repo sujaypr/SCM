@@ -19,6 +19,7 @@ class ForecastRequest(BaseModel):
         ..., description="Business scale (Micro, Small, Medium, Large)"
     )
     location: str = Field(..., description="Indian state location")
+    state: Optional[str] = Field(None, description="State name (separate field if needed)")
     currentSales: float = Field(
         ..., gt=1000, description="Current monthly sales in INR"
     )
@@ -90,18 +91,27 @@ async def generate_forecast(request: ForecastRequest, db: Session = Depends(get_
 
         demand_service = DemandService()
         payload = request.dict()
-        tabbed_data = await demand_service.generate_tabbed_forecast(payload)
+        try:
+            tabbed_data = await demand_service.generate_tabbed_forecast(payload)
+        except Exception as e:
+            raise HTTPException(
+                status_code=502,
+                detail={
+                    "success": False,
+                    "error": "AI model output incomplete",
+                    "message": str(e),
+                },
+            )
 
-        biz_name = (
-            payload.get("businessName")
-            or f"{payload['businessType']} @ {payload['location']}"
-        )
+        state = payload.get("state") or payload.get("location")
+        biz_name = payload.get("businessName") or f"{payload['businessType']} @ {state}"
         business = (
             db.query(Business)
             .filter(
                 Business.name == biz_name,
                 Business.type == payload["businessType"],
                 Business.location == payload["location"],
+                Business.state == state,
             )
             .first()
         )
@@ -111,6 +121,7 @@ async def generate_forecast(request: ForecastRequest, db: Session = Depends(get_
                 type=payload["businessType"],
                 scale=payload["businessScale"],
                 location=payload["location"],
+                state=state,
             )
             db.add(business)
             db.flush()
@@ -329,6 +340,7 @@ async def get_forecast_history(
                     "id": df.id,
                     "business_type": biz.type,
                     "location": biz.location,
+                    "state": getattr(biz, "state", None),
                     "forecast_date": (
                         df.created_at.isoformat() if df.created_at else None
                     ),
@@ -369,6 +381,12 @@ async def get_forecast(forecast_id: int, db: Session = Depends(get_db)):
             "forecast_start": blob.get("forecast_start"),
             "forecast_end": blob.get("forecast_end"),
         }
+        try:
+            biz = db.query(Business).filter(Business.id == df.business_id).first()
+            if biz and getattr(biz, 'state', None):
+                forecast["state"] = biz.state
+        except Exception:
+            pass
         if df.confidence_score is not None:
             forecast["confidence_score"] = df.confidence_score
         return {"success": True, "forecast": forecast, "forecastId": df.id}

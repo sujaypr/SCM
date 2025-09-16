@@ -1,4 +1,5 @@
 from marshmallow import Schema, fields, validate, validates, ValidationError
+from typing import Any, Dict
 
 
 class ForecastRequestSchema(Schema):
@@ -458,6 +459,65 @@ def validate_indian_state(state_name):
     return state_name in indian_states or any(
         state.lower() in state_name.lower() for state in indian_states
     )
+
+
+# --- AI Forecast (Model-Driven) Schemas ---
+
+class ProductDemandItemSchema(Schema):
+    product = fields.Str(required=True)
+    demand_percentage = fields.Int(required=True, validate=validate.Range(min=0, max=100))
+    reason = fields.Str(required=False, allow_none=True)
+
+
+class FestivalChartItemSchema(Schema):
+    festival = fields.Str(required=True)
+    demand_increase = fields.Int(required=True, validate=validate.Range(min=0, max=100))
+    date = fields.Str(required=False, allow_none=True)  # YYYY-MM-DD
+    month = fields.Str(required=False, allow_none=True)  # short month label
+    year = fields.Int(required=False, allow_none=True)
+
+
+class FestivalDemandsSchema(Schema):
+    chart = fields.List(fields.Nested(FestivalChartItemSchema), required=True)
+    top_items = fields.Dict(keys=fields.Str(), values=fields.Dict(), required=False)
+
+
+class SeasonalChartItemSchema(Schema):
+    season = fields.Str(required=True)
+    demand_surge = fields.Int(required=True, validate=validate.Range(min=0, max=100))
+    start = fields.Str(required=False, allow_none=True)  # YYYY-MM-DD
+    end = fields.Str(required=False, allow_none=True)  # YYYY-MM-DD
+
+
+class SeasonalDemandsSchema(Schema):
+    chart = fields.List(fields.Nested(SeasonalChartItemSchema), required=True)
+    top_items = fields.Dict(keys=fields.Str(), values=fields.Dict(), required=False)
+
+
+class TabbedForecastSchema(Schema):
+    product_demands = fields.List(fields.Nested(ProductDemandItemSchema), required=False)
+    festival_demands = fields.Nested(FestivalDemandsSchema, required=False)
+    seasonal_demands = fields.Nested(SeasonalDemandsSchema, required=False)
+    suggestions = fields.List(fields.Str(), required=False)
+    forecast_start = fields.Str(required=False)
+    forecast_end = fields.Str(required=False)
+    confidence_score = fields.Float(required=False)
+
+
+def normalize_tabbed_forecast(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate and lightly normalize the tabbed forecast payload.
+
+    Uses partial validation to avoid being brittle. Returns the (possibly
+    normalized) data back. Raises on unexpected structural issues only if
+    they are severe; otherwise returns input.
+    """
+    try:
+        schema = TabbedForecastSchema(partial=True)
+        loaded = schema.load(data)
+        return loaded
+    except Exception:
+        # Keep original data to preserve resilience
+        return data
 
 
 def validate_gst_number_format(gst_number):

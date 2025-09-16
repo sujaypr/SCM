@@ -56,7 +56,7 @@ const WhatIfScenarios = () => {
   };
 
   return (
-    <div className="max-w-[1100px] mx-auto p-8">
+    <div className="max-w-[1100px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6">
       <div className="mb-8 text-left">
         <h2 className="text-2xl font-semibold text-[--foreground] mb-1">What-if Scenario Analysis</h2>
         <p className="text-[--muted-foreground]">Model different business strategies and their impact</p>
