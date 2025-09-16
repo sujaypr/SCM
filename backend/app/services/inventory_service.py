@@ -246,36 +246,18 @@ class InventoryService:
                 "updated_at": "2025-09-12T10:00:00",
             },
             {
-<<<<<<< HEAD
                 'id': 6,
                 'name': 'Masala Chai Mix',
                 'category': 'Food & Beverage',
                 'sku': 'F&B-001',
                 'current_stock': 45,
-                'min_stock_level': 20,
-                'max_stock_level': 100,
+                'min_stock_level': 50,
+                'max_stock_level': 120,
                 'unit_cost': 150.0,
                 'selling_price': 200.0,
-                'supplier': 'Tea Distributor',
-                'status': 'healthy',
+                'supplier': 'Local Tea Supplier',
+                'status': 'low',
                 'created_at': '2025-09-01T10:00:00',
                 'updated_at': '2025-09-12T10:00:00'
             }
         ]
-=======
-                "id": 6,
-                "name": "Masala Chai Mix",
-                "category": "Food & Beverage",
-                "sku": "F&B-001",
-                "current_stock": 45,
-                "min_stock_level": 50,
-                "max_stock_level": 120,
-                "unit_cost": 150.0,
-                "selling_price": 200.0,
-                "supplier": "Local Tea Supplier",
-                "status": "low",
-                "created_at": "2025-09-01T10:00:00",
-                "updated_at": "2025-09-12T10:00:00",
-            },
-        ]
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396

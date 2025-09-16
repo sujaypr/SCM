@@ -858,6 +858,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 **Made with ❤️ for Indian Retail Businesses**
 
-*Empowering MSME retailers with AI-driven insights and intelligent automation.*#   s c m - f r o n t e n d  
+*Empowering MSME retailers with AI-driven insights and intelligent automation.*#   s c m - f r o n t e n d 
+ 
  
 >>>>>>> dd13e359edf8315579d074f38944983b2ae3d396

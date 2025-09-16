@@ -91,20 +91,6 @@ app.include_router(logistics.router, prefix="/api/logistics", tags=["logistics"]
 app.include_router(scenarios.router, prefix="/api/scenarios", tags=["scenarios"])
 app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
 
-<<<<<<< HEAD
-# Serve frontend build if present (SPA)
-frontend_dist = os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'dist')
-if os.path.isdir(frontend_dist):
-    app.mount('/', StaticFiles(directory=frontend_dist, html=True), name='frontend')
-    # Ensure index.html exists and fallback works
-    index_path = os.path.join(frontend_dist, 'index.html')
-    if os.path.isfile(index_path):
-        @app.get("/{full_path:path}")
-        async def spa_fallback(full_path: str):
-            return FileResponse(index_path)
-=======
->>>>>>> dd13e359edf8315579d074f38944983b2ae3d396
-
 # Root endpoint
 @app.get("/")
 async def root():
