@@ -15,7 +15,6 @@ function AppContent() {
       setActiveComponent('settings');
     }
   }, [businessInfo]);
-
   const toggleSidebar = useCallback(() => setSidebarOpen((v) => !v), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 

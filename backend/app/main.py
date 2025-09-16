@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import uvicorn
 import os
 from contextlib import asynccontextmanager
@@ -88,7 +90,6 @@ app.include_router(inventory.router, prefix="/api/inventory", tags=["inventory"]
 app.include_router(logistics.router, prefix="/api/logistics", tags=["logistics"])
 app.include_router(scenarios.router, prefix="/api/scenarios", tags=["scenarios"])
 app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
-
 
 # Root endpoint
 @app.get("/")
