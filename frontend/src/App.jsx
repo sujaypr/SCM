@@ -15,6 +15,10 @@ function AppContent() {
     }
   }, [businessInfo]);
 
+  useEffect(() => {
+    console.log('AppContent mounted, activeComponent=', activeComponent);
+  }, [activeComponent]);
+
   return (
   <div className="flex min-h-screen bg-[--background] text-[--foreground]">
       <Sidebar 

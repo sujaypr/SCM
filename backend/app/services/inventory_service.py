@@ -4,7 +4,7 @@ from datetime import datetime
 class InventoryService:
     """Service for inventory management and optimization"""
 
-    def __init__(self):
+    def __init__(self): 
         # In a real application, this would connect to database
         self._mock_inventory = self._get_mock_inventory()
 
@@ -240,12 +240,12 @@ class InventoryService:
                 'category': 'Food & Beverage',
                 'sku': 'F&B-001',
                 'current_stock': 45,
-                'min_stock_level': 50,
-                'max_stock_level': 120,
+                'min_stock_level': 20,
+                'max_stock_level': 100,
                 'unit_cost': 150.0,
                 'selling_price': 200.0,
-                'supplier': 'Local Tea Supplier',
-                'status': 'low',
+                'supplier': 'Tea Distributor',
+                'status': 'healthy',
                 'created_at': '2025-09-01T10:00:00',
                 'updated_at': '2025-09-12T10:00:00'
             }

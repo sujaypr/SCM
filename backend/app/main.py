@@ -3,6 +3,8 @@ load_dotenv()
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import uvicorn
 import os
 from contextlib import asynccontextmanager
@@ -54,6 +56,17 @@ app.include_router(inventory.router, prefix="/api/inventory", tags=["inventory"]
 app.include_router(logistics.router, prefix="/api/logistics", tags=["logistics"])
 app.include_router(scenarios.router, prefix="/api/scenarios", tags=["scenarios"])
 app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
+
+# Serve frontend build if present (SPA)
+frontend_dist = os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'dist')
+if os.path.isdir(frontend_dist):
+    app.mount('/', StaticFiles(directory=frontend_dist, html=True), name='frontend')
+    # Ensure index.html exists and fallback works
+    index_path = os.path.join(frontend_dist, 'index.html')
+    if os.path.isfile(index_path):
+        @app.get("/{full_path:path}")
+        async def spa_fallback(full_path: str):
+            return FileResponse(index_path)
 
 # Root endpoint
 @app.get("/")

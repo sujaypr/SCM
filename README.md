@@ -388,7 +388,54 @@ pytest app/tests/test_integration.py -v
 
 ---
 
-## 📄 License
+## � Logistics Integrations (new)
+
+This project now includes a lightweight logistics feature with the following integrations:
+
+- News (NewsAPI-compatible) for incident detection and route advisories
+- Weather (OpenWeatherMap) for route/weather-based transport decisions
+- Optional routing/distance via OpenRouteService (ORS) for accurate distances/durations
+- Frontend Map UI (Leaflet) to select origin/destination
+
+Environment variables (set these in your `.env` or environment):
+
+- NEWS_API_KEY - API key for NewsAPI-compatible service (default provided for development)
+- WEATHER_API_KEY - API key for OpenWeatherMap (default provided for development)
+- ORS_API_KEY - (optional) API key for OpenRouteService to enable driving distance/duration
+
+Running locally:
+
+1. Backend (from repository root):
+```powershell
+cd backend
+# create a venv and install
+python -m venv scm-venv
+.\scm-venv\Scripts\activate
+pip install -r requirements.txt
+# set env vars or update .env
+python -m uvicorn app.main:app --reload --port 8000
+```
+
+2. Frontend:
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+3. Open the Logistics page in the frontend and use the interactive map to pick origin/destination. The map will call backend endpoints:
+
+- POST /api/shipments/estimate — returns recommended transport mode
+- POST /api/shipments/providers — returns provider quotes (mocked)
+- GET /api/routes/distance?origin=...&destination=... — returns distance/duration
+
+Notes:
+- Nominatim is used for geocoding/reverse-geocoding for development (respect usage policy).
+- Provider adapters are pluggable; implement real provider adapters in `backend/app/services/providers.py` to fetch live quotes.
+- Use `ORS_API_KEY` for better distance/duration via OpenRouteService.
+
+
+## �📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
