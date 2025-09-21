@@ -96,12 +96,23 @@ const festivalGuidesPlugin = {
 ChartJS.register(festivalGuidesPlugin);
 
 const SuggestionPanel = ({ suggestions }) => {
-  const items = Array.isArray(suggestions) ? suggestions.slice(0, 4) : [];
+  const raw = Array.isArray(suggestions) ? suggestions.slice(0, 4) : [];
+  const items = raw.map((s) => {
+    if (s == null) return '';
+    if (typeof s === 'string') return s;
+    // Common shapes: { suggestion: '...' } or { text: '...' }
+    if (typeof s === 'object') {
+      if (typeof s.suggestion === 'string') return s.suggestion;
+      if (typeof s.text === 'string') return s.text;
+      try { return JSON.stringify(s); } catch { return String(s); }
+    }
+    return String(s);
+  });
   return (
     <div>
       <ul className="list-disc pl-5 space-y-2">
-        {items.map((s, i) => (
-          <li key={i}>{s}</li>
+        {items.map((t, i) => (
+          <li key={i}>{t}</li>
         ))}
       </ul>
     </div>

@@ -18,9 +18,9 @@ class GeminiAIModel:
                 return
 
             genai.configure(api_key=api_key)
-            model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-pro")
+            model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
             self.model = genai.GenerativeModel(model_name)
-            print("Gemini 2.5 Pro AI client initialized successfully")
+            # print("Gemini 2.5 Pro AI client initialized successfully")
 
         except Exception as e:
             print(f"Error initializing Gemini client: {e}")
