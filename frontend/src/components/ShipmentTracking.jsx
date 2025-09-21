@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import 'leaflet/dist/leaflet.css';
 
@@ -21,12 +21,80 @@ export default function ShipmentTracking({
   className = ''
 }) {
   const [activeTab, setActiveTab] = useState('map');
+  const [routePoints, setRoutePoints] = useState(shipment.route || []);
+  const [loadingRoute, setLoadingRoute] = useState(false);
+
+  // Compute progress dynamically from status when explicit percentage is missing
+  const getProgress = (s) => {
+    if (!s) return 0;
+    const status = (s.status || '').toString().toLowerCase();
+    if (status === 'delivered') return 100;
+    const raw = s.tracking_info?.progress_percentage;
+    const p = typeof raw === 'string' ? parseFloat(raw) : raw;
+    if (typeof p === 'number' && p >= 0 && p <= 100) return Math.round(p);
+    switch (status) {
+      case 'out for delivery':
+        return 90;
+      case 'in transit':
+        return 60;
+      case 'processing':
+        return 10;
+      case 'delayed':
+        return 50;
+      default:
+        return 0;
+    }
+  };
+
+  // Fetch actual coordinates for origin/destination (and midpoints) for accurate map
+  useEffect(() => {
+    let cancelled = false;
+    const fetchCoords = async () => {
+      try {
+        setLoadingRoute(true);
+        const id = shipment?.tracking_id || shipment?.id;
+        if (!id) return;
+        // Use lightweight endpoint that avoids weather API calls
+        const resp = await fetch(`/api/logistics/shipments/${id}/route-points`);
+        const json = await resp.json();
+        if (!json?.success) return;
+        const pts = json.points || [];
+        // Expect format: [[lat, lon], [lat, lon], ...]
+        const coords = Array.isArray(pts) ? pts
+          .filter(arr => Array.isArray(arr) && typeof arr[0] === 'number' && typeof arr[1] === 'number')
+          : [];
+        if (!cancelled && coords.length >= 2) {
+          setRoutePoints(coords);
+        }
+      } catch (e) {
+        // non-fatal
+        console.warn('Failed to fetch route points for tracking:', e);
+      } finally {
+        if (!cancelled) setLoadingRoute(false);
+      }
+    };
+    fetchCoords();
+    return () => { cancelled = true; };
+  }, [shipment?.tracking_id, shipment?.id]);
 
   if (!shipment) return null;
 
-  const origin = shipment.route?.[0];
-  const destination = shipment.route?.[shipment.route.length - 1];
+  const origin = (routePoints && routePoints.length > 0) ? routePoints[0] : (shipment.route?.[0]);
+  const destination = (routePoints && routePoints.length > 0) ? routePoints[routePoints.length - 1] : (shipment.route?.[shipment.route.length - 1]);
   const currentLocation = shipment.current_location || origin;
+
+  const FitBounds = ({ points }) => {
+    const map = useMap();
+    useEffect(() => {
+      if (points && points.length >= 2) {
+        const bounds = points.map(p => [p[0], p[1]]);
+        map.fitBounds(bounds, { padding: [40, 40] });
+      } else if (origin) {
+        map.setView(origin, 6);
+      }
+    }, [points]);
+    return null;
+  };
 
   const renderStatus = (status) => {
     const colors = getStatusColors(status);
@@ -39,6 +107,7 @@ export default function ShipmentTracking({
 
   const renderTimeline = () => {
     const statusHistory = shipment.status_updates || shipment.tracking_info?.status_history || [];
+    const overallProgress = getProgress(shipment);
     
     return (
       <div className="flow-root">
@@ -109,12 +178,12 @@ export default function ShipmentTracking({
         <div className="mt-6 p-4 bg-[--muted]/30 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">Overall Progress</span>
-            <span className="text-sm font-semibold">{shipment.tracking_info?.progress_percentage || 0}%</span>
+            <span className="text-sm font-semibold">{overallProgress}%</span>
           </div>
           <div className="w-full bg-[--muted] rounded-full h-2">
             <div 
               className="bg-[--primary] h-2 rounded-full transition-all duration-500" 
-              style={{width: `${shipment.tracking_info?.progress_percentage || 0}%`}}
+              style={{width: `${overallProgress}%`}}
             ></div>
           </div>
         </div>
@@ -193,43 +262,53 @@ export default function ShipmentTracking({
 
         {/* Items */}
         <div className="sm:col-span-2 bg-[--sidebar] rounded-lg p-4 border border-[--border]">
+          {/** Prefer top-level items; fallback to tracking_info.items if not present */}
+          {(() => { /* scoped block to compute items list once */ })()}
+          {/** compute itemsList outside of JSX mapping via an IIFE pattern */}
+          {(() => {
+            const itemsList = (shipment.items && Array.isArray(shipment.items) ? shipment.items : (shipment.tracking_info?.items || []));
+            return (
+              <>
           <h4 className="text-sm font-medium mb-4 flex items-center">
             <i className="fas fa-boxes mr-2 text-[--primary]"></i>
-            Shipment Items ({shipment.items?.length || 0})
+                Shipment Items ({itemsList.length || 0})
           </h4>
-          {shipment.items && shipment.items.length > 0 ? (
-            <div className="space-y-3">
-              {shipment.items.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-[--background] rounded border">
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{item.description}</div>
-                    <div className="text-xs text-[--muted-foreground] mt-1">
-                      Qty: {item.quantity} • Weight: {item.weight} kg
+              {itemsList.length > 0 ? (
+                <div className="space-y-3">
+                  {itemsList.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-[--background] rounded border">
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{item.description}</div>
+                        <div className="text-xs text-[--muted-foreground] mt-1">
+                          Qty: {item.quantity} • Weight: {item.weight} kg
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium">{item.quantity}x</div>
+                        <div className="text-xs text-[--muted-foreground]">{item.weight} kg</div>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="mt-3 pt-3 border-t border-[--border]">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium">Total Items:</span>
+                      <span>{itemsList.reduce((sum, item) => sum + (item.quantity || 0), 0)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-1">
+                      <span className="font-medium">Total Weight:</span>
+                      <span>{itemsList.reduce((sum, item) => sum + (item.weight || 0), 0)} kg</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium">{item.quantity}x</div>
-                    <div className="text-xs text-[--muted-foreground]">{item.weight} kg</div>
-                  </div>
                 </div>
-              ))}
-              <div className="mt-3 pt-3 border-t border-[--border]">
-                <div className="flex justify-between text-sm">
-                  <span className="font-medium">Total Items:</span>
-                  <span>{shipment.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
+              ) : (
+                <div className="text-center py-4 text-[--muted-foreground]">
+                  <i className="fas fa-box-open text-2xl mb-2"></i>
+                  <p className="text-sm">No item details available</p>
                 </div>
-                <div className="flex justify-between text-sm mt-1">
-                  <span className="font-medium">Total Weight:</span>
-                  <span>{shipment.items.reduce((sum, item) => sum + item.weight, 0)} kg</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-4 text-[--muted-foreground]">
-              <i className="fas fa-box-open text-2xl mb-2"></i>
-              <p className="text-sm">No item details available</p>
-            </div>
-          )}
+              )}
+              </>
+            );
+          })()}
         </div>
       </div>
     );
@@ -252,7 +331,7 @@ export default function ShipmentTracking({
             <div className="flex items-center gap-4 mt-2">
               {renderStatus(shipment.status)}
               <span className="text-xs text-[--muted-foreground]">
-                Progress: {shipment.tracking_info?.progress_percentage || 0}%
+                Progress: {getProgress(shipment)}%
               </span>
             </div>
           </div>
@@ -312,6 +391,7 @@ export default function ShipmentTracking({
                 zoom={5}
                 style={{ height: '100%', width: '100%' }}
               >
+                <FitBounds points={routePoints} />
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 
                 {/* Origin Marker */}
@@ -341,13 +421,15 @@ export default function ShipmentTracking({
                 )}
 
                 {/* Route Line */}
-                {shipment.route && (
+                {(routePoints && routePoints.length >= 2) ? (
                   <Polyline 
-                    positions={shipment.route}
+                    positions={routePoints}
                     color="#3b82f6"
                     weight={3}
                   />
-                )}
+                ) : (shipment.route && (
+                  <Polyline positions={shipment.route} color="#3b82f6" weight={3} />
+                ))}
               </MapContainer>
             </div>
           )}

@@ -62,7 +62,7 @@ class DatabaseManager:
             autocommit=False, autoflush=False, bind=self.engine
         )
 
-        print(f"✅ Database configured: {database_url.split('://')[0]}")
+        print(f"Database configured: {database_url.split('://')[0]}")
 
     def create_tables(self):
         """Create all database tables"""
@@ -76,6 +76,14 @@ class DatabaseManager:
                         if "state" not in cols:
                             conn.execute(text("ALTER TABLE businesses ADD COLUMN state VARCHAR(100)"))
                             print("✅ Migrated: added 'state' column to businesses")
+                        # Shipments new columns (transport_mode, priority)
+                        ship_cols = [r[1] for r in conn.execute(text("PRAGMA table_info(shipments)"))]
+                        if "transport_mode" not in ship_cols:
+                            conn.execute(text("ALTER TABLE shipments ADD COLUMN transport_mode VARCHAR(30)"))
+                            print("✅ Migrated: added 'transport_mode' column to shipments")
+                        if "priority" not in ship_cols:
+                            conn.execute(text("ALTER TABLE shipments ADD COLUMN priority VARCHAR(30)"))
+                            print("✅ Migrated: added 'priority' column to shipments")
             except Exception as mig_e:
                 print(f"⚠️ Migration warning: {mig_e}")
             print("✅ Database tables created successfully")
@@ -277,6 +285,11 @@ def get_database_session():
 def test_database_connection():
     """Test database connection"""
     return db_manager.test_connection()
+
+
+def get_engine():
+    """Return underlying SQLAlchemy engine (for services needing direct access)."""
+    return db_manager.engine
 
 
 # FastAPI database dependency

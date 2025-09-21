@@ -1,5 +1,6 @@
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
+import math
 import uuid
 import requests
 import os
@@ -11,62 +12,196 @@ except Exception:
 import threading
 import time
 
-# API keys (loaded from environment where possible)
-NEWS_API_KEY = os.getenv('NEWS_API_KEY', '27e521566a6e46a597ba8bdc6f74a86a')
-OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY', 'a84144b278bdeac6c181b514a15e5db3')  # Will use Open-Meteo as fallback
-ORS_API_KEY = os.getenv('ORS_API_KEY', '')
-# Gemini defaults (use provided key if env not set)
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyCkIfYPDPy2Cid027BAEyAXcfnC84DA_l0')
+"""Logistics service provides shipment, routing, provider comparison, and environment-aware
+external data acquisition. This refactor adds:
+
+1. SQLite persistence using existing SQLAlchemy models (Shipment).
+2. Removal of hardcoded secret defaults (env must supply keys; otherwise graceful fallbacks).
+3. Pagination helpers for shipments listing.
+4. Lightweight in-memory TTL cache (geocode + weather).
+5. Normalized cost breakdown structure across AI and provider outputs.
+6. Provider ranking with explicit weight metadata.
+7. Mode recommendation route support (decide_transport_mode output shape unchanged internally).
+"""
+
+# API keys (loaded from environment; no hardcoded sensitive defaults)
+NEWS_API_KEY = os.getenv('NEWS_API_KEY')
+OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY')  # If absent, will fallback to open-meteo
+ORS_API_KEY = os.getenv('ORS_API_KEY')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')
 
 # configure genai if available
-if genai is not None:
+if genai is not None and GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        print(f"✅ Gemini configured with model: {GEMINI_MODEL}")
+        print(f"Gemini configured with model: {GEMINI_MODEL}")
     except Exception as e:
-        print(f"❌ Gemini configuration failed: {e}")
+        print(f"Gemini configuration failed: {e}")
         genai = None
+else:
+    if genai is not None:
+        print("WARNING: GEMINI_API_KEY not set - AI route analysis will use fallback heuristics.")
+
+from app.models.db_models import Shipment as ShipmentModel
+from sqlalchemy.orm import Session
+from app.utils.db import get_engine
+from sqlalchemy import select, func
+
 
 class LogisticsService:
-    """Service for logistics and shipment management"""
+    """Service for logistics and shipment management with hybrid persistence.
 
-    def __init__(self): 
-        # In a real application, this would connect to database
+    If database engine is available, shipments are persisted in the `shipments` table.
+    Otherwise, falls back to in-memory mock list (useful for tests or first-run without migration).
+    """
+
+    CACHE_GEO_TTL = 60 * 60 * 12  # 12h
+    CACHE_WEATHER_TTL = 60 * 30    # 30m
+
+    def __init__(self):
+        self._engine = None
+        try:
+            self._engine = get_engine()
+        except Exception:
+            self._engine = None
+
+        # In-memory fallback store only used when DB unavailable
         self._mock_shipments = self._get_mock_shipments()
-        # Simple in-memory cache for external calls
-        self._cache = {}
+
+        # TTL cache: key -> (expires_epoch, value)
+        self._cache: Dict[str, Any] = {}
         self._cache_lock = threading.Lock()
-        # Simple per-endpoint last-call timestamps for rudimentary rate-limiting
-        self._last_called = {}
+        self._last_called: Dict[str, float] = {}
+        # Static approximate coordinates for common cities (fallback when geocoder fails)
+        self._city_coords = {
+            'Bangalore': (12.9716, 77.5946),
+            'Mumbai': (19.0760, 72.8777),
+            'Delhi': (28.6139, 77.2090),
+            'Chennai': (13.0827, 80.2707),
+            'Hyderabad': (17.3850, 78.4867),
+            'Pune': (18.5204, 73.8567),
+            'Kolkata': (22.5726, 88.3639),
+            'London': (51.5074, -0.1278),
+            'Panaji': (15.4909, 73.8278),
+        }
 
-    def get_shipments(self, status_filter: Optional[str] = None, transport_mode: Optional[str] = None, priority: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Get all shipments with enhanced filtering options"""
+    # -------------- Internal helpers for city coordinate fallback --------------
+    def _city_coord(self, name: str) -> Optional[tuple]:
+        if not name:
+            return None
+        n = name.replace('Distribution Center', '').replace('Warehouse', '').strip().title()
+        # If multi-word keep both if second word is capitalised (e.g., New Delhi) else first
+        if n not in self._city_coords and ' ' in n:
+            parts = [p for p in n.split() if p]
+            if len(parts) >= 2:
+                candidate = f"{parts[0]} {parts[1]}"
+                if candidate in self._city_coords:
+                    n = candidate
+                else:
+                    n = parts[0]
+        return self._city_coords.get(n)
 
-        shipments = self._mock_shipments.copy()
+    # -------------------- Persistence Helpers --------------------
+    def _has_db(self) -> bool:
+        return self._engine is not None
 
-        if status_filter:
-            shipments = [
-                shipment for shipment in shipments 
-                if shipment['status'].lower() == status_filter.lower()
-            ]
-        
-        if transport_mode:
-            shipments = [
-                shipment for shipment in shipments 
-                if shipment.get('transport_mode', '').lower() == transport_mode.lower()
-            ]
-        
-        if priority:
-            shipments = [
-                shipment for shipment in shipments 
-                if shipment.get('priority', '').lower() == priority.lower()
-            ]
+    def _session(self) -> Optional[Session]:
+        if not self._has_db():
+            return None
+        from sqlalchemy.orm import sessionmaker
+        SessionLocal = sessionmaker(bind=self._engine)
+        return SessionLocal()
 
-        return shipments
+    def _to_dict(self, shipment: ShipmentModel) -> Dict[str, Any]:
+        return {
+            'id': shipment.id,
+            'origin': shipment.origin,
+            'destination': shipment.destination,
+            'status': shipment.status,
+            'items_count': shipment.items_count,
+            'total_weight': shipment.total_weight,
+            'transport_mode': shipment.transport_mode or (shipment.tracking_info.get('transport_mode') if shipment.tracking_info else None),
+            'priority': shipment.priority or (shipment.tracking_info.get('priority') if shipment.tracking_info else None),
+            'created_date': shipment.created_date.strftime('%Y-%m-%d') if shipment.created_date else None,
+            'shipped_date': shipment.shipped_date.strftime('%Y-%m-%d') if shipment.shipped_date else None,
+            'eta': shipment.estimated_delivery.strftime('%Y-%m-%d') if shipment.estimated_delivery else None,
+            'actual_delivery': shipment.actual_delivery.strftime('%Y-%m-%d') if shipment.actual_delivery else None,
+            'tracking_info': shipment.tracking_info or {},
+            # Expose item details for DB-backed shipments; items are stored under tracking_info to avoid schema migrations
+            'items': (shipment.tracking_info or {}).get('items', []),
+            'cost': shipment.shipping_cost,
+        }
+
+    # -------------------- Shipment Operations --------------------
+
+    def get_shipments(self, status_filter: Optional[str] = None, transport_mode: Optional[str] = None,
+                      priority: Optional[str] = None, page: int = 1, page_size: int = 20) -> Dict[str, Any]:
+        """Get shipments with filtering + pagination.
+
+        Returns dict with shipments list and meta.
+        """
+        if page < 1:
+            page = 1
+        if page_size < 1 or page_size > 200:
+            page_size = 20
+
+        if self._has_db():
+            sess = self._session()
+            try:
+                stmt = select(ShipmentModel)
+                if status_filter:
+                    stmt = stmt.where(ShipmentModel.status == status_filter)
+                if transport_mode:
+                    stmt = stmt.where(ShipmentModel.transport_mode == transport_mode)
+                if priority:
+                    stmt = stmt.where(ShipmentModel.priority == priority)
+                total = sess.execute(select(func.count()).select_from(stmt.subquery())).scalar() or 0
+                stmt = stmt.order_by(ShipmentModel.created_date.desc()).offset((page - 1) * page_size).limit(page_size)
+                rows = sess.execute(stmt).scalars().all()
+                shipments = []
+                changed = False
+                for r in rows:
+                    d = self._to_dict(r)
+                    if self._auto_progress_status(d, r, sess):
+                        changed = True
+                    shipments.append(self._to_dict(r))
+                if changed:
+                    try:
+                        sess.commit()
+                    except Exception:
+                        sess.rollback()
+            finally:
+                sess.close()
+        else:
+            shipments = self._mock_shipments.copy()
+            if status_filter:
+                shipments = [s for s in shipments if s['status'].lower() == status_filter.lower()]
+            if transport_mode:
+                shipments = [s for s in shipments if s.get('transport_mode', '').lower() == transport_mode.lower()]
+            if priority:
+                shipments = [s for s in shipments if s.get('priority', '').lower() == priority.lower()]
+            total = len(shipments)
+            start = (page - 1) * page_size
+            subset = shipments[start:start + page_size]
+            # auto progress in-memory subset
+            for s in subset:
+                self._auto_progress_status(s, None, None)
+            shipments = subset
+
+        pages = (total // page_size) + (1 if total % page_size else 0)
+        return {
+            'shipments': shipments,
+            'meta': {
+                'page': page,
+                'page_size': page_size,
+                'total': total,
+                'pages': pages
+            }
+        }
 
     def create_shipment(self, shipment_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Create a new shipment with enhanced validation and features"""
+        """Create a new shipment with persistence + cost/time estimation."""
 
         # Validate required fields
         if not shipment_data.get('destination'):
@@ -86,16 +221,13 @@ class LogisticsService:
         origin = shipment_data.get('origin', 'Bangalore Distribution Center')
         destination = shipment_data['destination']
         
-        # Get precise distance and AI predictions
-        precise_data = self.get_precise_distance_and_predictions(origin, destination, transport_mode, weight)
-        
-        if 'error' not in precise_data:
-            shipping_cost = precise_data['ai_predictions']['estimated_cost_inr']
-            estimated_days = max(1, int(precise_data['ai_predictions']['estimated_time_hours'] / 24))
-        else:
-            # Fallback to original calculation
-            distance_cost = self._calculate_distance_cost(origin, destination)
-            shipping_cost = self._calculate_shipping_cost(weight, items_count, distance_cost, transport_mode)
+        # Use non-precise estimation only (precise analysis deprecated)
+        distance_cost = self._calculate_distance_cost(origin, destination)
+        shipping_cost = self._calculate_shipping_cost(weight, items_count, distance_cost, transport_mode)
+        estimated_hours = estimated_days * 24
+        # Derive days from hours (round up)
+        estimated_days = max(1, int(math.ceil(estimated_hours / 24))) if estimated_hours else estimated_days
+        ai_predicted_eta = (datetime.now() + timedelta(hours=estimated_hours)).strftime('%Y-%m-%d') if estimated_hours else estimated_delivery.strftime('%Y-%m-%d')
         
         # Priority handling
         priority = shipment_data.get('priority', 'standard')
@@ -118,7 +250,8 @@ class LogisticsService:
             'priority': priority,
             'created_date': datetime.now().strftime('%Y-%m-%d'),
             'shipped_date': None,
-            'eta': estimated_delivery.strftime('%Y-%m-%d'),
+            'eta': ai_predicted_eta,  # prefer AI predicted ETA
+            'ai_predicted_eta': ai_predicted_eta,
             'actual_delivery': None,
             'items': shipment_data.get('items', []),
             'notes': shipment_data.get('notes', ''),
@@ -127,6 +260,9 @@ class LogisticsService:
                 'location': origin,
                 'next_checkpoint': self._get_next_checkpoint(origin, destination),
                 'progress_percentage': 0,
+                'ai_predicted_hours': estimated_hours,
+                # Persist items inside tracking_info so DB path retains them without schema change
+                'items': shipment_data.get('items', []),
                 'status_history': [{
                     'status': 'Processing',
                     'timestamp': datetime.now().isoformat(),
@@ -136,79 +272,226 @@ class LogisticsService:
             }
         }
 
-        self._mock_shipments.append(new_shipment)
-        return new_shipment
+        if self._has_db():
+            sess = self._session()
+            try:
+                # Ensure at least one business exists (lazy seed minimal record)
+                from app.models.db_models import Business  # local import to avoid cycles
+                biz = sess.execute(select(Business).limit(1)).scalars().first()
+                if not biz:
+                    biz = Business(
+                        name="Default Business",
+                        type="Generic Store",
+                        scale="Small",
+                        location="Karnataka",
+                    )
+                    sess.add(biz)
+                    sess.flush()  # assign id
+
+                model = ShipmentModel(
+                    id=shipment_id,
+                    business_id=biz.id,
+                    origin=origin,
+                    destination=destination,
+                    status='Processing',
+                    items_count=items_count,
+                    total_weight=weight,
+                    transport_mode=transport_mode,
+                    priority=priority,
+                    estimated_delivery=datetime.strptime(new_shipment['eta'], '%Y-%m-%d'),
+                    shipping_cost=shipping_cost,
+                    tracking_info=new_shipment['tracking_info'],
+                    created_date=datetime.now(),
+                )
+                sess.add(model)
+                sess.commit()
+            except Exception as e:
+                try:
+                    sess.rollback()
+                except Exception:
+                    pass
+                # Attach error for debugging (tests can inspect if needed)
+                new_shipment['persistence_error'] = str(e)
+                self._mock_shipments.append(new_shipment)
+                return new_shipment
+            finally:
+                try:
+                    sess.close()
+                except Exception:
+                    pass
+            return new_shipment
+        else:
+            self._mock_shipments.append(new_shipment)
+            return new_shipment
 
     def get_shipment_by_id(self, shipment_id: str) -> Optional[Dict[str, Any]]:
-        """Get specific shipment by ID with enhanced details"""
+        if self._has_db():
+            sess = self._session()
+            try:
+                obj = sess.get(ShipmentModel, shipment_id)
+                if not obj:
+                    return None
+                shipment = self._to_dict(obj)
+                updated = self._auto_progress_status(shipment, obj, sess)
+                if updated:
+                    sess.commit()
+                    shipment = self._to_dict(obj)
+            finally:
+                sess.close()
+        else:
+            shipment = next((s for s in self._mock_shipments if s['id'] == shipment_id), None)
+            if shipment:
+                self._auto_progress_status(shipment, None, None)
+        return shipment
 
-        for shipment in self._mock_shipments:
-            if shipment['id'] == shipment_id:
-                # Add real-time updates for in-transit shipments
-                if shipment['status'] == 'In Transit':
-                    # Simulate progress updates
-                    created = datetime.strptime(shipment['created_date'], '%Y-%m-%d')
-                    eta = datetime.strptime(shipment['eta'], '%Y-%m-%d')
-                    now = datetime.now()
-                    
-                    total_duration = (eta - created).days
-                    elapsed_duration = (now.date() - created.date()).days
-                    
-                    if total_duration > 0:
-                        progress = min(90, max(10, (elapsed_duration / total_duration) * 100))
-                        shipment['tracking_info']['progress_percentage'] = int(progress)
-                
-                return shipment
+    # ----------------------------------
+    # Automatic status progression
+    # ----------------------------------
+    def _auto_progress_status(self, shipment: Dict[str, Any], db_obj: Optional[ShipmentModel], sess: Optional[Session]) -> bool:
+        """Automatically update shipment status based on AI predicted timeline.
 
-        return None
+        Logic (simple heuristic using elapsed / predicted_hours):
+          < 10% elapsed -> Processing
+          10% - 85% -> In Transit
+          85% - 95% -> Out for Delivery
+          >= 95% and past ETA date -> Delivered
+        """
+        try:
+            tracking = shipment.get('tracking_info', {})
+            predicted_hours = tracking.get('ai_predicted_hours')
+            if not predicted_hours or predicted_hours <= 0:
+                return False
+            created_str = shipment.get('created_date')
+            if not created_str:
+                return False
+            created_dt = datetime.strptime(created_str, '%Y-%m-%d')
+            elapsed_hours = (datetime.now() - created_dt).total_seconds() / 3600.0
+            ratio = elapsed_hours / predicted_hours
+            current_status = shipment.get('status')
+
+            # Do not auto-change terminal statuses
+            if current_status in ('Cancelled', 'Delivered'):
+                return False
+
+            new_status = None
+            if ratio < 0.10:
+                new_status = 'Processing'
+            elif ratio < 0.85:
+                new_status = 'In Transit'
+            elif ratio < 0.95:
+                new_status = 'Out for Delivery'
+            else:
+                # Only mark Delivered if we've passed ETA date
+                eta_str = shipment.get('eta') or shipment.get('ai_predicted_eta')
+                eta_dt = datetime.strptime(eta_str, '%Y-%m-%d') if eta_str else None
+                if eta_dt and datetime.now().date() >= eta_dt.date():
+                    new_status = 'Delivered'
+                else:
+                    new_status = 'Out for Delivery'
+
+            # Lateness detection: if past ETA and not delivered
+            eta_str_for_delay = shipment.get('eta') or shipment.get('ai_predicted_eta')
+            if new_status != 'Delivered' and eta_str_for_delay:
+                try:
+                    eta_dt2 = datetime.strptime(eta_str_for_delay, '%Y-%m-%d')
+                    if datetime.now() > eta_dt2 and current_status not in ('Delivered', 'Cancelled'):
+                        new_status = 'Delayed'
+                except Exception:
+                    pass
+
+            progress_map = {'Processing': 5, 'In Transit': 50, 'Out for Delivery': 90, 'Delayed': 95, 'Delivered': 100}
+            # Always update progress percentage based on ratio if not delivered/cancelled
+            if current_status not in ('Delivered', 'Cancelled'):
+                # derive dynamic progress: scale ratio (0-1) to 0-99, then adjust near terminal states
+                dynamic_progress = int(min(99, max(1, ratio * 100)))
+                # If status is Delayed keep at least 95
+                if current_status == 'Delayed':
+                    dynamic_progress = max(dynamic_progress, 95)
+                tracking['progress_percentage'] = progress_map.get(current_status, dynamic_progress if current_status not in progress_map else max(tracking.get('progress_percentage', 0), dynamic_progress))
+
+            if new_status and new_status != current_status:
+                # Update tracking
+                tracking.setdefault('status_history', []).append({
+                    'status': new_status,
+                    'timestamp': datetime.now().isoformat(),
+                    'location': tracking.get('location', 'Unknown'),
+                    'message': f'Auto-progressed to {new_status}'
+                })
+                shipment['status'] = new_status
+                tracking['last_update'] = datetime.now().isoformat()
+                # Rough progress mapping
+                # Recalculate progress after status change
+                # Ensure delivered snaps to 100
+                tracking['progress_percentage'] = 100 if new_status == 'Delivered' else progress_map.get(new_status, tracking.get('progress_percentage', 0))
+                shipment['tracking_info'] = tracking
+                if db_obj is not None and sess is not None:
+                    db_obj.status = new_status
+                    db_obj.tracking_info = tracking
+                    if new_status == 'In Transit' and not db_obj.shipped_date:
+                        db_obj.shipped_date = datetime.now()
+                    if new_status == 'Delivered' and not db_obj.actual_delivery:
+                        db_obj.actual_delivery = datetime.now()
+                return True
+        except Exception:
+            return False
+        return False
 
     def update_shipment_status(self, shipment_id: str, new_status: str, location: str = None, message: str = None) -> Optional[Dict[str, Any]]:
-        """Update shipment status with enhanced tracking"""
-
-        for shipment in self._mock_shipments:
-            if shipment['id'] == shipment_id:
-                old_status = shipment['status']
-                shipment['status'] = new_status
-
-                # Update dates based on status
-                now = datetime.now()
-
+        now = datetime.now()
+        if self._has_db():
+            sess = self._session()
+            try:
+                obj = sess.get(ShipmentModel, shipment_id)
+                if not obj:
+                    return None
+                old_status = obj.status
+                obj.status = new_status
                 if new_status == 'In Transit' and old_status == 'Processing':
-                    shipment['shipped_date'] = now.strftime('%Y-%m-%d')
+                    obj.shipped_date = now
                 elif new_status == 'Delivered':
-                    shipment['actual_delivery'] = now.strftime('%Y-%m-%d')
-
-                # Update progress percentage
-                progress_map = {
-                    'Processing': 10,
-                    'In Transit': 50,
-                    'Out for Delivery': 90,
-                    'Delivered': 100,
-                    'Cancelled': 0
-                }
-                
-                # Update tracking info
-                tracking_info = shipment.get('tracking_info', {})
-                tracking_info['last_update'] = now.isoformat()
-                tracking_info['progress_percentage'] = progress_map.get(new_status, 50)
-                
+                    obj.actual_delivery = now
+                tracking = obj.tracking_info or {}
+                progress_map = {'Processing': 10,'In Transit':50,'Out for Delivery':90,'Delivered':100,'Cancelled':0}
+                tracking['last_update'] = now.isoformat()
+                tracking['progress_percentage'] = 100 if new_status == 'Delivered' else progress_map.get(new_status, 50)
                 if location:
-                    tracking_info['location'] = location
-                
-                # Add to status history
-                if 'status_history' not in tracking_info:
-                    tracking_info['status_history'] = []
-                
-                tracking_info['status_history'].append({
+                    tracking['location'] = location
+                tracking.setdefault('status_history', []).append({
                     'status': new_status,
                     'timestamp': now.isoformat(),
-                    'location': location or tracking_info.get('location', 'Unknown'),
+                    'location': location or tracking.get('location', 'Unknown'),
                     'message': message or f'Status updated to {new_status}'
                 })
-                
-                shipment['tracking_info'] = tracking_info
-                return shipment
-
+                obj.tracking_info = tracking
+                sess.commit()
+                return self._to_dict(obj)
+            except Exception:
+                sess.rollback()
+                return None
+            finally:
+                sess.close()
+        else:
+            for shipment in self._mock_shipments:
+                if shipment['id'] == shipment_id:
+                    old_status = shipment['status']
+                    shipment['status'] = new_status
+                    if new_status == 'In Transit' and old_status == 'Processing':
+                        shipment['shipped_date'] = now.strftime('%Y-%m-%d')
+                    elif new_status == 'Delivered':
+                        shipment['actual_delivery'] = now.strftime('%Y-%m-%d')
+                    progress_map = {'Processing':10,'In Transit':50,'Out for Delivery':90,'Delivered':100,'Cancelled':0}
+                    tracking = shipment.get('tracking_info', {})
+                    tracking['last_update'] = now.isoformat()
+                    tracking['progress_percentage'] = 100 if new_status == 'Delivered' else progress_map.get(new_status, 50)
+                    if location:
+                        tracking['location'] = location
+                    tracking.setdefault('status_history', []).append({
+                        'status': new_status,'timestamp': now.isoformat(),
+                        'location': location or tracking.get('location', 'Unknown'),
+                        'message': message or f'Status updated to {new_status}'
+                    })
+                    shipment['tracking_info'] = tracking
+                    return shipment
         return None
 
     def optimize_routes(self, destinations: List[str]) -> Dict[str, Any]:
@@ -318,7 +601,7 @@ Be realistic and accurate for Indian logistics.
             distance_km = 500  # Default
         
         # Calculate estimates
-        hours = max(4, distance_km / 60)  # 60 km/h average
+        hours = max(0.5, distance_km / 60.0)  # 60 km/h average, min 0.5h
         fuel_cost = (distance_km / 12) * 100  # 12km/L, ₹100/L
         other_costs = distance_km * 3 + 1000  # Tolls, driver, maintenance
         total_cost = fuel_cost + other_costs
@@ -326,11 +609,11 @@ Be realistic and accurate for Indian logistics.
         return {
             'distance_info': {
                 'distance_km': round(distance_km, 1),
-                'duration_hours': round(hours, 1)
+                'duration_hours': round(hours, 2)
             },
             'stats': {
                 'distance': int(distance_km),
-                'estimated_hours': int(hours),
+                'estimated_hours': round(hours, 2),
                 'average_cost': int(total_cost),
                 'risk_level': 'low'
             },
@@ -341,196 +624,70 @@ Be realistic and accurate for Indian logistics.
             }
         }
 
-    def get_precise_distance_and_predictions(self, origin: str, destination: str, transport_mode: str = 'road', weight: float = 10.0) -> Dict[str, Any]:
-        """Get precise distance using mapping API and AI predictions for time/cost"""
-        try:
-            # Get coordinates
-            origin_coords = self._geocode_place(origin)
-            dest_coords = self._geocode_place(destination)
-            
-            if not origin_coords or not dest_coords:
-                return {'error': 'Could not geocode locations'}
-            
-            # Get precise distance using OpenRouteService or fallback
-            distance_data = self._get_precise_route_distance(origin_coords, dest_coords, transport_mode)
-            
-            # Use Gemini AI for intelligent predictions
-            ai_predictions = self._get_ai_transport_predictions(origin, destination, distance_data, transport_mode, weight)
-            
-            return {
-                'distance_km': distance_data['distance_km'],
-                'duration_hours': distance_data['duration_hours'],
-                'route_geometry': distance_data.get('geometry'),
-                'ai_predictions': ai_predictions,
-                'transport_mode': transport_mode,
-                'weight_kg': weight
-            }
-            
-        except Exception as e:
-            print(f"Error in precise distance calculation: {e}")
-            return {'error': str(e)}
-    
-    def _get_precise_route_distance(self, origin_coords: Dict, dest_coords: Dict, transport_mode: str) -> Dict[str, Any]:
-        """Get precise route distance using mapping services"""
-        try:
-            # Try OpenRouteService first if API key available
-            if ORS_API_KEY:
-                return self._get_ors_route_data(origin_coords, dest_coords, transport_mode)
-            
-            # Fallback to Haversine distance with estimated duration
-            distance_km = self._haversine_distance(
-                origin_coords['lat'], origin_coords['lon'],
-                dest_coords['lat'], dest_coords['lon']
-            )
-            
-            # Estimate duration based on transport mode
-            speed_map = {'road': 60, 'rail': 80, 'air': 500, 'sea': 25}
-            avg_speed = speed_map.get(transport_mode, 60)
-            duration_hours = distance_km / avg_speed
-            
-            return {
-                'distance_km': round(distance_km, 2),
-                'duration_hours': round(duration_hours, 2),
-                'method': 'haversine_fallback'
-            }
-            
-        except Exception as e:
-            print(f"Route distance calculation error: {e}")
-            return {'distance_km': 500, 'duration_hours': 8, 'method': 'fallback'}
-    
-    def _get_ors_route_data(self, origin_coords: Dict, dest_coords: Dict, transport_mode: str) -> Dict[str, Any]:
-        """Get route data from OpenRouteService"""
-        try:
-            profile_map = {
-                'road': 'driving-car',
-                'rail': 'driving-car',  # Approximate with car
-                'air': 'driving-car',   # Direct distance
-                'sea': 'driving-car'    # Approximate
-            }
-            
-            profile = profile_map.get(transport_mode, 'driving-car')
-            
-            url = f"https://api.openrouteservice.org/v2/directions/{profile}"
-            headers = {'Authorization': ORS_API_KEY}
-            
-            data = {
-                'coordinates': [
-                    [origin_coords['lon'], origin_coords['lat']],
-                    [dest_coords['lon'], dest_coords['lat']]
-                ],
-                'format': 'json'
-            }
-            
-            response = requests.post(url, json=data, headers=headers, timeout=10)
-            
-            if response.status_code == 200:
-                result = response.json()
-                route = result['routes'][0]
-                
-                return {
-                    'distance_km': round(route['summary']['distance'] / 1000, 2),
-                    'duration_hours': round(route['summary']['duration'] / 3600, 2),
-                    'geometry': route.get('geometry'),
-                    'method': 'openrouteservice'
-                }
-            
-        except Exception as e:
-            print(f"ORS API error: {e}")
-        
-        # Fallback to Haversine
-        return self._get_precise_route_distance(origin_coords, dest_coords, transport_mode)
-    
-    def _get_ai_transport_predictions(self, origin: str, destination: str, distance_data: Dict, transport_mode: str, weight: float) -> Dict[str, Any]:
-        """Use Gemini AI to predict transport time and cost"""
-        try:
-            if not genai:
-                return self._fallback_transport_predictions(distance_data, transport_mode, weight)
-            
-            model = genai.GenerativeModel(GEMINI_MODEL)
-            
-            prompt = f"""
-As a logistics expert, analyze this shipment and provide precise predictions:
+    # precise-analysis removed: distance/time/cost AI predictions deprecated
 
-Route: {origin} to {destination}
-Distance: {distance_data['distance_km']} km
-Transport Mode: {transport_mode}
-Weight: {weight} kg
-Base Duration: {distance_data.get('duration_hours', 'unknown')} hours
+    # -------------------- Provider Comparison & Ranking --------------------
+    def compare_logistics_providers(self, origin: str, destination: str) -> List[Dict[str, Any]]:  # override later search
+        from app.services.providers import get_default_providers
+        distance_data = self.get_distance_and_duration(origin, destination)
+        dist = distance_data.get('distance_km', 500)
+        providers = get_default_providers()
+        results = []
+        for adapter in providers:
+            q = adapter.quote(origin, destination, dist)
+            # Normalize cost breakdown (rough split)
+            total = q.get('estimated_cost', 0)
+            fuel = round(total * 0.45, 2)
+            base = round(total * 0.35, 2)
+            other = round(total - fuel - base, 2)
+            q['cost_breakdown'] = { 'base': base, 'fuel': fuel, 'other': other, 'total': total }
+            results.append(q)
+        # Simple ranking score: lower time + lower total cost better
+        if results:
+            max_time = max(r['estimated_time_hours'] for r in results)
+            max_cost = max(r['cost_breakdown']['total'] for r in results)
+            for r in results:
+                time_score = 1 - (r['estimated_time_hours'] / max_time) if max_time else 0
+                cost_score = 1 - (r['cost_breakdown']['total'] / max_cost) if max_cost else 0
+                r['score'] = round(time_score * 0.5 + cost_score * 0.4 + 0.1, 3)
+            results.sort(key=lambda x: x['score'], reverse=True)
+        return results
 
-Provide predictions in this exact JSON format:
-{{
-  "estimated_time_hours": <number>,
-  "estimated_cost_inr": <number>,
-  "fuel_cost_inr": <number>,
-  "driver_cost_inr": <number>,
-  "toll_cost_inr": <number>,
-  "risk_factors": ["factor1", "factor2"],
-  "cost_breakdown_explanation": "brief explanation",
-  "time_factors": "factors affecting delivery time"
-}}
+    # -------------------- Caching Helpers --------------------
+    def _cache_get(self, key: str) -> Optional[Any]:
+        now = time.time()
+        with self._cache_lock:
+            entry = self._cache.get(key)
+            if not entry:
+                return None
+            exp, val = entry
+            if exp < now:
+                self._cache.pop(key, None)
+                return None
+            return val
 
-Consider:
-- Indian road conditions and traffic
-- Fuel prices (₹100/L diesel)
-- Driver wages (₹500/day)
-- Toll charges
-- Weight impact on speed and fuel
-- Seasonal factors
-- Route complexity
-"""
-            
-            response = model.generate_content(prompt)
-            
-            # Try to extract JSON from response
-            import json
-            import re
-            
-            text = response.text
-            json_match = re.search(r'\{.*\}', text, re.DOTALL)
-            
-            if json_match:
-                try:
-                    predictions = json.loads(json_match.group())
-                    return predictions
-                except json.JSONDecodeError:
-                    pass
-            
-            # If JSON parsing fails, use fallback
-            return self._fallback_transport_predictions(distance_data, transport_mode, weight)
-            
-        except Exception as e:
-            print(f"AI prediction error: {e}")
-            return self._fallback_transport_predictions(distance_data, transport_mode, weight)
+    def _cache_set(self, key: str, value: Any, ttl: int):
+        with self._cache_lock:
+            self._cache[key] = (time.time() + ttl, value)
+
+    # Example usage for geocode & weather (hook into existing methods if desired later)
+
     
-    def _fallback_transport_predictions(self, distance_data: Dict, transport_mode: str, weight: float) -> Dict[str, Any]:
-        """Fallback predictions when AI is unavailable"""
-        distance_km = distance_data.get('distance_km', 500)
-        
-        # Base calculations
-        fuel_efficiency = max(8, 12 - (weight / 1000))  # km/L, decreases with weight
-        fuel_needed = distance_km / fuel_efficiency
-        fuel_cost = fuel_needed * 100  # ₹100/L
-        
-        # Driver cost (₹500/day, assuming 8 hours driving per day)
-        driving_hours = distance_data.get('duration_hours', distance_km / 60)
-        driver_cost = (driving_hours / 8) * 500
-        
-        # Toll cost (approximate ₹2/km for highways)
-        toll_cost = distance_km * 2
-        
-        # Total cost
-        total_cost = fuel_cost + driver_cost + toll_cost + (weight * 5)  # ₹5/kg handling
-        
-        return {
-            'estimated_time_hours': round(driving_hours * 1.2, 1),  # 20% buffer
-            'estimated_cost_inr': round(total_cost),
-            'fuel_cost_inr': round(fuel_cost),
-            'driver_cost_inr': round(driver_cost),
-            'toll_cost_inr': round(toll_cost),
-            'risk_factors': ['traffic_delays', 'weather_conditions'],
-            'cost_breakdown_explanation': f'Fuel: ₹{fuel_cost:.0f}, Driver: ₹{driver_cost:.0f}, Tolls: ₹{toll_cost:.0f}',
-            'time_factors': 'Traffic conditions and route complexity considered'
-        }
+    # precise-analysis removed: external routing service integration deprecated
+    
+    # precise-analysis removed: ORS API usage deprecated
+    
+    # precise-analysis removed: AI transport predictions deprecated
+    
+    # precise-analysis removed: cost calculators deprecated
+    
+    # precise-analysis removed: mode-specific cost calculation (road) deprecated
+    
+    # precise-analysis removed: mode-specific cost calculation (rail) deprecated
+    
+    # precise-analysis removed: mode-specific cost calculation (air) deprecated
+    
+    # precise-analysis removed: mode-specific cost calculation (sea) deprecated
     
     def _haversine_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """Calculate distance between two points using Haversine formula"""
@@ -584,34 +741,7 @@ Consider:
             
         except Exception as e:
             print(f"Geocoding error for {place_name}: {e}")
-        
-        return Nonelate_total_time(optimized_order)
-        estimated_cost = self._calculate_route_cost(optimized_order)
-
-        return {
-            'optimized_route': optimized_order,
-            'total_destinations': len(destinations),
-            'total_distance_km': total_distance,
-            'estimated_time_hours': estimated_time,
-            'estimated_cost': estimated_cost,
-            'savings': {
-                'distance_saved_km': total_distance * 0.15,  # 15% optimization
-                'time_saved_hours': estimated_time * 0.20,   # 20% time saving
-                'cost_saved': estimated_cost * 0.15          # 15% cost saving
-            },
-            'route_details': [
-                {
-                    'sequence': i + 1,
-                    'destination': dest,
-                    'estimated_arrival': self._calculate_arrival_time(i, optimized_order),
-                    'distance_from_previous': self._get_distance_between(
-                        optimized_order[i-1] if i > 0 else 'Origin',
-                        dest
-                    )
-                }
-                for i, dest in enumerate(optimized_order)
-            ]
-        }
+        return None
 
     # New integrations and helper methods
     def fetch_latest_news(self, query: str, page_size: int = 5) -> List[Dict[str, Any]]:
@@ -703,7 +833,7 @@ Consider:
             # Geocode city first
             geo_url = 'https://nominatim.openstreetmap.org/search'
             geo_params = {'q': city, 'format': 'json', 'limit': 1}
-            geo_resp = requests.get(geo_url, params=geo_params, headers={'User-Agent': 'scm-app/1.0'}, timeout=6)
+            geo_resp = requests.get(geo_url, params=geo_params, headers={'User-Agent': 'scm-app/1.0'}, timeout=3)
             geo_data = geo_resp.json()
             
             if not geo_data:
@@ -721,7 +851,7 @@ Consider:
                 'timezone': 'auto'
             }
             
-            weather_resp = requests.get(weather_url, params=weather_params, timeout=8)
+            weather_resp = requests.get(weather_url, params=weather_params, timeout=4)
             weather_data = weather_resp.json()
             
             current = weather_data.get('current_weather', {})
@@ -757,11 +887,20 @@ Consider:
             if cached:
                 return cached
 
-            if not self._allow_call('weather_coords', 1.0):
-                return self._get_mock_weather_coords(lat, lon)
-
-            # Use Open-Meteo API (free)
-            return self._fetch_weather_coords_open_meteo(lat, lon)
+            # Always try to get weather data, fallback to mock if API fails
+            try:
+                if self._allow_call('weather_coords', 1.0):
+                    result = self._fetch_weather_coords_open_meteo(lat, lon)
+                    if result and 'error' not in result:
+                        self._set_cache(cache_key, result, 1800)  # Cache for 30 minutes
+                        return result
+            except Exception as e:
+                print(f"Open-Meteo API failed for {lat},{lon}: {e}")
+            
+            # Fallback to mock weather
+            mock_result = self._get_mock_weather_coords(lat, lon)
+            self._set_cache(cache_key, mock_result, 600)  # Cache mock for 10 minutes to reduce repeated calls
+            return mock_result
             
         except Exception as e:
             print(f"Weather fetch error for coords {lat},{lon}: {e}")
@@ -770,28 +909,34 @@ Consider:
     def _get_mock_weather_coords(self, lat: float, lon: float) -> Dict[str, Any]:
         """Generate mock weather data for coordinates"""
         import random
+        import math
         
-        conditions = ['Clear', 'Partly Cloudy', 'Cloudy', 'Light Rain', 'Sunny']
+        conditions = ['clear', 'partly_cloudy', 'cloudy', 'rain', 'sunny']
         descriptions = ['clear sky', 'few clouds', 'scattered clouds', 'light rain', 'sunny']
         
-        temp = random.randint(15, 35)
+        # Base temperature on latitude (simple approximation)
+        base_temp = 25 - abs(lat) * 0.5  # Warmer near equator
+        temp = max(5, min(40, base_temp + random.randint(-10, 10)))
+        
         condition_idx = random.randint(0, len(conditions) - 1)
         
+        # Ensure all required fields are present
         return {
-            'lat': lat,
-            'lon': lon,
+            'lat': round(lat, 4),
+            'lon': round(lon, 4),
             'location': f'Location {lat:.2f},{lon:.2f}',
-            'temp_c': temp,
-            'feels_like': temp + random.randint(-3, 3),
+            'temp_c': round(temp, 1),
+            'feels_like': round(temp + random.uniform(-3, 3), 1),
             'humidity': random.randint(40, 80),
             'pressure': random.randint(1000, 1020),
             'weather': conditions[condition_idx],
             'description': descriptions[condition_idx],
-            'wind_speed': random.randint(2, 15),
+            'wind_speed': round(random.uniform(2, 15), 1),
             'wind_deg': random.randint(0, 360),
             'visibility': random.randint(8, 15),
             'clouds': random.randint(0, 100),
-            'source': 'mock'
+            'source': 'mock',
+            'timestamp': int(time.time())
         }
     
     def _fetch_weather_coords_open_meteo(self, lat: float, lon: float) -> Dict[str, Any]:
@@ -806,7 +951,7 @@ Consider:
                 'timezone': 'auto'
             }
             
-            resp = requests.get(url, params=params, timeout=8)
+            resp = requests.get(url, params=params, timeout=4)
             data = resp.json()
             
             current = data.get('current_weather', {})
@@ -824,8 +969,14 @@ Consider:
         except Exception as e:
             return {'lat': lat, 'lon': lon, 'error': 'weather_fetch_failed', 'detail': str(e), 'source': 'error'}
 
-    def decide_transport_mode(self, origin: str, destination: str) -> Dict[str, Any]:
-        """Decide optimal transport mode based on simple rules using weather and news"""
+    def decide_transport_mode(self, origin: str, destination: str, priority: Optional[str] = None) -> Dict[str, Any]:
+        """Decide optimal transport mode based on simple rules using weather and news.
+
+        Priority hint influences mode bias:
+        - urgent -> strongly favor air; de-prioritize sea
+        - express -> favor air/rail slightly
+        - standard -> mild bias toward road
+        """
         # Gather simple weather and news signals for origin and destination
         origin_weather = self.fetch_weather_for_location(origin)
         dest_weather = self.fetch_weather_for_location(destination)
@@ -883,6 +1034,21 @@ Consider:
         # penalize road and rail more for strikes and protests
         mode_scores['road'] -= npen
         mode_scores['rail'] -= npen
+
+        # Priority-based biases
+        try:
+            pr = (priority or '').strip().lower() if isinstance(priority, str) else ''
+            if pr == 'urgent':
+                mode_scores['air'] += 3
+                mode_scores['rail'] += 1
+                mode_scores['sea'] -= 1
+            elif pr == 'express':
+                mode_scores['air'] += 2
+                mode_scores['rail'] += 1
+            elif pr == 'standard':
+                mode_scores['road'] += 1
+        except Exception:
+            pass
 
         # Choose best mode
         best_mode = max(mode_scores.items(), key=lambda x: x[1])[0]
@@ -980,20 +1146,31 @@ Consider:
             return {'providers': results, 'gemini_summary': fallback}
 
     def _geocode_place(self, place: str) -> Optional[Dict[str, float]]:
-        """Try to geocode a place name using Nominatim"""
+        """Try to geocode a place name using Nominatim.
+
+        Note: Use per-place rate limiting so we can geocode origin and destination
+        back-to-back without tripping a global throttle.
+        """
         try:
+            # Fast-path: try static city coord map first to avoid network calls
+            if place:
+                key = place.replace('Distribution Center','').replace('Warehouse','').replace('Hub','').strip().title()
+                if key in self._city_coords:
+                    lat, lon = self._city_coords[key]
+                    return {'lat': lat, 'lon': lon, 'source': 'static'}
             cache_key = f"geocode:{place}"
             cached = self._get_cache(cache_key)
             if cached:
                 return cached
 
-            if not self._allow_call('geocode', 1.0):
+            # Per-place throttle key so different places are not blocked within the same second
+            if not self._allow_call(f'geocode:{place}', 0.2):
                 return None
 
             url = 'https://nominatim.openstreetmap.org/search'
             params = {'q': place, 'format': 'jsonv2', 'limit': 1}
             headers = {'User-Agent': 'AISupplyChain/1.0'}
-            r = requests.get(url, params=params, headers=headers, timeout=6)
+            r = requests.get(url, params=params, headers=headers, timeout=3)
             r.raise_for_status()
             data = r.json()
             if data:
@@ -1004,18 +1181,89 @@ Consider:
             return None
         return None
 
-    def get_route_analysis_with_weather(self, origin: str, destination: str) -> Dict[str, Any]:
-        """Get comprehensive route analysis with weather and AI insights"""
+    def get_route_analysis_with_weather(self, origin: str, destination: str,
+                                        transport_mode: Optional[str] = None,
+                                        items_count: Optional[int] = None,
+                                        weight_kg: Optional[float] = None) -> Dict[str, Any]:
+        """Get comprehensive route analysis with weather and AI insights.
+
+        Distance and duration are sourced from Gemini AI via get_dynamic_trip_analysis
+        (with an internal fallback when Gemini is unavailable). Weather sampling still
+        relies on geocoded coordinates.
+        """
         try:
             print(f"Starting route analysis: {origin} -> {destination}")
-            
-            # Get basic route info
-            route_info = self.get_distance_and_duration(origin, destination)
-            print(f"Route info: {route_info}")
-            
+
+            # Prefer Gemini AI for distance and time (with internal fallback)
+            ai_trip = self.get_dynamic_trip_analysis(origin, destination)
+            ai_di = ai_trip.get('distance_info', {}) if isinstance(ai_trip, dict) else {}
+            ai_dist = ai_di.get('distance_km')
+            ai_hours = ai_di.get('duration_hours')
+
+            route_info = {
+                'distance_km': round(ai_dist, 1) if isinstance(ai_dist, (int, float)) else None,
+                'duration_hours': round(ai_hours, 2) if isinstance(ai_hours, (int, float)) else None,
+                'source': 'ai'
+            }
+
+            # Safety fallback to previous calc if AI lacks values
+            if route_info['distance_km'] is None or route_info['duration_hours'] is None:
+                fallback_route = self.get_distance_and_duration(origin, destination)
+                if route_info['distance_km'] is None:
+                    route_info['distance_km'] = fallback_route.get('distance_km', 0)
+                if route_info['duration_hours'] is None:
+                    route_info['duration_hours'] = fallback_route.get('duration_hours', 24)
+                # annotate combined source
+                route_info['source'] = f"{route_info['source']}_fallback"
+
+            print(f"Route info (AI-first): {route_info}")
+
+            # Determine transport mode for costing
+            mode = (transport_mode or 'road').lower()
+
+            # Compute mode-specific cost breakdown using AI total if available
+            ai_total_cost = None
+            if isinstance(ai_trip, dict):
+                stats = ai_trip.get('stats') or {}
+                ai_total_cost = stats.get('average_cost') or None
+            cost_breakdown = self._compute_cost_breakdown_for_mode(
+                distance_km=route_info.get('distance_km') or 0,
+                mode=mode,
+                ai_total_inr=ai_total_cost,
+                items_count=items_count or 0,
+                weight_kg=weight_kg or 0,
+                likely_international=(route_info.get('distance_km') or 0) > 2000 and mode in ['air','sea']
+            )
+
+            # If air mode, refine duration using air-specific estimator
+            try:
+                if mode == 'air':
+                    dist = route_info.get('distance_km') or 0
+                    likely_international = (dist > 2000)
+                    air_hours = self._estimate_air_hours(dist, likely_international)
+                    # If AI gave a value, clamp to a reasonable window around air estimate
+                    ai_h = route_info.get('duration_hours')
+                    if isinstance(ai_h, (int, float)) and ai_h > 0:
+                        # Clamp AI within [0.7x, 1.6x] of model to avoid extreme outliers
+                        lo, hi = 0.7 * air_hours, 1.6 * air_hours
+                        route_info['duration_hours'] = float(min(max(ai_h, lo), hi))
+                    else:
+                        route_info['duration_hours'] = air_hours
+            except Exception:
+                pass
+
             # Get coordinates for weather analysis
             origin_geo = self._geocode_place(origin)
             dest_geo = self._geocode_place(destination)
+            # Fallback to static city coordinates if geocoding failed
+            if not origin_geo:
+                cc = self._city_coord(origin)
+                if cc:
+                    origin_geo = {'lat': cc[0], 'lon': cc[1], 'source': 'static'}
+            if not dest_geo:
+                cc2 = self._city_coord(destination)
+                if cc2:
+                    dest_geo = {'lat': cc2[0], 'lon': cc2[1], 'source': 'static'}
             
             if not origin_geo or not dest_geo:
                 print(f"Geocoding failed: origin={origin_geo}, dest={dest_geo}")
@@ -1035,22 +1283,52 @@ Consider:
                         'estimated_delivery': self._calculate_delivery_window(route_info.get('duration_hours', 24))
                     },
                     'ai_insights': 'Route analysis completed with standard parameters.',
-                    'recommendations': ['Standard delivery conditions expected', 'Monitor traffic conditions']
+                    'recommendations': ['Standard delivery conditions expected', 'Monitor traffic conditions'],
+                    'transport_mode': mode,
+                    'cost_breakdown': cost_breakdown,
+                    'ai_summary': ai_trip.get('gemini_summary') if isinstance(ai_trip, dict) else None,
+                    'ai_stats': ai_trip.get('stats') if isinstance(ai_trip, dict) else None
                 }
             
             print(f"Geocoding successful: {origin_geo}, {dest_geo}")
             
-            # Get weather along route
-            weather_analysis = self.get_weather_along_route(
-                origin_geo['lat'], origin_geo['lon'],
-                dest_geo['lat'], dest_geo['lon'],
-                samples=5
+            # Generate richer, mode-specific weather points with place names
+            points = self._generate_route_weather_points(
+                origin_geo, dest_geo, origin, destination, mode
             )
+            # Build summary for assessment
+            summary = []
+            for p in points:
+                w = p.get('weather', {})
+                if w and 'error' not in w:
+                    summary.append({
+                        'position': p.get('position'),
+                        'temp': w.get('temp_c', 20),
+                        'weather': w.get('weather', 'Clear'),
+                        'description': w.get('description', 'Clear sky'),
+                        'wind_speed': w.get('wind_speed', 5),
+                        'visibility': w.get('visibility', 10)
+                    })
+            route_conditions = self._assess_route_conditions(summary)
+            weather_analysis = {
+                'points': points,
+                'weather_summary': summary,
+                'ai_analysis': 'Weather conditions summarized (analysis mode).',
+                'route_conditions': route_conditions
+            }
             
-            print(f"Weather analysis: {weather_analysis.get('route_conditions', {})}")
+            print(f"Weather analysis: {route_conditions}")
             
-            # Calculate adjusted delivery time with weather impact
+            # Calculate adjusted delivery time with weather impact (base from AI)
             base_hours = route_info.get('duration_hours', 24)
+            try:
+                # Guard against tiny zero-ish values and ensure float
+                if isinstance(base_hours, (int, float)):
+                    base_hours = max(0.5, float(base_hours))
+                else:
+                    base_hours = 24
+            except Exception:
+                base_hours = 24
             weather_delay_factor = weather_analysis.get('route_conditions', {}).get('delay_factor', 1.0)
             adjusted_hours = base_hours * weather_delay_factor
             
@@ -1069,10 +1347,20 @@ Consider:
                     'estimated_delivery': self._calculate_delivery_window(adjusted_hours)
                 },
                 'ai_insights': ai_insights,
-                'recommendations': self._generate_route_recommendations(weather_analysis, route_info)
+                'recommendations': self._generate_route_recommendations(weather_analysis, route_info),
+                'transport_mode': mode,
+                'cost_breakdown': cost_breakdown,
+                'ai_summary': ai_trip.get('gemini_summary') if isinstance(ai_trip, dict) else None,
+                'ai_stats': ai_trip.get('stats') if isinstance(ai_trip, dict) else None
             }
             
             print("Route analysis completed successfully")
+            # Persist AI route_info into tracking where possible for reuse in live snapshots
+            try:
+                # Best-effort: if analysis is for a known shipment, caller route will persist. For route-only, skip.
+                pass
+            except Exception:
+                pass
             return result
             
         except Exception as e:
@@ -1108,6 +1396,28 @@ Consider:
             'latest': (now + timedelta(hours=hours * 1.1)).strftime('%Y-%m-%d %H:%M'),
             'estimated': estimated_delivery.strftime('%Y-%m-%d %H:%M')
         }
+
+    def _estimate_air_hours(self, distance_km: float, likely_international: bool = False) -> float:
+        """Estimate air transport hours with buffers.
+
+        Model:
+        - Cruise speed ~800 km/h
+        - Fixed buffers (check-in, security, boarding, taxi, baggage):
+          2.5h domestic, 3.5h international
+        - For very long distances (> 6000 km), add 2h layover buffer
+        - Clamp minimum total to 1.8h
+        """
+        try:
+            d = max(0.0, float(distance_km or 0))
+        except Exception:
+            d = 0.0
+        cruise_speed = 800.0
+        flight_time = d / cruise_speed if d > 0 else 0.0
+        buffers = 3.5 if likely_international else 2.5
+        if d > 6000:
+            buffers += 2.0
+        total = buffers + flight_time
+        return round(max(1.8, total), 2)
     
     def _generate_route_recommendations(self, weather_analysis: Dict, route_info: Dict) -> List[str]:
         """Generate route recommendations based on conditions"""
@@ -1151,6 +1461,14 @@ Consider:
 
             origin_geo = self._geocode_place(origin)
             dest_geo = self._geocode_place(destination)
+            if not origin_geo:
+                cc = self._city_coord(origin)
+                if cc:
+                    origin_geo = {'lat': cc[0], 'lon': cc[1], 'source': 'static'}
+            if not dest_geo:
+                cc2 = self._city_coord(destination)
+                if cc2:
+                    dest_geo = {'lat': cc2[0], 'lon': cc2[1], 'source': 'static'}
             
             if origin_geo and dest_geo:
                 # Use haversine distance calculation
@@ -1226,15 +1544,12 @@ Consider:
                         'visibility': w.get('visibility', 10)
                     })
             
-            # Generate analysis (with or without Gemini)
+            # Generate analysis (fast path): skip Gemini text to reduce latency
             if weather_data:
-                prompt = f"Analyze route weather for delivery: {weather_data}. Provide brief logistics analysis."
-                analysis = self._generate_gemini_text(prompt, 200)
-                
                 return {
                     'points': points,
                     'weather_summary': weather_data,
-                    'ai_analysis': analysis,
+                    'ai_analysis': 'Weather conditions summarized (fast mode).',
                     'route_conditions': self._assess_route_conditions(weather_data)
                 }
             
@@ -1266,8 +1581,8 @@ Consider:
         
         for point in weather_data:
             weather = point.get('weather', '').lower()
-            wind_speed = point.get('wind_speed', 0)
-            visibility = point.get('visibility', 10)
+            wind_speed = point.get('wind_speed', 0) or 0
+            visibility = point.get('visibility', 10) or 10
             
             # Assess risk factors
             if any(condition in weather for condition in ['rain', 'storm', 'snow']):
@@ -1328,6 +1643,149 @@ Consider:
             return "Provider analysis: Multiple logistics providers available for this route. Compare based on cost, reliability, and delivery time. Consider weather impact on different transport modes."
         else:
             return "Analysis completed using statistical models. Weather and route conditions have been assessed for optimal delivery planning."
+
+    def _compute_cost_breakdown_for_mode(self, distance_km: float, mode: str, ai_total_inr: Optional[float],
+                                         items_count: int = 0, weight_kg: float = 0,
+                                         likely_international: bool = False,
+                                         priority: Optional[str] = None) -> Dict[str, Any]:
+        """Compute mode-specific cost breakdown similar to UI cards.
+
+    Returns keys: handling, freight, documentation, fuel_surcharge,
+    security, customs, total, and a calculation_note. Insurance removed.
+    Priority (express/urgent) increases total proportionally after component calc.
+        """
+        # Baseline heuristics per mode (INR per km or per kg-km where relevant)
+        mode = (mode or 'road').lower()
+        # Rough baselines
+        if mode == 'air':
+            freight_base = distance_km * 3.45  # per km proxy
+            fuel_mult = 0.18
+            handling = 7500
+            security = 2500
+            documentation = 1500
+            customs = 5000 if likely_international else 300  # domestic clearance min
+        elif mode == 'sea':
+            freight_base = distance_km * 1.8
+            fuel_mult = 0.12
+            handling = 6000
+            security = 1500
+            documentation = 2000
+            customs = 6000 if likely_international else 300
+        elif mode == 'rail':
+            freight_base = distance_km * 2.2
+            fuel_mult = 0.10
+            handling = 3500
+            security = 1000
+            documentation = 1000
+            customs = 300
+        else:  # road
+            freight_base = distance_km * 2.9
+            fuel_mult = 0.14
+            handling = 3000
+            security = 800
+            documentation = 800
+            customs = 300
+        # Insurance removed across all modes
+        insurance = 0
+
+        # Adjust freight for weight somewhat (very coarse): add 0.5 INR per km per 100kg
+        weight_adj = (max(weight_kg, 0) / 100.0) * 0.5 * distance_km
+        freight = round(freight_base + weight_adj)
+        fuel_surcharge = round(freight * fuel_mult)
+
+        # Use AI total if provided to adjust proportional components, else sum our parts
+        subtotal = handling + freight + documentation + fuel_surcharge + security + customs
+        total = round(ai_total_inr) if ai_total_inr and ai_total_inr > 0 else subtotal
+
+        # If AI total differs a lot, scale freight to match while keeping ancillaries
+        if ai_total_inr and abs(total - subtotal) > 0.1 * subtotal:
+            diff = ai_total_inr - (subtotal - freight)
+            freight = max(0, round(diff))
+            subtotal = handling + freight + documentation + fuel_surcharge + security + customs
+            total = round(subtotal)
+
+        # Priority multiplier applied to total post-alignment
+        try:
+            pr = (priority or '').strip().lower()
+        except Exception:
+            pr = ''
+        mult = 1.0
+        if pr == 'express':
+            mult = 1.5
+        elif pr == 'urgent':
+            mult = 2.0
+
+        # Keep a target total if we applied AI alignment or priority multiplier
+        target_total = None
+        if mult != 1.0:
+            target_total = int(round(total * mult))
+        elif ai_total_inr:
+            target_total = int(round(total))
+        if target_total is not None:
+            # Keep ancillaries same, scale freight to reach new total
+            others = handling + documentation + fuel_surcharge + security + customs
+            new_freight = max(0, target_total - others)
+            freight = new_freight
+            total = target_total
+
+        # Enforce non-zero minimums for every component
+        MIN_COMPONENT = 50
+        handling = max(int(handling), MIN_COMPONENT)
+        documentation = max(int(documentation), MIN_COMPONENT)
+        fuel_surcharge = max(int(fuel_surcharge), MIN_COMPONENT)
+        security = max(int(security), MIN_COMPONENT)
+        customs = max(int(customs), MIN_COMPONENT)
+        min_freight = 250
+        freight = max(int(freight), min_freight)
+
+        # Refit freight to target_total if available and feasible
+        others_sum = handling + documentation + fuel_surcharge + security + customs
+        if target_total is not None:
+            desired_freight = target_total - others_sum
+            if desired_freight >= min_freight:
+                freight = desired_freight
+                total = target_total
+            else:
+                # Cannot fit target while honoring min; set total to sum
+                total = others_sum + freight
+        else:
+            total = others_sum + freight
+
+        note = "Calculation Method: Mode-adjusted with AI total alignment" if ai_total_inr else "Calculation Method: Heuristic mode-based estimate"
+
+        return {
+            'handling_inr': int(handling),
+            'freight_inr': int(freight),
+            'documentation_inr': int(documentation),
+            'fuel_surcharge_inr': int(fuel_surcharge),
+            'security_inr': int(security),
+            'customs_inr': int(customs),
+            'total_inr': int(total),
+            'calculation_note': note
+        }
+
+    def adjust_breakdown_to_total(self, breakdown: Dict[str, Any], target_total: int) -> Dict[str, Any]:
+        """Return a copy of breakdown with components adjusted to match target_total.
+
+        Strategy: adjust freight_inr to make sum(other) + freight_inr = target_total. Never negative.
+        Adds a note indicating reconciliation to locked price.
+        """
+        if not isinstance(breakdown, dict):
+            return breakdown
+        b = dict(breakdown)
+        # Insurance removed from calculation; ignore if present
+        handling = int(b.get('handling_inr', 0))
+        documentation = int(b.get('documentation_inr', 0))
+        fuel_surcharge = int(b.get('fuel_surcharge_inr', 0))
+        security = int(b.get('security_inr', 0))
+        customs = int(b.get('customs_inr', 0))
+        others = handling + documentation + fuel_surcharge + security + customs
+        new_freight = max(0, int(target_total) - others)
+        b['freight_inr'] = new_freight
+        b['total_inr'] = int(target_total)
+        note = b.get('calculation_note') or 'Calculation Method'
+        b['calculation_note'] = f"{note}; Reconciled to locked total"
+        return b
 
     # Simple cache helpers
     def _get_cache(self, key: str):
@@ -1431,6 +1889,150 @@ Consider:
             },
             'recommendations': self._generate_recommendations()
         }
+
+    # -------------------- Cost Persistence for Consistency --------------------
+    def update_shipment_cost_info(self, shipment_id: str, total_inr: int,
+                                  breakdown: Dict[str, Any],
+                                  ai_stats: Optional[Dict[str, Any]] = None,
+                                  ai_summary: Optional[str] = None,
+                                  overwrite_total: bool = False,
+                                  route_info: Optional[Dict[str, Any]] = None) -> bool:
+        """Persist cost info so list and detail views remain consistent.
+
+        Updates shipping_cost and stores cost_breakdown (plus ai_stats/ai_summary) in tracking_info.
+        Returns True on success or False if shipment not found/failed.
+        """
+        try:
+            if self._has_db():
+                sess = self._session()
+                try:
+                    row = sess.query(ShipmentModel).filter(ShipmentModel.id == shipment_id).first()
+                    if not row:
+                        return False
+                    # Respect immutability of price after creation unless explicitly requested
+                    if overwrite_total or not row.shipping_cost or row.shipping_cost == 0:
+                        row.shipping_cost = total_inr
+                    info = row.tracking_info or {}
+                    # shallow copy and update
+                    updated = dict(info)
+                    # Remove insurance from breakdown if present
+                    if isinstance(breakdown, dict) and 'insurance_inr' in breakdown:
+                        breakdown = {k: v for k, v in breakdown.items() if k != 'insurance_inr'}
+                    updated['cost_breakdown'] = breakdown
+                    if route_info is not None:
+                        updated['ai_route_info'] = route_info
+                        try:
+                            dur = route_info.get('duration_hours') if isinstance(route_info, dict) else None
+                            if dur:
+                                updated['ai_predicted_hours'] = dur
+                        except Exception:
+                            pass
+                    if ai_stats is not None:
+                        updated['ai_stats'] = ai_stats
+                    if ai_summary is not None:
+                        updated['ai_summary'] = ai_summary
+                    row.tracking_info = updated
+                    sess.commit()
+                    return True
+                except Exception:
+                    sess.rollback()
+                    return False
+                finally:
+                    sess.close()
+            else:
+                for s in self._mock_shipments:
+                    if s.get('id') == shipment_id:
+                        # Do not overwrite agreed price unless explicitly allowed
+                        if overwrite_total or not s.get('cost') or s.get('cost') == 0:
+                            s['cost'] = total_inr
+                        ti = s.get('tracking_info') or {}
+                        updated = dict(ti)
+                        if isinstance(breakdown, dict) and 'insurance_inr' in breakdown:
+                            breakdown = {k: v for k, v in breakdown.items() if k != 'insurance_inr'}
+                        updated['cost_breakdown'] = breakdown
+                        if route_info is not None:
+                            updated['ai_route_info'] = route_info
+                            try:
+                                dur = route_info.get('duration_hours') if isinstance(route_info, dict) else None
+                                if dur:
+                                    updated['ai_predicted_hours'] = dur
+                            except Exception:
+                                pass
+                        if ai_stats is not None:
+                            updated['ai_stats'] = ai_stats
+                        if ai_summary is not None:
+                            updated['ai_summary'] = ai_summary
+                        s['tracking_info'] = updated
+                        return True
+                return False
+        except Exception:
+            return False
+
+    def reconcile_shipment_costs(self) -> int:
+        """Backfill cost_breakdown for all shipments and align totals to stored price.
+
+        If a shipment has no stored price (0/None), compute and set it from analysis.
+        Otherwise, compute a fresh breakdown and set its total to the stored price, marking note as locked.
+        Returns the number of shipments updated.
+        """
+        updated = 0
+        if self._has_db():
+            sess = self._session()
+            try:
+                rows = sess.execute(select(ShipmentModel)).scalars().all()
+                for r in rows:
+                    try:
+                        origin = r.origin
+                        destination = r.destination
+                        mode = r.transport_mode or 'road'
+                        items_count = r.items_count or 0
+                        weight_kg = r.total_weight or 0.0
+                        analysis = self.get_route_analysis_with_weather(origin, destination, mode, items_count, weight_kg)
+                        cb = (analysis or {}).get('cost_breakdown') or {}
+                        if 'insurance_inr' in cb:
+                            cb.pop('insurance_inr', None)
+                        stored = r.shipping_cost
+                        if stored and stored > 0:
+                            cb = self.adjust_breakdown_to_total(cb, int(stored))
+                            note = cb.get('calculation_note') or 'Calculation Method'
+                            cb['calculation_note'] = f"{note}; Price locked at booking"
+                            if self.update_shipment_cost_info(r.id, int(stored), cb, analysis.get('ai_stats'), analysis.get('ai_summary'), overwrite_total=False):
+                                updated += 1
+                        else:
+                            # Set initial price from analysis total
+                            computed_total = int(cb.get('total_inr') or 0)
+                            if computed_total > 0 and self.update_shipment_cost_info(r.id, computed_total, cb, analysis.get('ai_stats'), analysis.get('ai_summary'), overwrite_total=True):
+                                updated += 1
+                    except Exception:
+                        continue
+            finally:
+                sess.close()
+        else:
+            for s in self._mock_shipments:
+                try:
+                    origin = s.get('origin')
+                    destination = s.get('destination')
+                    mode = s.get('transport_mode') or 'road'
+                    items_count = s.get('items_count') or 0
+                    weight_kg = s.get('total_weight') or 0.0
+                    analysis = self.get_route_analysis_with_weather(origin, destination, mode, items_count, weight_kg)
+                    cb = (analysis or {}).get('cost_breakdown') or {}
+                    if 'insurance_inr' in cb:
+                        cb.pop('insurance_inr', None)
+                    stored = s.get('cost')
+                    if stored and stored > 0:
+                        cb = self.adjust_breakdown_to_total(cb, int(stored))
+                        note = cb.get('calculation_note') or 'Calculation Method'
+                        cb['calculation_note'] = f"{note}; Price locked at booking"
+                        if self.update_shipment_cost_info(s['id'], int(stored), cb, analysis.get('ai_stats'), analysis.get('ai_summary'), overwrite_total=False):
+                            updated += 1
+                    else:
+                        computed_total = int(cb.get('total_inr') or 0)
+                        if computed_total > 0 and self.update_shipment_cost_info(s['id'], computed_total, cb, analysis.get('ai_stats'), analysis.get('ai_summary'), overwrite_total=True):
+                            updated += 1
+                except Exception:
+                    continue
+        return updated
     
     def _generate_recommendations(self) -> List[str]:
         """Generate logistics recommendations based on current data"""
@@ -1574,11 +2176,283 @@ Consider:
     def _calculate_route_cost(self, route: List[str]) -> float:
         """Calculate total cost for route"""
 
+
+    # ----------------------------------
+    # Stats aggregation
+    # ----------------------------------
+    def get_shipment_stats(self) -> Dict[str, Any]:
+        """Compute logistics dashboard metrics.
+
+        Metrics:
+          total_shipments: count of all shipments
+          in_transit: shipments with status 'In Transit'
+          on_time_rate: percentage (0-100) of delivered shipments delivered on/before ETA
+          avg_delivery_time_days: average (float) days from shipped_date (or created) to actual_delivery
+        """
+        total = 0
+        in_transit = 0
+        delivered = 0
+        on_time = 0
+        durations = []
+
+        def parse_dt(val):
+            if not val:
+                return None
+            if isinstance(val, datetime):
+                return val
+            for fmt in ('%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S'):
+                try:
+                    return datetime.strptime(val.split('.')[0], fmt)
+                except Exception:
+                    continue
+            return None
+
+        if self._has_db():
+            sess = self._session()
+            try:
+                rows = sess.execute(select(ShipmentModel)).scalars().all()
+                for r in rows:
+                    total += 1
+                    status = (r.status or '').lower()
+                    if status == 'in transit':
+                        in_transit += 1
+                    if status == 'delivered':
+                        delivered += 1
+                        eta = r.estimated_delivery
+                        actual = r.actual_delivery
+                        if actual and eta and actual.date() <= eta.date():
+                            on_time += 1
+                        # duration
+                        start = r.shipped_date or r.created_date or r.created_at
+                        end = actual
+                        if start and end:
+                            durations.append((end - start).total_seconds() / 86400.0)
+            finally:
+                sess.close()
+        else:
+            for s in self._mock_shipments:
+                total += 1
+                status = (s.get('status') or '').lower()
+                if status == 'in transit':
+                    in_transit += 1
+                if status == 'delivered':
+                    delivered += 1
+                    eta = parse_dt(s.get('eta'))
+                    actual = parse_dt(s.get('actual_delivery'))
+                    if actual and eta and actual.date() <= eta.date():
+                        on_time += 1
+                    start = parse_dt(s.get('shipped_date')) or parse_dt(s.get('created_date'))
+                    end = actual
+                    if start and end:
+                        durations.append((end - start).total_seconds() / 86400.0)
+
+        on_time_rate = (on_time / delivered * 100.0) if delivered else 0.0
+        avg_delivery_time = (sum(durations) / len(durations)) if durations else 0.0
+
+        return {
+            'total_shipments': total,
+            'in_transit': in_transit,
+            'on_time_rate': round(on_time_rate, 1),
+            'avg_delivery_time_days': round(avg_delivery_time, 2)
+        }
+
+    # ----------------------------------
+    # Live / lightweight weather refresh for shipment modal
+    # ----------------------------------
+    def get_live_weather_analysis(self, shipment: Dict[str, Any], debug: bool = False) -> Dict[str, Any]:
+        """Return a lightweight, fast-updating snapshot used for periodic modal polling.
+
+        This avoids recomputing the full expensive analysis each interval. Strategy:
+          1. Use cached precise distance / AI predictions if already computed earlier (stored in tracking_info).
+          2. Refresh ONLY current origin & destination point weather (plus one mid-point sample) to update
+             risk assessment and delay factor.
+          3. Derive updated ETA adjustment if shipment status indicates progress beyond original prediction.
+
+        Returns structure with keys: distance_km, ai_predictions, weather_points, risk, delivery_window, timestamp.
+        """
+        try:
+            origin = shipment.get('origin')
+            destination = shipment.get('destination')
+            # Normalize common suffixes for consistency across services
+            def _norm(n):
+                if not n: return n
+                return n.replace('Distribution Center','').replace('Warehouse','').strip()
+            origin_norm = _norm(origin)
+            destination_norm = _norm(destination)
+            transport_mode = shipment.get('transport_mode', 'road')
+            if not origin or not destination:
+                return {'error': 'missing_route'}
+
+            # Use cached AI route info if available; otherwise lightweight estimate
+            tracking = shipment.get('tracking_info', {}) or {}
+            cached_ai_route = tracking.get('ai_route_info') or {}
+            if isinstance(cached_ai_route, dict) and cached_ai_route.get('distance_km') and cached_ai_route.get('duration_hours'):
+                distance_km = cached_ai_route.get('distance_km')
+                ai_predictions = {
+                    'estimated_time_hours': cached_ai_route.get('duration_hours')
+                }
+            else:
+                base_route = self.get_distance_and_duration(origin_norm, destination_norm)
+                distance_km = base_route.get('distance_km')
+                ai_predictions = None
+
+            # Geocode origin/destination (cached inside helpers)
+            o_geo = self._geocode_place(origin_norm)
+            d_geo = self._geocode_place(destination_norm)
+            if not o_geo:
+                cc = self._city_coord(origin_norm)
+                if cc:
+                    o_geo = {'lat': cc[0], 'lon': cc[1], 'source': 'static'}
+            if not d_geo:
+                cc2 = self._city_coord(destination_norm)
+                if cc2:
+                    d_geo = {'lat': cc2[0], 'lon': cc2[1], 'source': 'static'}
+            weather_points = []
+            risk_level = 'unknown'
+            delay_factor = 1.0
+            if o_geo and d_geo:
+                # Generate weather points along the route based on transport mode
+                weather_points = self._generate_route_weather_points(
+                    o_geo, d_geo, origin_norm, destination_norm, transport_mode
+                )
+                
+                # Assess overall route conditions
+                summary = []
+                for p in weather_points:
+                    w = p.get('weather', {})
+                    if w and 'error' not in w:
+                        summary.append({
+                            'position': p['position'],
+                            'weather': w.get('weather'),
+                            'temp': w.get('temp_c'),
+                            'wind_speed': w.get('wind_speed'),
+                            'visibility': w.get('visibility')
+                        })
+                assess = self._assess_route_conditions(summary)
+                risk_level = assess.get('risk_level', 'low')
+                delay_factor = assess.get('delay_factor', 1.0)
+
+            # Compute dynamic remaining ETA based on progress percentage
+            progress_pct = tracking.get('progress_percentage') or 0
+            # Prefer cached AI route duration; then fall back to tracking legacy; then AI predictions
+            predicted_hours = (cached_ai_route.get('duration_hours') if isinstance(cached_ai_route, dict) else None) 
+            if not predicted_hours:
+                predicted_hours = (ai_predictions or {}).get('estimated_time_hours')
+            if not predicted_hours:
+                predicted_hours = tracking.get('ai_predicted_hours')
+
+            # If still missing, use base route duration (coords or internal)
+            if not predicted_hours:
+                predicted_hours = self.get_distance_and_duration(origin_norm, destination_norm).get('duration_hours')
+
+            # Air-specific refinement: if mode is air and distance is known, clamp to model window or compute
+            try:
+                if (shipment.get('transport_mode') or '').lower() == 'air' and distance_km:
+                    air_hours = self._estimate_air_hours(distance_km, likely_international=distance_km > 2000)
+                    if predicted_hours:
+                        lo, hi = 0.7 * air_hours, 1.6 * air_hours
+                        predicted_hours = float(min(max(predicted_hours, lo), hi))
+                    else:
+                        predicted_hours = air_hours
+            except Exception:
+                pass
+
+            # If progress is very low and tracking's hours look unrealistically high vs route, clamp to route-based duration
+            try:
+                route_based = None
+                if o_geo and d_geo:
+                    route_based = self.get_distance_and_duration_by_coords(o_geo['lat'], o_geo['lon'], d_geo['lat'], d_geo['lon']).get('duration_hours')
+                else:
+                    route_based = self.get_distance_and_duration(origin_norm, destination_norm).get('duration_hours')
+                if route_based and predicted_hours and progress_pct < 5 and predicted_hours > (route_based * 2.5):
+                    predicted_hours = route_based
+            except Exception:
+                pass
+            remaining_hours = None
+            if predicted_hours:
+                remaining_ratio = max(0.0, 1.0 - (progress_pct / 100.0))
+                remaining_hours = predicted_hours * remaining_ratio * delay_factor
+            delivery_window = self._calculate_delivery_window(remaining_hours) if remaining_hours else None
+
+            result = {
+                'shipment_id': shipment.get('id'),
+                'distance_km': distance_km,
+                'ai_predictions': ai_predictions,
+                'weather_points': weather_points,
+                'risk': {
+                    'risk_level': risk_level,
+                    'delay_factor': delay_factor
+                },
+                'remaining_hours': remaining_hours,
+                'delivery_window': delivery_window,
+                'timestamp': datetime.utcnow().isoformat() + 'Z'
+            }
+            if debug:
+                result['debug'] = {
+                    'origin_norm': origin_norm,
+                    'destination_norm': destination_norm,
+                    'o_geo': o_geo,
+                    'd_geo': d_geo,
+                    'distance_method': base_route.get('source'),
+                    'progress_pct': progress_pct,
+                    'predicted_hours_base': predicted_hours,
+                    'delay_factor': delay_factor
+                }
+            return result
+        except Exception as e:
+            return {'error': 'live_weather_failed', 'detail': str(e)}
+
+    # ----------------------------------
+    # Administrative helpers
+    # ----------------------------------
+    def clear_shipments(self) -> int:
+        """Delete all shipments (DB or in-memory). Returns number removed.
+
+        NOTE: This is a destructive helper intended for development/reset scenarios.
+        """
+        removed = 0
+        if self._has_db():
+            sess = self._session()
+            try:
+                removed = sess.query(ShipmentModel).delete()
+                sess.commit()
+            except Exception:
+                sess.rollback()
+                raise
+            finally:
+                sess.close()
+        else:
+            removed = len(self._mock_shipments)
+            self._mock_shipments.clear()
+        return removed
         total_distance = self._calculate_total_distance(route)
         return round(total_distance * 8 + len(route) * 200, 2)  # ₹8/km + ₹200/stop
 
     def _get_distance_between(self, origin: str, destination: str) -> float:
-        """Get distance between two cities"""
+        """Get distance between two cities with basic normalization.
+
+        Normalization strips common suffixes like 'Distribution Center', lowercases then title-cases
+        for lookup so that shipments with origins such as 'Bangalore Distribution Center' map to
+        the Bangalore key and avoid using the same fallback distance for all routes.
+        """
+
+        def norm(name: str) -> str:
+            if not name:
+                return name
+            cleaned = name.replace('Distribution Center', '').replace('Warehouse', '')
+            cleaned = cleaned.replace('Hub', '').strip()
+            # keep only first word for large composite names
+            if ' ' in cleaned:
+                parts = [p for p in cleaned.split() if p]
+                if len(parts) > 0:
+                    cleaned = parts[0]
+            # synonyms
+            if cleaned.lower() == 'bengaluru':
+                cleaned = 'Bangalore'
+            return cleaned.title()
+
+        o = norm(origin)
+        d = norm(destination)
 
         distance_map = {
             ('Bangalore', 'Mumbai'): 980,
@@ -1591,10 +2465,16 @@ Consider:
             ('Mumbai', 'Chennai'): 1340,
             ('Delhi', 'Chennai'): 2180,
             ('Delhi', 'Hyderabad'): 1580,
+            # Added extended routes for differentiation
+            ('Panaji', 'Bangalore'): 560,
+            ('Panaji', 'Mumbai'): 590,
+            ('Mumbai', 'London'): 7160,
+            ('Bangalore', 'London'): 8050,
+            ('Delhi', 'London'): 6700,
         }
 
-        key = (origin, destination)
-        reverse_key = (destination, origin)
+        key = (o, d)
+        reverse_key = (d, o)
 
         return distance_map.get(key) or distance_map.get(reverse_key, 500)
 
@@ -1774,3 +2654,204 @@ Consider:
                 }
             }
         ]
+    
+    def _generate_route_weather_points(self, o_geo: Dict, d_geo: Dict, origin_norm: str, destination_norm: str, transport_mode: str) -> List[Dict]:
+        """Generate weather points along the route based on transport mode"""
+        weather_points = []
+        
+        try:
+            # Define number of points based on transport mode (increased for better coverage)
+            if transport_mode == 'air':
+                # For air transport: more points for long-distance flights
+                num_points = 7
+                point_labels = ['Origin Airport', 'Departure Zone', 'Climb Route', 'Cruise Altitude', 'Descent Route', 'Approach Zone', 'Destination Airport']
+            elif transport_mode == 'sea':
+                # For sea transport: more points for ocean crossings
+                num_points = 6
+                point_labels = ['Origin Port', 'Departure Waters', 'Coastal Route', 'Open Waters', 'Approach Waters', 'Destination Port']
+            elif transport_mode == 'rail':
+                # For rail transport: include more intermediate stations
+                num_points = 6
+                point_labels = ['Origin Station', 'Regional Hub', 'Major Junction', 'Mid Route Station', 'Approach Terminal', 'Destination Station']
+            else:
+                # For road transport: more highway checkpoints
+                num_points = 6
+                point_labels = ['Origin', 'City Exit', 'Highway Route', 'Mid Route', 'Destination Approach', 'Destination']
+            
+            # Calculate intermediate points
+            lat_diff = d_geo['lat'] - o_geo['lat']
+            lon_diff = d_geo['lon'] - o_geo['lon']
+            
+            print(f"Generating {num_points} weather points for {transport_mode} route: {origin_norm} -> {destination_norm}")
+            
+            for i in range(num_points):
+                # Calculate position along the route (0 to 1)
+                ratio = i / (num_points - 1) if num_points > 1 else 0
+                
+                # Calculate coordinates
+                lat = o_geo['lat'] + (lat_diff * ratio)
+                lon = o_geo['lon'] + (lon_diff * ratio)
+                
+                # Determine location label
+                if i == 0:
+                    position = f"{origin_norm}"
+                    location_type = "origin"
+                elif i == num_points - 1:
+                    position = f"{destination_norm}"
+                    location_type = "destination"
+                else:
+                    position = point_labels[i] if i < len(point_labels) else f'Route Point {i+1}'
+                    location_type = "intermediate"
+                
+                # Try to get place name for intermediate points, fallback to coordinates
+                place_name = self._get_place_name_or_coordinates(lat, lon, position, transport_mode)
+                
+                # Always fetch weather data (will fallback to mock if needed)
+                weather_data = self.fetch_weather_by_coords(lat, lon)
+                
+                # Ensure weather data is valid
+                if not weather_data or 'error' in weather_data:
+                    print(f"Weather fetch failed for point {i+1}, using mock data")
+                    weather_data = self._get_mock_weather_coords(lat, lon)
+                
+                weather_point = {
+                    'position': place_name,
+                    'coordinates': {'lat': round(lat, 4), 'lon': round(lon, 4)},
+                    'location_type': location_type,
+                    'transport_context': point_labels[i] if i < len(point_labels) else f'Point {i+1}',
+                    'weather': weather_data
+                }
+                
+                weather_points.append(weather_point)
+                
+                # Debug print
+                temp = weather_data.get('temp_c', 'N/A')
+                condition = weather_data.get('weather', 'unknown')
+                print(f"  Point {i+1}/{num_points}: {place_name} - {condition} {temp}°C")
+            
+            print(f"Successfully generated {len(weather_points)} weather points")
+            
+        except Exception as e:
+            print(f"Error generating weather points: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Fallback: create guaranteed basic points with mock weather
+            print("Creating fallback weather points...")
+            weather_points = []
+            fallback_points = [
+                {'name': origin_norm, 'lat': o_geo.get('lat', 0), 'lon': o_geo.get('lon', 0), 'type': 'origin'},
+                {'name': f'Mid Route', 'lat': (o_geo.get('lat', 0) + d_geo.get('lat', 0))/2, 'lon': (o_geo.get('lon', 0) + d_geo.get('lon', 0))/2, 'type': 'intermediate'},
+                {'name': destination_norm, 'lat': d_geo.get('lat', 0), 'lon': d_geo.get('lon', 0), 'type': 'destination'}
+            ]
+            
+            for i, point in enumerate(fallback_points):
+                weather_points.append({
+                    'position': point['name'],
+                    'coordinates': {'lat': round(point['lat'], 4), 'lon': round(point['lon'], 4)},
+                    'location_type': point['type'],
+                    'transport_context': point['name'],
+                    'weather': self._get_mock_weather_coords(point['lat'], point['lon'])
+                })
+        
+        # Ensure we always return at least some weather points
+        if not weather_points:
+            print("No weather points generated, creating minimal fallback")
+            weather_points = [{
+                'position': f"{origin_norm} to {destination_norm}",
+                'coordinates': {'lat': 0, 'lon': 0},
+                'location_type': 'route',
+                'transport_context': 'Route',
+                'weather': self._get_mock_weather_coords(0, 0)
+            }]
+        
+        return weather_points
+    
+    def _get_place_name_or_coordinates(self, lat: float, lon: float, fallback_label: str, transport_mode: str) -> str:
+        """Get real place name for coordinates using reverse geocoding"""
+        try:
+            # First try to get real place name via reverse geocoding
+            real_place = self._reverse_geocode(lat, lon)
+            if real_place:
+                return real_place
+                
+            # Fallback to coordinate-based labels with context
+            if transport_mode == 'sea':
+                if abs(lat) < 60:  # Not polar regions
+                    lat_dir = 'N' if lat >= 0 else 'S'
+                    lon_dir = 'E' if lon >= 0 else 'W'
+                    return f"Ocean Point ({abs(lat):.1f}°{lat_dir}, {abs(lon):.1f}°{lon_dir})"
+                else:
+                    return f"Polar Waters ({lat:.1f}°, {lon:.1f}°)"
+            elif transport_mode == 'air':
+                lat_dir = 'N' if lat >= 0 else 'S'
+                lon_dir = 'E' if lon >= 0 else 'W'
+                return f"Airspace ({abs(lat):.1f}°{lat_dir}, {abs(lon):.1f}°{lon_dir})"
+            else:
+                # For road/rail, show nearby landmark or coordinates
+                lat_dir = 'N' if lat >= 0 else 'S'
+                lon_dir = 'E' if lon >= 0 else 'W'
+                return f"Route Point ({abs(lat):.1f}°{lat_dir}, {abs(lon):.1f}°{lon_dir})"
+        except Exception as e:
+            print(f"Error getting place name for {lat},{lon}: {e}")
+            return f"{fallback_label}"
+
+    def _reverse_geocode(self, lat: float, lon: float) -> Optional[str]:
+        """Get place name from coordinates using reverse geocoding"""
+        try:
+            cache_key = f"reverse_geocode_{lat:.3f}_{lon:.3f}"
+            
+            with self._cache_lock:
+                if cache_key in self._cache:
+                    return self._cache[cache_key]
+            
+            # Use Nominatim for reverse geocoding
+            url = "https://nominatim.openstreetmap.org/reverse"
+            params = {
+                'lat': lat,
+                'lon': lon,
+                'format': 'json',
+                'zoom': 10,  # City level
+                'addressdetails': 1
+            }
+            
+            headers = {'User-Agent': 'SCM-Logistics/1.0'}
+            response = requests.get(url, params=params, headers=headers, timeout=8)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data and 'display_name' in data:
+                    # Extract meaningful location parts
+                    address = data.get('address', {})
+                    
+                    # Priority order for location naming
+                    place_name = None
+                    if address.get('city'):
+                        place_name = address['city']
+                    elif address.get('town'):
+                        place_name = address['town']
+                    elif address.get('village'):
+                        place_name = address['village']
+                    elif address.get('county'):
+                        place_name = address['county']
+                    elif address.get('state'):
+                        place_name = address['state']
+                    
+                    # Add state for context if we have city
+                    if place_name and address.get('state') and place_name != address['state']:
+                        if len(place_name) + len(address['state']) < 25:  # Keep names reasonable
+                            place_name = f"{place_name}, {address['state']}"
+                    
+                    if place_name:
+                        with self._cache_lock:
+                            self._cache[cache_key] = place_name
+                        return place_name
+            
+            # Rate limiting - wait a bit between calls
+            import time
+            time.sleep(0.2)
+            
+        except Exception as e:
+            print(f"Reverse geocoding error for {lat},{lon}: {e}")
+        
+        return None

@@ -11,14 +11,14 @@ const TRANSPORT_MODES = [
 
 export default function NewShipmentForm({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
-    destination: '',
-    origin: 'Bangalore Distribution Center',
-    items: [{ description: '', quantity: 1, weight: 0 }],
+  destination: '',
+  origin: '',
+    items: [{ description: '', quantity: '', weight: '' }],
     selectedProvider: '',
     selectedMode: 'road',
-    priority: 'standard',
-    notes: '',
-    estimated_days: 4
+  priority: 'standard',
+  notes: '',
+  estimated_days: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -28,7 +28,7 @@ export default function NewShipmentForm({ onClose, onSuccess }) {
   const addItem = () => {
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, { description: '', quantity: 1, weight: 0 }]
+      items: [...prev.items, { description: '', quantity: '', weight: '' }]
     }));
   };
 
@@ -54,8 +54,8 @@ export default function NewShipmentForm({ onClose, onSuccess }) {
     setError(null);
 
     try {
-      const totalWeight = formData.items.reduce((sum, item) => sum + (item.weight || 0), 0);
-      const itemsCount = formData.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalWeight = formData.items.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
+  const itemsCount = formData.items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 0), 0);
       
       const payload = {
         destination: formData.destination,
@@ -65,9 +65,12 @@ export default function NewShipmentForm({ onClose, onSuccess }) {
         items: formData.items,
         notes: formData.notes,
         weight: totalWeight,
-        items_count: itemsCount,
-        estimated_days: formData.estimated_days
+        items_count: itemsCount
       };
+      // Include estimated_days only if user provided a value
+      if (formData.estimated_days !== '' && formData.estimated_days !== null && !Number.isNaN(formData.estimated_days)) {
+        payload.estimated_days = parseInt(formData.estimated_days, 10);
+      }
 
       const response = await axios.post('/api/logistics/shipments', payload);
       onSuccess(response.data);
@@ -96,7 +99,7 @@ export default function NewShipmentForm({ onClose, onSuccess }) {
 
         <form onSubmit={handleSubmit} className="p-6">
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded mb-4">
               {error}
             </div>
           )}
@@ -110,6 +113,7 @@ export default function NewShipmentForm({ onClose, onSuccess }) {
                   type="text"
                   value={formData.origin}
                   onChange={(e) => setFormData(prev => ({ ...prev, origin: e.target.value }))}
+                  placeholder="Enter origin address"
                   className="w-full px-3 py-2 bg-[--sidebar] border border-[--border] rounded-md focus:ring-2 focus:ring-[--primary] focus:border-transparent"
                   required
                 />
@@ -185,7 +189,7 @@ export default function NewShipmentForm({ onClose, onSuccess }) {
               <input
                 type="number"
                 value={formData.estimated_days}
-                onChange={(e) => setFormData(prev => ({ ...prev, estimated_days: parseInt(e.target.value) || 4 }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, estimated_days: e.target.value === '' ? '' : Math.max(1, Math.min(30, parseInt(e.target.value) || 0)) }))}
                 min="1"
                 max="30"
                 className="w-32 px-3 py-2 bg-[--sidebar] border border-[--border] rounded-md focus:ring-2 focus:ring-[--primary] focus:border-transparent"
@@ -215,7 +219,7 @@ export default function NewShipmentForm({ onClose, onSuccess }) {
                         type="text"
                         value={item.description}
                         onChange={(e) => updateItem(index, 'description', e.target.value)}
-                        placeholder="Item description"
+                        placeholder="Item name"
                         className="w-full px-3 py-2 bg-[--sidebar] border border-[--border] rounded-md"
                         required
                       />
@@ -224,8 +228,9 @@ export default function NewShipmentForm({ onClose, onSuccess }) {
                       <input
                         type="number"
                         value={item.quantity}
-                        onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value))}
+                        onChange={(e) => updateItem(index, 'quantity', e.target.value === '' ? '' : Math.max(1, parseInt(e.target.value, 10) || 0))}
                         min="1"
+                        placeholder="quantity"
                         className="w-full px-3 py-2 bg-[--sidebar] border border-[--border] rounded-md"
                         required
                       />
@@ -234,9 +239,10 @@ export default function NewShipmentForm({ onClose, onSuccess }) {
                       <input
                         type="number"
                         value={item.weight}
-                        onChange={(e) => updateItem(index, 'weight', parseFloat(e.target.value))}
+                        onChange={(e) => updateItem(index, 'weight', e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0))}
                         min="0"
                         step="0.1"
+                        placeholder="kg"
                         className="w-full px-3 py-2 bg-[--sidebar] border border-[--border] rounded-md"
                         required
                       />
@@ -245,7 +251,7 @@ export default function NewShipmentForm({ onClose, onSuccess }) {
                       <button
                         type="button"
                         onClick={() => removeItem(index)}
-                        className="text-red-500 hover:text-red-600 px-2"
+                        className="text-destructive hover:text-destructive/80 px-2"
                       >
                         <i className="fas fa-trash"></i>
                       </button>

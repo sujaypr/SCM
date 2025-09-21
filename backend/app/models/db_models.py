@@ -178,6 +178,9 @@ class Shipment(Base):
     shipping_cost = Column(Float, nullable=True)
     tracking_number = Column(String(100), nullable=True)
     carrier = Column(String(100), nullable=True)
+    # Newly added fields for mode & priority (kept nullable for backward compatibility)
+    transport_mode = Column(String(30), nullable=True, index=True)  # road, rail, air, sea
+    priority = Column(String(30), nullable=True, index=True)        # standard, express, urgent
 
     # Additional information
     special_instructions = Column(Text, nullable=True)

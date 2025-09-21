@@ -7,8 +7,6 @@ import ShipmentTracking from '../components/ShipmentTracking';
 
 import RouteOptimizer from '../components/RouteOptimizer';
 import RouteWeatherAnalysis from '../components/RouteWeatherAnalysis';
-import PreciseRouteAnalysis from '../components/PreciseRouteAnalysis';
-import PreciseRouteAnalysisSection from '../components/PreciseRouteAnalysisSection';
 import { exportToCSV, exportToExcel } from '../utils/exportUtils';
 
 const Logistics = () => {
@@ -26,7 +24,7 @@ const Logistics = () => {
   });
   const [showRouteOptimizer, setShowRouteOptimizer] = useState(false);
   const [showWeatherAnalysis, setShowWeatherAnalysis] = useState(false);
-  const [showPreciseAnalysis, setShowPreciseAnalysis] = useState(false);
+  
   const [weatherRoute, setWeatherRoute] = useState({ origin: '', destination: '' });
 
   // Click outside handler for export menu
@@ -98,11 +96,68 @@ const Logistics = () => {
     }
   };
 
+  // Compute On-Time Rate dynamically from current shipments list (client-side only)
+  // Includes a light predictive signal: "Out for Delivery" shipments with ETA within next 24h
+  const computedOnTimeRate = React.useMemo(() => {
+    if (!Array.isArray(shipments) || shipments.length === 0) return null;
+    const delivered = shipments.filter(s => s.status === 'Delivered');
+    let onTimeDelivered = 0;
+    for (const s of delivered) {
+      if (!s.actual_delivery || !s.eta) continue;
+      const actual = new Date(s.actual_delivery);
+      const eta = new Date(s.eta);
+      if (!isNaN(actual.getTime()) && !isNaN(eta.getTime()) && actual <= eta) {
+        onTimeDelivered += 1;
+      }
+    }
+
+    // Predictive: count OFD shipments due within 24h as likely on-time
+    const now = new Date();
+    const ofd = shipments.filter(s => s.status === 'Out for Delivery' && s.eta);
+    const predictedEligible = ofd.filter(s => {
+      const eta = new Date(s.eta);
+      if (isNaN(eta.getTime())) return false;
+      const hoursToEta = (eta.getTime() - now.getTime()) / (1000 * 60 * 60);
+      return hoursToEta >= 0 && hoursToEta <= 24;
+    }).length;
+
+    const denom = delivered.length + predictedEligible;
+    if (denom === 0) return 0;
+    const num = onTimeDelivered + predictedEligible;
+    return Math.round((num / denom) * 100);
+  }, [shipments]);
+
+  // New: dedicated stats for dashboard cards
+  const [stats, setStats] = React.useState(null);
+  const fetchStats = async () => {
+    try {
+      const resp = await fetch('/api/logistics/shipments/stats');
+      const json = await resp.json();
+      if (json.success) setStats(json.stats);
+    } catch (e) {
+      console.error('Error fetching shipment stats:', e);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchStats();
+  }, []);
+
+  // Periodic refresh for progress auto-updates
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      fetchShipments();
+      fetchStats();
+    }, 60000); // 60s
+    return () => clearInterval(interval);
+  }, []);
+
   const getStatusColor = (status) => {
     switch(status.toLowerCase()) {
       case 'delivered': return 'green';
       case 'in transit': return 'blue';
       case 'processing': return 'orange';
+      case 'delayed': return 'yellow';
       case 'cancelled': return 'red';
       default: return 'gray';
     }
@@ -111,41 +166,38 @@ const Logistics = () => {
   return (
     <div className="max-w-[1100px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6">
       <div className="mb-8 text-center">
-        <h2 className="font-semibold text-[28px] mb-2">
+        <h2 className="font-semibold text-2xl mb-2">
           <i className="fas fa-truck mr-2 text-[--primary]"></i>
           Logistics Management
         </h2>
-        <p className="text-[--muted-foreground] text-base">Track and manage your shipments and deliveries</p>
+        <p className="text-[--muted-foreground] text-sm">Track and manage your shipments and deliveries</p>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+  <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6">
         <div className="text-center p-5 rounded-[var(--radius)] border border-[--border] bg-[--sidebar] hover:shadow-md transition-shadow">
-          <div className="text-2xl text-[--primary] mb-2"><i className="fas fa-box"></i></div>
+          <div className="text-xl text-[--primary] mb-2"><i className="fas fa-box"></i></div>
           <h3 className="text-[--foreground] font-medium mb-2">Total Shipments</h3>
-          <div className="text-xl font-semibold text-[--foreground]">{analytics?.total_shipments || shipments.length}</div>
+          <div className="text-lg font-semibold text-[--foreground]">{stats?.total_shipments ?? shipments.length}</div>
           <div className="text-xs text-[--muted-foreground] mt-1">Active shipments</div>
         </div>
 
         <div className="text-center p-5 rounded-[var(--radius)] border border-[--border] bg-[--sidebar] hover:shadow-md transition-shadow">
-          <div className="text-2xl text-[--chart-2] mb-2"><i className="fas fa-shipping-fast"></i></div>
+          <div className="text-xl text-[--chart-2] mb-2"><i className="fas fa-shipping-fast"></i></div>
           <h3 className="text-[--foreground] font-medium mb-2">In Transit</h3>
-          <div className="text-xl font-semibold text-[--chart-2]">{analytics?.status_breakdown?.['In Transit'] || shipments.filter(s => s.status === 'In Transit').length}</div>
+          <div className="text-lg font-semibold text-[--chart-2]">{stats?.in_transit ?? shipments.filter(s => s.status === 'In Transit').length}</div>
           <div className="text-xs text-[--muted-foreground] mt-1">Currently shipping</div>
         </div>
 
         <div className="text-center p-5 rounded-[var(--radius)] border border-[--border] bg-[--sidebar] hover:shadow-md transition-shadow">
-          <div className="text-2xl text-[--chart-3] mb-2"><i className="fas fa-check-circle"></i></div>
+          <div className="text-xl text-[--chart-3] mb-2"><i className="fas fa-check-circle"></i></div>
           <h3 className="text-[--foreground] font-medium mb-2">On-Time Rate</h3>
-          <div className="text-xl font-semibold text-[--chart-3]">{analytics?.on_time_delivery_rate || 95}%</div>
-          <div className="text-xs text-[--muted-foreground] mt-1">Delivery performance</div>
+          <div className="text-lg font-semibold text-[--chart-3]">
+            {computedOnTimeRate !== null ? `${computedOnTimeRate}%` : '—'}
+          </div>
+          <div className="text-xs text-[--muted-foreground] mt-1">Delivery performance (incl. predicted OFD)</div>
         </div>
 
-        <div className="text-center p-5 rounded-[var(--radius)] border border-[--border] bg-[--sidebar] hover:shadow-md transition-shadow">
-          <div className="text-2xl text-[--primary] mb-2"><i className="fas fa-clock"></i></div>
-          <h3 className="text-[--foreground] font-medium mb-2">Avg Delivery Time</h3>
-          <div className="text-xl font-semibold text-[--foreground]">{analytics?.average_delivery_time_days || 4.2} days</div>
-          <div className="text-xs text-[--muted-foreground] mt-1">Average duration</div>
-        </div>
+        {/** Removed Avg Delivery Time card per request */}
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
@@ -254,21 +306,7 @@ const Logistics = () => {
             className="px-4 py-2 rounded-md bg-[--primary] text-[--primary-foreground] hover:opacity-90 transition-opacity">
             <i className="fas fa-plus mr-2"></i>New Shipment
           </button>
-          
-          <button 
-            onClick={() => setShowRouteOptimizer(true)} 
-            className="px-4 py-2 rounded-md border border-[--border] hover:bg-[--sidebar] transition-colors">
-            <i className="fas fa-route mr-2"></i>Optimize Routes
-          </button>
-          
-          <button 
-            onClick={() => {
-              setWeatherRoute({ origin: 'Bangalore', destination: 'Mumbai' });
-              setShowWeatherAnalysis(true);
-            }} 
-            className="px-4 py-2 rounded-md border border-[--border] hover:bg-[--sidebar] transition-colors">
-            <i className="fas fa-cloud-sun mr-2"></i>Weather Analysis
-          </button>
+          {/* Removed Optimize Routes & Weather Analysis buttons per request */}
         </div>
       </div>
 
@@ -292,7 +330,7 @@ const Logistics = () => {
             </thead>
             <tbody>
               {shipments.map(shipment => {
-                const progress = shipment.tracking_info?.progress_percentage || 0;
+                const progress = shipment.status === 'Delivered' ? 100 : (shipment.tracking_info?.progress_percentage || 0);
                 return (
                   <tr key={shipment.id} className="hover:bg-[--muted]/50 transition-colors">
                     <td className="p-4 border-b border-[--muted] text-[--foreground]">
@@ -308,10 +346,11 @@ const Logistics = () => {
                     </td>
                     <td className="p-4 border-b border-[--muted]">
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold uppercase ${
-                        getStatusColor(shipment.status) === 'green' ? 'bg-green-100 text-green-600' : 
-                        getStatusColor(shipment.status) === 'blue' ? 'bg-blue-100 text-blue-600' : 
-                        getStatusColor(shipment.status) === 'orange' ? 'bg-orange-100 text-orange-500' : 
-                        'bg-red-100 text-red-600'
+                        getStatusColor(shipment.status) === 'green' ? 'bg-success/10 text-success' :
+                        getStatusColor(shipment.status) === 'blue' ? 'bg-info/10 text-info' :
+                        getStatusColor(shipment.status) === 'orange' ? 'bg-warning/10 text-warning' :
+                        getStatusColor(shipment.status) === 'yellow' ? 'bg-warning/10 text-warning' :
+                        'bg-destructive/10 text-destructive'
                       }`}>
                         {shipment.status}
                       </span>
@@ -329,9 +368,9 @@ const Logistics = () => {
                     </td>
                     <td className="p-4 border-b border-[--muted] text-[--foreground]">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        shipment.priority === 'urgent' ? 'bg-red-100 text-red-600' :
-                        shipment.priority === 'express' ? 'bg-yellow-100 text-yellow-600' :
-                        'bg-gray-100 text-gray-600'
+                        shipment.priority === 'urgent' ? 'bg-destructive/10 text-destructive' :
+                        shipment.priority === 'express' ? 'bg-warning/10 text-warning' :
+                        'bg-muted text-muted-foreground'
                       }`}>
                         {shipment.priority || 'standard'}
                       </span>
@@ -352,7 +391,7 @@ const Logistics = () => {
                     <td className="p-4 border-b border-[--muted] text-[--foreground]">
                       <div className="text-sm">{shipment.eta}</div>
                       {shipment.actual_delivery && (
-                        <div className="text-xs text-green-600">Delivered: {shipment.actual_delivery}</div>
+                        <div className="text-xs text-success">Delivered: {shipment.actual_delivery}</div>
                       )}
                     </td>
                     <td className="p-4 border-b border-[--muted] text-[--foreground]">
@@ -366,8 +405,7 @@ const Logistics = () => {
                             ...shipment,
                             tracking_id: shipment.id,
                             provider: 'FastFreight Ltd.',
-                            route: [[20.5937, 78.9629], [12.9716, 77.5946]],
-                            current_location: [15.5937, 78.2629],
+                            // Let ShipmentTracking fetch real route points and determine current location
                             current_location_name: shipment.tracking_info?.location || 'In Transit',
                             status_updates: shipment.tracking_info?.status_history || []
                           })} 
@@ -380,15 +418,12 @@ const Logistics = () => {
                             setWeatherRoute({ origin: shipment.origin, destination: shipment.destination, shipmentId: shipment.id });
                             setShowWeatherAnalysis(true);
                           }}
-                          className="px-3 py-1 rounded bg-blue-500 text-white text-sm hover:opacity-90 transition-opacity"
+                          className="px-3 py-1 rounded bg-info text-info-foreground text-sm hover:opacity-90 transition-opacity"
                           title="Analyze route weather"
                         >
                           <i className="fas fa-cloud-sun mr-1"></i>Weather
                         </button>
                         
-                        <button className="px-3 py-1 rounded bg-[--primary] text-[--primary-foreground] text-sm hover:opacity-90 transition-opacity">
-                          <i className="fas fa-info-circle mr-1"></i>Details
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -408,28 +443,18 @@ const Logistics = () => {
       </div>
 
       {/* Weather & News Section */}
-      {/* Precise Route Analysis Section */}
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold mb-4 flex items-center">
-          <i className="fas fa-calculator mr-2 text-[--primary]"></i>
-          Precise Route Analysis
-        </h3>
-        <div className="bg-[--sidebar] p-6 rounded-lg border border-[--border]">
-          <PreciseRouteAnalysisSection />
-        </div>
-      </div>
 
 
 
 
 
       {shipments.length === 0 && !loading && (
-        <div className="text-center p-12 text-[--muted-foreground]">
+        <div className="text-center p-10 text-[--muted-foreground]">
           <div className="mb-4">
-            <i className="fas fa-shipping-fast text-4xl text-[--muted-foreground] mb-4"></i>
+            <i className="fas fa-shipping-fast text-3xl text-[--muted-foreground] mb-3"></i>
           </div>
-          <h3 className="mb-2 text-[--foreground] text-xl">No shipments found</h3>
-          <p className="mb-4">Create your first shipment to start tracking deliveries</p>
+          <h3 className="mb-2 text-[--foreground] text-lg">No shipments found</h3>
+          <p className="mb-4 text-sm">Create your first shipment to start tracking deliveries</p>
           <button 
             onClick={() => setShowNewShipmentForm(true)}
             className="px-6 py-3 rounded-md bg-[--primary] text-[--primary-foreground] hover:opacity-90 transition-opacity"
@@ -445,6 +470,7 @@ const Logistics = () => {
           onSuccess={(newShipment) => {
             fetchShipments();
             fetchAnalytics();
+            fetchStats();
             setShowNewShipmentForm(false);
           }}
         />
@@ -472,11 +498,7 @@ const Logistics = () => {
         />
       )}
 
-      {showPreciseAnalysis && (
-        <PreciseRouteAnalysis 
-          onClose={() => setShowPreciseAnalysis(false)}
-        />
-      )}
+      
     </div>
   );
 };

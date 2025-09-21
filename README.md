@@ -1,9 +1,15 @@
-<<<<<<< HEAD
-# AI Supply Chain Management Platform - Technical Documentation
+# AI Supply Chain Management Platform – Technical Documentation
+
+> AI-powered demand forecasting, inventory optimization, logistics, and scenario analysis tailored for Indian MSME retail businesses.
 
 ## 🎯 Project Overview
 
-The AI Supply Chain Management Platform is a comprehensive solution designed specifically for Indian retail businesses. It leverages Google's Gemini 2.5 Pro AI to provide intelligent demand forecasting, inventory optimization, and supply chain management tailored to the Indian market's unique characteristics.
+The AI Supply Chain Management Platform is a full‑stack solution for Indian retail & MSME enterprises. It leverages Google's Gemini 2.5 Pro AI (with graceful fallbacks) plus domain heuristics for:
+- Demand forecasting (festival, seasonal, product demand segmentation)
+- Inventory health & replenishment insights
+- Logistics planning (route estimation, mode selection, shipment tracking)
+- Scenario / what‑if analysis
+- Reporting & export (PDF / XLSX)
 
 ## 🏗️ Architecture Overview
 
@@ -45,9 +51,9 @@ The AI Supply Chain Management Platform is a comprehensive solution designed spe
 
 **Infrastructure:**
 - Docker containerization
-- Nginx reverse proxy
-- Redis for caching
-- PostgreSQL for production
+- (Planned) Nginx reverse proxy
+- (Planned) Redis for caching
+- SQLite for development; PostgreSQL recommended for production
 
 ## 📊 Data Models
 
@@ -83,13 +89,13 @@ The AI Supply Chain Management Platform is a comprehensive solution designed spe
 - **Seasonal Adjustments**: Monsoon, winter, summer variations
 - **Cultural Context**: Wedding seasons, harvest periods
 
-### Fallback System
+### Fallback & Deterministic Behavior
 
-When Gemini API is unavailable:
-- Statistical models using historical patterns
-- Rule-based festival impact calculations
-- Seasonal multipliers for different business types
-- Confidence scoring for prediction reliability
+When Gemini API is not available (missing key or in test mode) the platform uses:
+- Lightweight deterministic heuristics (hash‑seeded stable scores)
+- Synthetic seasonal, festival & product demand synthesis
+- Rule‑based uplift factors for scale, season, festival impact
+- Normalization utilities (`normalize_tabbed_forecast`) for consistent UI shape
 
 ## 🛠️ Development Setup
 
@@ -389,22 +395,24 @@ pytest app/tests/test_integration.py -v
 
 ---
 
-## � Logistics Integrations (new)
+## 🚚 Logistics Integrations (New)
 
-This project now includes a lightweight logistics feature with the following integrations:
+Lightweight logistics & routing assists operations teams:
+- News (NewsAPI‑compatible) for incident detection / advisories
+- Weather (OpenWeatherMap) for weather‑aware mode recommendation
+- Optional routing: OpenRouteService (ORS) for realistic distance/duration
+- Interactive Map (Leaflet + react‑leaflet) for origin/destination selection
 
-- News (NewsAPI-compatible) for incident detection and route advisories
-- Weather (OpenWeatherMap) for route/weather-based transport decisions
-- Optional routing/distance via OpenRouteService (ORS) for accurate distances/durations
-- Frontend Map UI (Leaflet) to select origin/destination
+### Environment Variables (logistics)
+Configure in `.env` (see `.env.example`). No secrets should be hardcoded in code.
+- `NEWS_API_KEY` – News API key (or compatible proxy)
+- `OPENWEATHER_API_KEY` – OpenWeather / Open‑Meteo key
+- `ORS_API_KEY` – (Optional) OpenRouteService key for improved routing
+- `GEMINI_API_KEY` – Required for AI features (Gemini 2.5 Pro)
 
-Environment variables (set these in your `.env` or environment):
+> NOTE: The previous version of the code contained placeholder keys in `logistics_service.py`. These should be removed in production to avoid accidental leakage. Current code now expects values via environment only.
 
-- NEWS_API_KEY - API key for NewsAPI-compatible service (default provided for development)
-- WEATHER_API_KEY - API key for OpenWeatherMap (default provided for development)
-- ORS_API_KEY - (optional) API key for OpenRouteService to enable driving distance/duration
-
-Running locally:
+### Running Locally (Backend + Frontend)
 
 1. Backend (from repository root):
 ```powershell
@@ -436,9 +444,9 @@ Notes:
 - Use `ORS_API_KEY` for better distance/duration via OpenRouteService.
 
 
-## �📄 License
+## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License – see `LICENSE` (to be added if missing).
 
 ## 🙏 Acknowledgments
 
@@ -452,8 +460,55 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 **Made with ❤️ for Indian Retail Businesses**
 
 *Empowering MSME retailers with AI-driven insights and intelligent automation.*
-=======
-# AI Supply Chain Management Platform - Technical Documentation
+
+---
+
+<!-- Merge conflict markers removed. This README unified both versions and logistics additions. -->
+<!-- Keep documentation DRY: docs/README.md holds marketing style overview; root README focuses on technicals. -->
+
+## 🔧 Development Quick Reference (Windows PowerShell)
+
+```powershell
+# Clone & enter
+git clone <your-fork-url> ai-supplychain
+cd ai-supplychain
+
+# Copy env template
+copy .env.example .env
+# Edit .env and add keys
+
+# Backend
+cd backend
+python -m venv venv
+venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m uvicorn app.main:app --reload --port 8000
+
+# Frontend (new terminal at repo root)
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## ✅ Pending / Suggested Improvements
+
+| Area | Recommendation |
+|------|----------------|
+| Security | Remove any placeholder API keys from source (done for logistics). |
+| Config | Add `LICENSE` and ensure `.env.example` is authoritative. |
+| Testing | Increase backend unit coverage for logistics + demand heuristics; add frontend component tests (React Testing Library). |
+| CI/CD | Add GitHub Actions: lint, test matrix (py 3.11), frontend build. |
+| Caching | Introduce Redis caching layer for festival calendar + geocoding. |
+| DB | Provide migrations via Alembic (generate initial revision). |
+| Observability | Add Prometheus metrics endpoint & request logging middleware. |
+| Auth | Implement JWT auth & role claims; protect write endpoints. |
+| Frontend | Replace template README with project specifics (updated). |
+| Docs | Auto-generate OpenAPI client or publish Swagger UI link. |
+
+See `docs/README.md` for expanded narrative overview.
+*** End Patch
 
 ## 🎯 Project Overview
 

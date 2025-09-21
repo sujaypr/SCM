@@ -37,7 +37,7 @@ const Dashboard = () => {
           <div>
             <h3 className="text-2xl text-[--foreground] mb-1">₹{(stats.totalSales / 100000).toFixed(1)}L</h3>
             <p className="text-[--muted-foreground] text-sm mb-1">Total Sales (Monthly)</p>
-            <span className="text-green-600 bg-green-100 px-2 py-0.5 rounded-full text-xs font-semibold">+12.5%</span>
+            <span className="text-success bg-success/10 px-2 py-0.5 rounded-full text-xs font-semibold">+12.5%</span>
           </div>
         </div>
 
@@ -48,7 +48,7 @@ const Dashboard = () => {
           <div>
             <h3 className="text-2xl text-[--foreground] mb-1">{stats.forecastAccuracy}%</h3>
             <p className="text-[--muted-foreground] text-sm mb-1">Forecast Accuracy</p>
-            <span className="text-green-600 bg-green-100 px-2 py-0.5 rounded-full text-xs font-semibold">+8.2%</span>
+            <span className="text-success bg-success/10 px-2 py-0.5 rounded-full text-xs font-semibold">+8.2%</span>
           </div>
         </div>
 
@@ -59,7 +59,7 @@ const Dashboard = () => {
           <div>
             <h3 className="text-2xl text-[--foreground] mb-1">{stats.inventoryTurnover}</h3>
             <p className="text-[--muted-foreground] text-sm mb-1">Inventory Turnover</p>
-            <span className="text-green-600 bg-green-100 px-2 py-0.5 rounded-full text-xs font-semibold">+15.3%</span>
+            <span className="text-success bg-success/10 px-2 py-0.5 rounded-full text-xs font-semibold">+15.3%</span>
           </div>
         </div>
 
