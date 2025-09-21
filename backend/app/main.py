@@ -32,10 +32,7 @@ async def lifespan(app: FastAPI):
 
     # Expose AI availability flag for tests and runtime behavior
     try:
-        from app.utils.config import get_config as _get_cfg
-
-        _cfg = _get_cfg()
-        app.state.gemini_available = bool(_cfg.gemini_api_key)
+        app.state.gemini_available = bool(os.getenv("GEMINI_API_KEY"))
     except Exception:
         app.state.gemini_available = False
 

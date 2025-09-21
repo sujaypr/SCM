@@ -20,6 +20,8 @@ import { Bar, Pie, Line } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, LineElement, PointElement, TimeScale, Filler, Title, ChartTooltip, ChartLegend, ChartDataLabels);
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').trim().replace(/\/$/, '');
+console.log('API_BASE:', API_BASE);
 
 const bottomLabelsPlugin = {
   id: 'bottomLabels',
@@ -94,12 +96,23 @@ const festivalGuidesPlugin = {
 ChartJS.register(festivalGuidesPlugin);
 
 const SuggestionPanel = ({ suggestions }) => {
-  const items = Array.isArray(suggestions) ? suggestions.slice(0, 4) : [];
+  const raw = Array.isArray(suggestions) ? suggestions.slice(0, 4) : [];
+  const items = raw.map((s) => {
+    if (s == null) return '';
+    if (typeof s === 'string') return s;
+    // Common shapes: { suggestion: '...' } or { text: '...' }
+    if (typeof s === 'object') {
+      if (typeof s.suggestion === 'string') return s.suggestion;
+      if (typeof s.text === 'string') return s.text;
+      try { return JSON.stringify(s); } catch { return String(s); }
+    }
+    return String(s);
+  });
   return (
     <div>
       <ul className="list-disc pl-5 space-y-2">
-        {items.map((s, i) => (
-          <li key={i}>{s}</li>
+        {items.map((t, i) => (
+          <li key={i}>{t}</li>
         ))}
       </ul>
     </div>
@@ -446,7 +459,7 @@ const DemandForecasting = () => {
     setError(null);
     window.dispatchEvent(new Event('demandForecast:loading'));
     try {
-      const response = await fetch('/api/demand/forecast', {
+  const response = await fetch(`${API_BASE}/demand/forecast`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...businessInfo, forecastPeriod: period })
@@ -456,7 +469,7 @@ const DemandForecasting = () => {
         setForecast(result.forecast);
   try { if (result.forecastId) sessionStorage.setItem('lastForecastId', String(result.forecastId)); } catch { /* ignore storage */ }
         try {
-          const h = await fetch('/api/demand/forecast-history?limit=10');
+          const h = await fetch(`${API_BASE}/demand/forecast-history?limit=10`);
           const hist = await h.json().catch(() => ({}));
           const items = Array.isArray(hist?.history) ? hist.history : [];
           const sorted = [...items].sort((a, b) => {
@@ -488,7 +501,7 @@ const DemandForecasting = () => {
     setSelectedId(String(id));
     setOverlayLoading(true);
     try {
-      const resp = await fetch(`/api/demand/forecast/${id}`);
+  const resp = await fetch(`${API_BASE}/demand/forecast/${id}`);
       const data = await resp.json();
       if (data?.success && data?.forecast) {
         setForecast(data.forecast);
@@ -517,7 +530,7 @@ const DemandForecasting = () => {
       try {
         setLoading(true);
         setError(null);
-        const h = await fetch('/api/demand/forecast-history?limit=10');
+  const h = await fetch(`${API_BASE}/demand/forecast-history?limit=10`);
         const hist = await h.json().catch(() => ({}));
         const items = Array.isArray(hist?.history) ? hist.history : [];
         const sorted = [...items].sort((a, b) => {

@@ -1,27 +1,26 @@
 import os
 from typing import Dict, Any
 import google.generativeai as genai
-from app.utils.config import get_config
 
 
 class GeminiAIModel:
 
     def __init__(self):
-        self.config = get_config()
         self.model = None
         self._initialize_client()
 
     def _initialize_client(self):
         try:
-            api_key = self.config.gemini_api_key
+            api_key = os.getenv("GEMINI_API_KEY")
             if not api_key:
                 print("Warning: GEMINI_API_KEY not found in config or environment")
                 print("AI features will use statistical fallback models")
                 return
 
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel("gemini-2.5-pro")
-            print("Gemini 2.5 Pro AI client initialized successfully")
+            model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+            self.model = genai.GenerativeModel(model_name)
+            # print("Gemini 2.5 Pro AI client initialized successfully")
 
         except Exception as e:
             print(f"Error initializing Gemini client: {e}")
