@@ -418,10 +418,10 @@ const Logistics = () => {
                             setWeatherRoute({ origin: shipment.origin, destination: shipment.destination, shipmentId: shipment.id });
                             setShowWeatherAnalysis(true);
                           }}
-                          className="px-3 py-1 rounded bg-info text-info-foreground text-sm hover:opacity-90 transition-opacity"
-                          title="Analyze route weather"
+                          className="px-3 py-1 rounded bg-[--primary] text-[--primary-foreground] text-sm hover:opacity-90 transition-opacity"
+                          title="View details"
                         >
-                          <i className="fas fa-cloud-sun mr-1"></i>Weather
+                          <i className="fas fa-info-circle mr-1"></i>Details
                         </button>
                         
                       </div>

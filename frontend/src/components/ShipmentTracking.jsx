@@ -315,8 +315,8 @@ export default function ShipmentTracking({
   };
 
   return (
-    <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${className}`}>
-      <div className="bg-[--background] rounded-lg shadow-xl w-full max-w-6xl mx-4 max-h-[90vh] flex flex-col">
+    <div className={`fixed inset-y-0 right-0 left-0 lg:left-[280px] bg-black/50 flex items-center justify-center z-[1200] ${className}`}>
+      <div className="bg-[--background] rounded-lg shadow-xl w-full max-w-6xl mx-4 lg:mx-6 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[--border] flex items-center justify-between">
           <div>

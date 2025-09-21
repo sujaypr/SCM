@@ -232,8 +232,8 @@ const RouteWeatherAnalysis = ({ origin, destination, shipmentId, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]" style={{left: 0, right: 0, top: 0, bottom: 0}}>
-      <div className="bg-[--background] rounded-lg shadow-xl w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000]">
+    <div className="fixed inset-y-0 right-0 left-0 lg:left-[280px] bg-black/50 flex items-center justify-center z-[1200]" style={{left: undefined, right: 0, top: 0, bottom: 0}}>
+      <div className="bg-[--background] rounded-lg shadow-xl w-full max-w-6xl mx-4 lg:mx-6 max-h-[90vh] overflow-y-auto relative z-[1300]">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[--border] flex items-center justify-between">
           <div>

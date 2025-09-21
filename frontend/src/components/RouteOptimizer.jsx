@@ -65,7 +65,7 @@ const RouteOptimizer = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div className="fixed inset-y-0 right-0 left-0 lg:left-[280px] bg-black/50 flex items-center justify-center z-[1200]">
       <div className="bg-[--background] rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[--border] flex items-center justify-between">
