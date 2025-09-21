@@ -20,6 +20,8 @@ import { Bar, Pie, Line } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, LineElement, PointElement, TimeScale, Filler, Title, ChartTooltip, ChartLegend, ChartDataLabels);
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').trim().replace(/\/$/, '');
+console.log('API_BASE:', API_BASE);
 
 const bottomLabelsPlugin = {
   id: 'bottomLabels',
@@ -446,7 +448,7 @@ const DemandForecasting = () => {
     setError(null);
     window.dispatchEvent(new Event('demandForecast:loading'));
     try {
-      const response = await fetch('/api/demand/forecast', {
+  const response = await fetch(`${API_BASE}/demand/forecast`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...businessInfo, forecastPeriod: period })
@@ -456,7 +458,7 @@ const DemandForecasting = () => {
         setForecast(result.forecast);
   try { if (result.forecastId) sessionStorage.setItem('lastForecastId', String(result.forecastId)); } catch { /* ignore storage */ }
         try {
-          const h = await fetch('/api/demand/forecast-history?limit=10');
+          const h = await fetch(`${API_BASE}/demand/forecast-history?limit=10`);
           const hist = await h.json().catch(() => ({}));
           const items = Array.isArray(hist?.history) ? hist.history : [];
           const sorted = [...items].sort((a, b) => {
@@ -488,7 +490,7 @@ const DemandForecasting = () => {
     setSelectedId(String(id));
     setOverlayLoading(true);
     try {
-      const resp = await fetch(`/api/demand/forecast/${id}`);
+  const resp = await fetch(`${API_BASE}/demand/forecast/${id}`);
       const data = await resp.json();
       if (data?.success && data?.forecast) {
         setForecast(data.forecast);
@@ -517,7 +519,7 @@ const DemandForecasting = () => {
       try {
         setLoading(true);
         setError(null);
-        const h = await fetch('/api/demand/forecast-history?limit=10');
+  const h = await fetch(`${API_BASE}/demand/forecast-history?limit=10`);
         const hist = await h.json().catch(() => ({}));
         const items = Array.isArray(hist?.history) ? hist.history : [];
         const sorted = [...items].sort((a, b) => {
