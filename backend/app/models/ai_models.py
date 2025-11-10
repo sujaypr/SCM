@@ -36,12 +36,17 @@ class GeminiAIModel:
             raise RuntimeError("Gemini model not available")
 
         try:
+            print(f"🤖 Generating AI forecast with Gemini...")
             prompt = self._prepare_gemini_prompt(context)
+            print(f"📝 Prompt length: {len(prompt)} characters")
             response = self.model.generate_content(prompt)
+            print(f"✅ Received response from Gemini API")
             forecast_data = self._parse_gemini_response(response.text, context)
+            print(f"✅ Successfully parsed forecast data")
             return forecast_data
 
         except Exception as e:
+            print(f"❌ Error generating Gemini forecast: {e}")
             raise RuntimeError(f"Error generating Gemini forecast: {e}")
 
     def _prepare_gemini_prompt(self, context: Dict[str, Any]) -> str:

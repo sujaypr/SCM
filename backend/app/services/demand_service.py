@@ -79,59 +79,6 @@ class DemandService:
             end = end - timedelta(days=1)
         return end
 
-    async def get_actionable_suggestions(
-        self, business_data: Dict[str, Any]
-    ) -> List[str]:
-        """Return 3-4 actionable suggestions to meet forecasted demand."""
-        try:
-            context = self._prepare_forecast_context(business_data)
-            top_products = business_data.get("topProducts") or []
-            prompt = (
-                "You are an Indian retail operations expert. Given the business context and optionally a list of top-demand products, "
-                "return ONLY a JSON array of 3-4 short, concrete suggestions (each 12-18 words) to meet demand. "
-                "Focus on inventory, procurement, supplier coordination, staffing, and marketing timing."
-                f"\nBusiness Context: {context}\nTop Products: {top_products}"
-            )
-            # Avoid external calls during tests
-            import os
-
-            if os.getenv("PYTEST_CURRENT_TEST"):
-                raise RuntimeError("skip external AI in tests")
-
-            if self.ai_model and getattr(self.ai_model, "model", None):
-                loop = asyncio.get_event_loop()
-                response = await loop.run_in_executor(
-                    None, self.ai_model.model.generate_content, prompt
-                )
-                text = getattr(response, "text", "")
-                import json
-
-                try:
-                    start = text.find("[")
-                    end = text.rfind("]") + 1
-                    return json.loads(text[start:end])[:4]
-                except Exception:
-                    items = [
-                        s.strip("-• ").strip() for s in text.split("\n") if s.strip()
-                    ]
-                    return [i for i in items if len(i) > 0][
-                        :4
-                    ] or self._fallback_suggestions(business_data)
-        except Exception:
-            pass
-
-        return self._fallback_suggestions(business_data)
-
-    def _fallback_suggestions(self, business_data: Dict[str, Any]) -> List[str]:
-        bt = business_data.get("businessType", "Retail")
-        loc = business_data.get("location", "your region")
-        return [
-            f"Pre-book priority {bt.lower()} inventory with two suppliers; stagger deliveries across 3 weeks.",
-            "Increase safety stock for top 5 SKUs by 25-35% during peak window.",
-            f"Run {loc} geo-targeted offers 10 days before peak; bundle top products smartly.",
-            "Extend store hours and add 1-2 temp staff for weekend surges.",
-        ]
-
     async def generate_tabbed_forecast(
         self, business_data: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -144,40 +91,23 @@ class DemandService:
             print(f"Forecast generation error: {e}")
             raise
 
-        # Enforce model-provided outputs; no service fallbacks (except in tests)
-        import os as _os
-        _is_test = bool(_os.getenv("PYTEST_CURRENT_TEST"))
-
         product_demands = forecast_data.get("product_demands")
         festival_demands = forecast_data.get("festival_demands")
         seasonal_demands = forecast_data.get("seasonal_demands")
 
-        if (not isinstance(product_demands, list) or len(product_demands) == 0):
-            if _is_test:
-                product_demands = self._get_top_product_demands(business_data)
-            else:
-                raise ValueError("AI output missing product_demands")
+        if not isinstance(product_demands, list) or len(product_demands) == 0:
+            raise ValueError("AI output missing product_demands")
 
         if not (isinstance(festival_demands, dict) and isinstance(festival_demands.get("chart"), list) and len(festival_demands["chart"]) > 0):
-            if _is_test:
-                fest_chart, fest_top_items = self._synth_festival_demands(business_data)
-                festival_demands = {"chart": fest_chart, "top_items": fest_top_items}
-            else:
-                raise ValueError("AI output missing festival_demands.chart")
+            raise ValueError("AI output missing festival_demands.chart")
 
         if not (isinstance(seasonal_demands, dict) and isinstance(seasonal_demands.get("chart"), list) and len(seasonal_demands["chart"]) > 0):
-            if _is_test:
-                seas_chart, seas_top_items = self._synth_seasonal_demands(business_data)
-                seasonal_demands = {"chart": seas_chart, "top_items": seas_top_items}
-            else:
-                raise ValueError("AI output missing seasonal_demands.chart")
+            raise ValueError("AI output missing seasonal_demands.chart")
 
         _now = self._now().replace(hour=0, minute=0, second=0, microsecond=0)
         _period = business_data.get("forecastPeriod", 6)
         _end = self._compute_end_date(_now, _period)
-        suggestions = forecast_data.get("suggestions") or (
-            [] if not _is_test else self._fallback_suggestions(business_data)
-        )
+        suggestions = forecast_data.get("suggestions") or []
         confidence_score = forecast_data.get("confidence_score")
         result = {
             "product_demands": product_demands,

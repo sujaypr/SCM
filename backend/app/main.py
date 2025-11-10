@@ -1,6 +1,10 @@
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+# Load .env file from backend directory
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
+
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
