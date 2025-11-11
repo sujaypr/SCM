@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from app.utils.db import get_db
-from app.services.inventory_service import InventoryService
+from app.services.inventory_service_db import InventoryService
 from app.services.csv_service import CSVService
 from app.services.ai_enrichment_service import AIEnrichmentService
 import json

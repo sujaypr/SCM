@@ -307,9 +307,11 @@ const WhatIfScenarios = () => {
   }, [messages, currentSessionId]);
 
   return (
-    <div className="flex h-[calc(100vh-80px)] w-full bg-[--background] overflow-hidden">
-      {/* Left Sidebar */}
-      <div className="w-64 bg-[--card] border-r border-[--border] p-4 flex flex-col overflow-hidden">
+    <div className="w-full h-full overflow-hidden">
+      <div className="max-w-[1200px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-4 h-full">
+        {/* Left Sidebar */}
+        <div className="bg-[--sidebar] rounded-[var(--radius)] border border-[--border] p-4 flex flex-col h-full overflow-hidden">
         {/* Upload Document Section */}
         <div className="mb-4">
           <h3 className="text-sm font-semibold text-[--foreground] mb-3">Upload Document</h3>
@@ -442,7 +444,7 @@ const WhatIfScenarios = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="bg-[--sidebar] rounded-[var(--radius)] border border-[--border] flex flex-col h-full overflow-hidden">
         {/* Messages Area */}
         <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
           {messages.map((message, index) => (
@@ -550,6 +552,8 @@ const WhatIfScenarios = () => {
         </div>
       </div>
     </div>
+  </div>
+</div>
   );
 };
 

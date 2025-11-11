@@ -1,4 +1,5 @@
 import React from 'react';
+import ErrorBoundary from './ErrorBoundary';
 import Dashboard from '../pages/Dashboard';
 import DemandForecasting from '../pages/DemandForecasting';
 import InventoryManagement from '../pages/InventoryManagement';
@@ -42,20 +43,22 @@ const Content = ({ activeComponent }) => {
   };
 
   return (
-    <div className={`${activeComponent === 'scenarios' 
-      ? 'flex-1 px-4 md:px-6 lg:px-8 py-4 md:py-6 overflow-hidden min-w-0' 
-      : 'flex-1 px-4 md:px-6 lg:px-8 py-4 md:py-6 overflow-y-auto hide-scrollbar min-w-0'}`}>
-      <div className="relative">
-        {prevKey && (
-          <div key={`prev-${prevKey}`} className="page-leave">
-            {renderBy(prevKey)}
+    <ErrorBoundary>
+      <div className={`${activeComponent === 'scenarios' 
+        ? 'flex-1 px-4 md:px-6 lg:px-8 py-4 md:py-6 overflow-hidden min-w-0' 
+        : 'flex-1 px-4 md:px-6 lg:px-8 py-4 md:py-6 overflow-y-auto hide-scrollbar min-w-0'}`}>
+        <div className="relative">
+          {prevKey && (
+            <div key={`prev-${prevKey}`} className="page-leave">
+              {renderBy(prevKey)}
+            </div>
+          )}
+          <div key={`cur-${currentKey}`} className="page-enter">
+            {renderBy(currentKey)}
           </div>
-        )}
-        <div key={`cur-${currentKey}`} className="page-enter">
-          {renderBy(currentKey)}
         </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 };
 
