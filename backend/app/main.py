@@ -16,7 +16,7 @@ import uvicorn
 import os
 from contextlib import asynccontextmanager
 
-from app.routes import demand, inventory, logistics, scenarios, reports
+from app.routes import demand, inventory, logistics, scenarios, reports, chat
 from app.utils.config import get_config
 from app.utils.db import init_database
 
@@ -91,6 +91,7 @@ app.include_router(inventory.router, prefix="/api/inventory", tags=["inventory"]
 app.include_router(logistics.router, prefix="/api/logistics", tags=["logistics"])
 app.include_router(scenarios.router, prefix="/api/scenarios", tags=["scenarios"])
 app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 # Root endpoint
 @app.get("/")
@@ -107,6 +108,7 @@ async def root():
             "logistics_tracking": "/api/logistics/shipments",
             "scenario_analysis": "/api/scenarios/analyze",
             "reports": "/api/reports/",
+            "chat_assistant": "/api/chat/message",
         },
     }
 

@@ -11,6 +11,9 @@ from app.models.db_models import (
     InventoryItem,
     Shipment,
     SeasonalPattern,
+    ChatSession,
+    ChatMessage,
+    DocumentStore,
 )
 from app.utils.config import get_config
 

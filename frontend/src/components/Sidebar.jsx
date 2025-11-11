@@ -7,7 +7,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, isOpen = false, onClose 
     { id: 'demand-forecasting', label: 'Demand Forecasting', icon: <i className="fas fa-chart-line"></i> },
     { id: 'inventory', label: 'Inventory Management', icon: <i className="fas fa-boxes"></i> },
     { id: 'logistics', label: 'Logistics', icon: <i className="fas fa-truck"></i> },
-    { id: 'scenarios', label: 'What-if Scenarios', icon: <i className="fas fa-lightbulb"></i> },
+    { id: 'scenarios', label: 'AI Chat Assistant', icon: <i className="fas fa-comments"></i> },
     { id: 'reports', label: 'Reports', icon: <i className="fas fa-file-alt"></i> },
     { id: 'settings', label: 'Settings', icon: <i className="fas fa-cog"></i> }
   ];

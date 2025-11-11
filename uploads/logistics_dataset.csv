@@ -1,0 +1,1001 @@
+OrderID,CustomerLocation,Warehouse,OrderDate,DispatchDate,DeliveryDate,Distance_km,ModeOfTransport,ProductType,Quantity,Status
+10001,Pune,Hyderabad_WH,2025-04-10,2025-05-13,2025-05-27,1520,Air,Machinery,378,In Transit
+10002,Delhi,Bangalore_WH,2025-05-08,2025-05-18,2025-05-18,1261,Air,Groceries,63,Cancelled
+10003,Lucknow,Delhi_WH,2025-05-09,2025-05-12,2025-06-01,1930,Ship,Toys,399,Pending
+10004,Bangalore,Bangalore_WH,2025-04-25,2025-05-04,2025-05-09,652,Bike,Groceries,426,Pending
+10005,Ahmedabad,Chennai_WH,2025-04-19,2025-05-06,2025-05-11,923,Ship,Machinery,44,Cancelled
+10006,Hyderabad,Kolkata_WH,2025-04-21,2025-04-22,2025-05-27,28,Bike,Furniture,313,In Transit
+10007,Delhi,Lucknow_WH,2025-05-02,2025-05-09,2025-06-05,93,Air,Books,144,Delivered
+10008,Lucknow,Hyderabad_WH,2025-04-30,2025-05-14,2025-06-04,312,Bike,Books,59,In Transit
+10009,Ahmedabad,Jaipur_WH,2025-04-12,2025-04-22,2025-05-23,50,Train,Apparel,326,Delivered
+10010,Chennai,Mumbai_WH,2025-04-23,2025-05-05,2025-05-26,1955,Bike,Toys,163,Delivered
+10011,Hyderabad,Delhi_WH,2025-04-25,2025-05-06,2025-05-16,775,Train,Machinery,477,Cancelled
+10012,Lucknow,Mumbai_WH,2025-04-21,2025-04-26,2025-04-30,421,Air,Groceries,166,Delivered
+10013,Hyderabad,Bangalore_WH,2025-04-19,2025-05-10,2025-05-23,324,Bike,Toys,286,In Transit
+10014,Hyderabad,Bangalore_WH,2025-04-28,2025-05-01,2025-05-29,1087,Air,Groceries,189,Cancelled
+10015,Hyderabad,Mumbai_WH,2025-04-21,2025-05-02,2025-06-06,1506,Ship,Pharma,377,In Transit
+10016,Kolkata,Hyderabad_WH,2025-04-29,2025-05-10,2025-05-12,682,Truck,Pharma,245,Pending
+10017,Mumbai,Hyderabad_WH,2025-05-05,2025-05-11,2025-06-08,1006,Bike,Apparel,403,Cancelled
+10018,Jaipur,Jaipur_WH,2025-05-01,2025-05-17,2025-05-17,324,Bike,Pharma,108,Delivered
+10019,Kolkata,Mumbai_WH,2025-04-10,2025-04-22,2025-05-30,621,Truck,Pharma,98,Pending
+10020,Kolkata,Kolkata_WH,2025-05-06,2025-05-08,2025-05-10,1352,Air,Pharma,82,Delivered
+10021,Bangalore,Jaipur_WH,2025-04-26,2025-04-26,2025-06-05,1627,Air,Machinery,227,Delivered
+10022,Lucknow,Pune_WH,2025-04-26,2025-05-03,2025-05-14,2340,Train,Books,382,Delivered
+10023,Delhi,Jaipur_WH,2025-04-29,2025-05-07,2025-05-20,2197,Bike,Groceries,213,Pending
+10024,Kolkata,Bangalore_WH,2025-05-09,2025-05-19,2025-05-27,1050,Bike,Electronics,256,Delivered
+10025,Jaipur,Lucknow_WH,2025-04-24,2025-04-26,2025-05-13,360,Truck,Electronics,280,Cancelled
+10026,Mumbai,Delhi_WH,2025-05-09,2025-05-15,2025-05-27,7,Air,Pharma,190,Delivered
+10027,Jaipur,Bangalore_WH,2025-05-04,2025-05-16,2025-05-19,1235,Train,Machinery,178,Cancelled
+10028,Lucknow,Bangalore_WH,2025-05-03,2025-05-14,2025-06-02,1794,Train,Electronics,39,In Transit
+10029,Delhi,Ahmedabad_WH,2025-04-28,2025-05-09,2025-05-14,1154,Bike,Toys,286,In Transit
+10030,Mumbai,Delhi_WH,2025-04-15,2025-05-14,2025-05-29,596,Air,Furniture,104,Delivered
+10031,Chennai,Ahmedabad_WH,2025-04-20,2025-05-01,2025-05-22,2289,Train,Electronics,461,Pending
+10032,Lucknow,Delhi_WH,2025-04-12,2025-05-05,2025-06-02,2278,Air,Toys,495,Delivered
+10033,Bangalore,Hyderabad_WH,2025-05-02,2025-05-17,2025-05-21,2348,Bike,Pharma,287,Cancelled
+10034,Ahmedabad,Delhi_WH,2025-04-12,2025-05-05,2025-06-04,1499,Ship,Machinery,134,In Transit
+10035,Chennai,Kolkata_WH,2025-04-23,2025-05-11,2025-06-02,40,Bike,Toys,175,Delivered
+10036,Ahmedabad,Lucknow_WH,2025-04-11,2025-04-15,2025-06-05,599,Ship,Pharma,449,Pending
+10037,Delhi,Pune_WH,2025-04-19,2025-05-04,2025-05-24,1648,Air,Furniture,426,Delivered
+10038,Lucknow,Pune_WH,2025-05-01,2025-05-05,2025-06-05,1405,Air,Apparel,172,In Transit
+10039,Jaipur,Jaipur_WH,2025-04-29,2025-05-04,2025-05-04,533,Truck,Furniture,422,Delivered
+10040,Hyderabad,Delhi_WH,2025-05-09,2025-05-12,2025-05-27,2468,Bike,Apparel,214,Cancelled
+10041,Hyderabad,Ahmedabad_WH,2025-04-30,2025-05-04,2025-05-05,925,Bike,Furniture,69,Cancelled
+10042,Chennai,Bangalore_WH,2025-04-18,2025-04-20,2025-05-19,1141,Bike,Groceries,63,Delivered
+10043,Kolkata,Lucknow_WH,2025-05-09,2025-05-10,2025-06-03,2235,Ship,Pharma,362,In Transit
+10044,Pune,Chennai_WH,2025-04-17,2025-05-08,2025-05-13,897,Train,Furniture,129,Pending
+10045,Jaipur,Chennai_WH,2025-05-03,2025-05-15,2025-06-06,1011,Truck,Pharma,364,Cancelled
+10046,Hyderabad,Delhi_WH,2025-04-18,2025-04-30,2025-05-09,866,Air,Groceries,210,In Transit
+10047,Jaipur,Mumbai_WH,2025-04-13,2025-05-03,2025-05-22,1410,Ship,Machinery,147,Pending
+10048,Hyderabad,Hyderabad_WH,2025-04-15,2025-05-05,2025-05-29,1024,Air,Apparel,123,Pending
+10049,Jaipur,Kolkata_WH,2025-04-19,2025-04-26,2025-05-08,457,Train,Electronics,42,Pending
+10050,Kolkata,Jaipur_WH,2025-04-11,2025-05-08,2025-05-13,989,Train,Books,131,Pending
+10051,Lucknow,Pune_WH,2025-05-01,2025-05-19,2025-05-22,438,Truck,Machinery,27,Pending
+10052,Kolkata,Chennai_WH,2025-04-20,2025-05-10,2025-05-19,466,Ship,Furniture,462,Cancelled
+10053,Bangalore,Lucknow_WH,2025-04-17,2025-04-24,2025-06-05,1683,Truck,Furniture,471,Cancelled
+10054,Kolkata,Delhi_WH,2025-04-21,2025-05-06,2025-05-20,191,Bike,Groceries,74,Pending
+10055,Kolkata,Jaipur_WH,2025-04-29,2025-05-11,2025-05-22,1313,Ship,Toys,166,Cancelled
+10056,Kolkata,Jaipur_WH,2025-04-14,2025-05-13,2025-05-25,2221,Air,Pharma,375,Pending
+10057,Hyderabad,Pune_WH,2025-04-13,2025-05-13,2025-05-24,684,Train,Books,363,Cancelled
+10058,Lucknow,Mumbai_WH,2025-05-07,2025-05-15,2025-05-28,11,Train,Toys,434,Delivered
+10059,Kolkata,Chennai_WH,2025-04-18,2025-05-08,2025-06-06,2011,Ship,Groceries,352,In Transit
+10060,Kolkata,Pune_WH,2025-04-22,2025-04-22,2025-05-01,651,Train,Groceries,452,Cancelled
+10061,Jaipur,Chennai_WH,2025-04-16,2025-05-05,2025-05-11,1297,Bike,Books,51,Cancelled
+10062,Jaipur,Bangalore_WH,2025-04-23,2025-04-25,2025-05-31,1458,Bike,Furniture,208,Cancelled
+10063,Ahmedabad,Lucknow_WH,2025-04-12,2025-05-05,2025-05-29,1991,Truck,Pharma,147,Cancelled
+10064,Jaipur,Delhi_WH,2025-04-19,2025-05-01,2025-05-04,43,Air,Groceries,491,Delivered
+10065,Lucknow,Lucknow_WH,2025-04-25,2025-05-13,2025-05-23,1148,Train,Toys,421,Cancelled
+10066,Delhi,Mumbai_WH,2025-05-02,2025-05-13,2025-05-31,2260,Train,Books,187,Delivered
+10067,Delhi,Delhi_WH,2025-04-17,2025-04-19,2025-06-03,428,Bike,Toys,425,Cancelled
+10068,Bangalore,Pune_WH,2025-04-17,2025-04-30,2025-05-18,1478,Truck,Books,367,Pending
+10069,Hyderabad,Hyderabad_WH,2025-05-04,2025-05-12,2025-05-21,1663,Truck,Toys,170,Delivered
+10070,Chennai,Ahmedabad_WH,2025-04-16,2025-05-10,2025-05-27,2408,Bike,Electronics,25,In Transit
+10071,Lucknow,Jaipur_WH,2025-05-04,2025-05-06,2025-05-31,1967,Bike,Books,370,Delivered
+10072,Kolkata,Chennai_WH,2025-04-18,2025-05-05,2025-06-01,415,Truck,Toys,323,Pending
+10073,Hyderabad,Lucknow_WH,2025-04-22,2025-05-07,2025-05-27,2034,Truck,Toys,46,Pending
+10074,Delhi,Lucknow_WH,2025-04-22,2025-05-02,2025-05-20,1733,Ship,Pharma,101,Delivered
+10075,Ahmedabad,Delhi_WH,2025-05-09,2025-05-17,2025-06-05,574,Ship,Furniture,453,Pending
+10076,Hyderabad,Delhi_WH,2025-04-25,2025-05-11,2025-05-14,681,Air,Pharma,150,Pending
+10077,Hyderabad,Bangalore_WH,2025-05-01,2025-05-06,2025-05-06,1403,Train,Books,471,Cancelled
+10078,Bangalore,Mumbai_WH,2025-05-05,2025-05-18,2025-06-02,1710,Bike,Electronics,63,Delivered
+10079,Ahmedabad,Kolkata_WH,2025-05-07,2025-05-14,2025-05-19,1531,Air,Apparel,326,Pending
+10080,Kolkata,Mumbai_WH,2025-05-04,2025-05-04,2025-05-20,134,Train,Machinery,58,In Transit
+10081,Ahmedabad,Ahmedabad_WH,2025-04-18,2025-05-13,2025-05-16,1145,Ship,Pharma,229,Delivered
+10082,Ahmedabad,Mumbai_WH,2025-04-21,2025-05-16,2025-05-20,1216,Train,Furniture,128,Pending
+10083,Kolkata,Pune_WH,2025-04-10,2025-05-06,2025-05-17,1384,Train,Pharma,183,Pending
+10084,Ahmedabad,Hyderabad_WH,2025-05-02,2025-05-14,2025-06-07,1908,Bike,Books,432,Cancelled
+10085,Chennai,Delhi_WH,2025-05-04,2025-05-14,2025-05-18,1597,Bike,Electronics,49,In Transit
+10086,Jaipur,Pune_WH,2025-04-11,2025-04-16,2025-05-19,2072,Bike,Toys,211,Delivered
+10087,Chennai,Delhi_WH,2025-04-23,2025-05-19,2025-06-06,1518,Bike,Apparel,279,Delivered
+10088,Kolkata,Chennai_WH,2025-04-23,2025-05-03,2025-05-16,1098,Air,Books,216,Pending
+10089,Kolkata,Kolkata_WH,2025-04-12,2025-04-23,2025-05-01,1330,Ship,Pharma,479,Pending
+10090,Jaipur,Jaipur_WH,2025-04-13,2025-05-10,2025-05-11,2235,Bike,Pharma,95,In Transit
+10091,Jaipur,Jaipur_WH,2025-04-26,2025-05-12,2025-06-08,411,Bike,Furniture,119,In Transit
+10092,Lucknow,Delhi_WH,2025-04-15,2025-04-28,2025-05-16,1989,Train,Apparel,213,Cancelled
+10093,Ahmedabad,Hyderabad_WH,2025-04-24,2025-05-08,2025-05-30,561,Bike,Electronics,126,Pending
+10094,Chennai,Delhi_WH,2025-05-07,2025-05-09,2025-05-09,753,Train,Books,203,Delivered
+10095,Ahmedabad,Hyderabad_WH,2025-04-26,2025-05-06,2025-05-07,2358,Truck,Pharma,264,In Transit
+10096,Hyderabad,Mumbai_WH,2025-04-15,2025-04-19,2025-05-26,1916,Ship,Furniture,201,Cancelled
+10097,Chennai,Delhi_WH,2025-04-27,2025-05-08,2025-05-10,701,Air,Electronics,483,Pending
+10098,Hyderabad,Ahmedabad_WH,2025-05-07,2025-05-17,2025-05-27,2474,Ship,Toys,334,Cancelled
+10099,Ahmedabad,Pune_WH,2025-04-12,2025-05-04,2025-05-07,1990,Truck,Toys,65,Pending
+10100,Kolkata,Chennai_WH,2025-05-03,2025-05-16,2025-05-27,2462,Ship,Groceries,136,Pending
+10101,Chennai,Mumbai_WH,2025-04-19,2025-04-29,2025-05-24,720,Ship,Pharma,118,Cancelled
+10102,Ahmedabad,Kolkata_WH,2025-04-13,2025-05-06,2025-05-24,2039,Truck,Furniture,240,Pending
+10103,Kolkata,Mumbai_WH,2025-05-03,2025-05-04,2025-06-03,550,Air,Furniture,421,Pending
+10104,Pune,Chennai_WH,2025-04-29,2025-05-02,2025-06-07,942,Air,Electronics,138,Delivered
+10105,Bangalore,Lucknow_WH,2025-04-25,2025-04-28,2025-05-05,307,Air,Toys,295,Delivered
+10106,Bangalore,Chennai_WH,2025-05-07,2025-05-14,2025-05-21,1143,Air,Furniture,206,Pending
+10107,Hyderabad,Pune_WH,2025-04-21,2025-05-11,2025-06-06,1251,Ship,Books,366,Cancelled
+10108,Ahmedabad,Chennai_WH,2025-04-14,2025-04-22,2025-05-03,604,Air,Furniture,430,In Transit
+10109,Bangalore,Lucknow_WH,2025-04-13,2025-05-15,2025-05-19,2120,Bike,Furniture,362,Delivered
+10110,Ahmedabad,Lucknow_WH,2025-04-29,2025-05-02,2025-05-16,2098,Ship,Pharma,267,Pending
+10111,Delhi,Pune_WH,2025-04-27,2025-04-28,2025-05-15,571,Truck,Machinery,463,Delivered
+10112,Bangalore,Hyderabad_WH,2025-05-04,2025-05-16,2025-05-16,686,Ship,Machinery,376,Delivered
+10113,Delhi,Jaipur_WH,2025-05-09,2025-05-11,2025-05-19,343,Bike,Pharma,477,In Transit
+10114,Bangalore,Pune_WH,2025-04-15,2025-04-25,2025-04-30,2488,Ship,Furniture,389,Delivered
+10115,Mumbai,Mumbai_WH,2025-05-05,2025-05-08,2025-06-02,255,Bike,Electronics,337,Pending
+10116,Chennai,Hyderabad_WH,2025-04-18,2025-05-17,2025-06-03,1438,Train,Pharma,58,Pending
+10117,Jaipur,Bangalore_WH,2025-04-21,2025-05-01,2025-05-24,2004,Bike,Machinery,419,Cancelled
+10118,Jaipur,Hyderabad_WH,2025-04-21,2025-04-23,2025-06-04,1522,Ship,Machinery,41,Pending
+10119,Bangalore,Chennai_WH,2025-05-03,2025-05-04,2025-05-19,544,Air,Electronics,161,Cancelled
+10120,Lucknow,Ahmedabad_WH,2025-05-03,2025-05-09,2025-05-25,1588,Air,Books,242,Delivered
+10121,Hyderabad,Pune_WH,2025-05-06,2025-05-14,2025-06-07,740,Ship,Pharma,432,In Transit
+10122,Chennai,Hyderabad_WH,2025-04-27,2025-05-02,2025-05-02,1493,Air,Toys,401,In Transit
+10123,Bangalore,Delhi_WH,2025-04-22,2025-04-28,2025-05-08,2283,Truck,Apparel,313,In Transit
+10124,Lucknow,Jaipur_WH,2025-05-04,2025-05-12,2025-05-26,1037,Bike,Electronics,485,Pending
+10125,Kolkata,Chennai_WH,2025-04-30,2025-05-10,2025-05-15,1060,Train,Groceries,205,Cancelled
+10126,Kolkata,Pune_WH,2025-04-11,2025-04-24,2025-06-06,833,Ship,Apparel,17,Pending
+10127,Pune,Lucknow_WH,2025-04-13,2025-05-08,2025-05-27,2460,Bike,Pharma,455,In Transit
+10128,Chennai,Chennai_WH,2025-04-13,2025-05-01,2025-05-22,1194,Bike,Pharma,347,In Transit
+10129,Bangalore,Lucknow_WH,2025-04-10,2025-05-09,2025-06-02,1265,Air,Machinery,56,In Transit
+10130,Kolkata,Lucknow_WH,2025-05-06,2025-05-17,2025-06-04,664,Air,Toys,367,Pending
+10131,Delhi,Jaipur_WH,2025-04-27,2025-05-19,2025-05-19,1012,Air,Electronics,459,Cancelled
+10132,Mumbai,Lucknow_WH,2025-05-09,2025-05-13,2025-06-08,385,Bike,Groceries,498,Delivered
+10133,Delhi,Chennai_WH,2025-05-02,2025-05-13,2025-05-19,723,Train,Furniture,493,Delivered
+10134,Jaipur,Hyderabad_WH,2025-04-22,2025-04-22,2025-04-24,1042,Train,Electronics,145,In Transit
+10135,Mumbai,Jaipur_WH,2025-04-10,2025-04-10,2025-04-25,1574,Bike,Machinery,446,Delivered
+10136,Jaipur,Pune_WH,2025-04-30,2025-05-09,2025-05-30,2397,Air,Electronics,184,In Transit
+10137,Pune,Pune_WH,2025-04-16,2025-04-30,2025-04-30,528,Truck,Apparel,26,Delivered
+10138,Jaipur,Kolkata_WH,2025-05-06,2025-05-19,2025-06-07,1534,Bike,Pharma,494,In Transit
+10139,Hyderabad,Delhi_WH,2025-05-03,2025-05-09,2025-05-09,1087,Truck,Groceries,140,Delivered
+10140,Pune,Bangalore_WH,2025-05-09,2025-05-14,2025-06-06,26,Truck,Electronics,338,In Transit
+10141,Delhi,Ahmedabad_WH,2025-05-07,2025-05-13,2025-05-27,1302,Train,Pharma,374,Delivered
+10142,Delhi,Kolkata_WH,2025-04-27,2025-05-08,2025-05-08,2219,Truck,Books,249,Delivered
+10143,Hyderabad,Hyderabad_WH,2025-04-13,2025-04-14,2025-05-29,1415,Air,Machinery,112,Delivered
+10144,Delhi,Kolkata_WH,2025-04-26,2025-05-09,2025-05-16,1706,Air,Books,50,Cancelled
+10145,Pune,Mumbai_WH,2025-04-23,2025-05-05,2025-06-08,1733,Train,Electronics,153,Delivered
+10146,Hyderabad,Mumbai_WH,2025-05-06,2025-05-13,2025-05-20,2268,Truck,Machinery,319,Cancelled
+10147,Chennai,Jaipur_WH,2025-04-12,2025-05-15,2025-06-07,2032,Air,Toys,358,Pending
+10148,Kolkata,Lucknow_WH,2025-05-01,2025-05-13,2025-06-07,835,Truck,Pharma,333,Pending
+10149,Mumbai,Ahmedabad_WH,2025-05-04,2025-05-13,2025-05-13,1893,Bike,Apparel,67,In Transit
+10150,Chennai,Delhi_WH,2025-05-09,2025-05-12,2025-06-04,2129,Truck,Pharma,50,In Transit
+10151,Jaipur,Ahmedabad_WH,2025-04-26,2025-05-18,2025-06-08,2047,Bike,Toys,247,In Transit
+10152,Ahmedabad,Mumbai_WH,2025-04-13,2025-05-01,2025-06-02,1522,Ship,Furniture,468,In Transit
+10153,Jaipur,Hyderabad_WH,2025-05-03,2025-05-13,2025-05-15,1211,Air,Books,454,Pending
+10154,Jaipur,Chennai_WH,2025-05-07,2025-05-07,2025-06-08,1002,Ship,Machinery,467,Pending
+10155,Chennai,Bangalore_WH,2025-04-14,2025-04-17,2025-04-29,915,Truck,Pharma,300,Delivered
+10156,Bangalore,Jaipur_WH,2025-05-02,2025-05-08,2025-06-04,1388,Bike,Furniture,229,In Transit
+10157,Bangalore,Pune_WH,2025-05-01,2025-05-18,2025-05-25,2076,Air,Groceries,138,Cancelled
+10158,Delhi,Jaipur_WH,2025-04-15,2025-05-18,2025-06-05,1072,Air,Books,166,Delivered
+10159,Hyderabad,Jaipur_WH,2025-05-02,2025-05-06,2025-05-23,203,Train,Pharma,35,Cancelled
+10160,Ahmedabad,Ahmedabad_WH,2025-04-11,2025-04-14,2025-05-25,201,Train,Apparel,255,In Transit
+10161,Lucknow,Chennai_WH,2025-05-06,2025-05-08,2025-05-19,798,Ship,Electronics,304,Delivered
+10162,Chennai,Chennai_WH,2025-05-08,2025-05-11,2025-06-07,588,Ship,Groceries,93,Delivered
+10163,Mumbai,Ahmedabad_WH,2025-04-19,2025-05-10,2025-05-29,589,Air,Pharma,409,Pending
+10164,Chennai,Hyderabad_WH,2025-04-20,2025-04-26,2025-05-19,2462,Train,Toys,437,Cancelled
+10165,Chennai,Pune_WH,2025-04-25,2025-05-14,2025-05-30,232,Air,Furniture,157,Cancelled
+10166,Jaipur,Delhi_WH,2025-04-19,2025-04-30,2025-06-07,480,Bike,Apparel,10,Delivered
+10167,Pune,Pune_WH,2025-04-16,2025-05-06,2025-05-26,2267,Ship,Apparel,398,Cancelled
+10168,Bangalore,Lucknow_WH,2025-04-13,2025-04-15,2025-05-09,1861,Bike,Toys,254,Cancelled
+10169,Chennai,Kolkata_WH,2025-04-19,2025-05-14,2025-05-22,2246,Ship,Electronics,202,Cancelled
+10170,Ahmedabad,Pune_WH,2025-05-02,2025-05-19,2025-06-04,1192,Truck,Electronics,442,Pending
+10171,Jaipur,Lucknow_WH,2025-04-19,2025-04-20,2025-06-08,884,Train,Pharma,498,Pending
+10172,Bangalore,Hyderabad_WH,2025-05-05,2025-05-16,2025-05-18,715,Bike,Machinery,240,Delivered
+10173,Kolkata,Kolkata_WH,2025-05-07,2025-05-12,2025-05-21,587,Truck,Toys,454,Delivered
+10174,Bangalore,Chennai_WH,2025-04-11,2025-05-02,2025-05-09,538,Air,Electronics,339,Pending
+10175,Hyderabad,Ahmedabad_WH,2025-05-04,2025-05-19,2025-06-02,436,Train,Electronics,107,In Transit
+10176,Lucknow,Pune_WH,2025-04-10,2025-04-13,2025-05-28,2058,Truck,Apparel,435,Cancelled
+10177,Bangalore,Ahmedabad_WH,2025-04-24,2025-05-07,2025-06-04,919,Bike,Electronics,237,Cancelled
+10178,Bangalore,Delhi_WH,2025-04-10,2025-05-06,2025-06-07,192,Truck,Apparel,326,Delivered
+10179,Jaipur,Pune_WH,2025-04-23,2025-05-03,2025-06-03,1111,Train,Apparel,295,In Transit
+10180,Hyderabad,Chennai_WH,2025-04-25,2025-05-13,2025-05-29,710,Bike,Machinery,468,Delivered
+10181,Lucknow,Hyderabad_WH,2025-05-02,2025-05-09,2025-06-08,1806,Bike,Groceries,13,Cancelled
+10182,Chennai,Ahmedabad_WH,2025-05-06,2025-05-16,2025-05-25,1176,Ship,Furniture,37,In Transit
+10183,Delhi,Jaipur_WH,2025-04-21,2025-05-01,2025-05-08,951,Air,Apparel,78,Cancelled
+10184,Jaipur,Delhi_WH,2025-05-04,2025-05-08,2025-05-26,867,Ship,Books,374,Pending
+10185,Hyderabad,Kolkata_WH,2025-05-04,2025-05-06,2025-05-14,1364,Air,Machinery,446,In Transit
+10186,Mumbai,Delhi_WH,2025-04-13,2025-04-27,2025-05-26,1357,Ship,Electronics,233,In Transit
+10187,Delhi,Mumbai_WH,2025-04-15,2025-05-12,2025-06-04,1175,Truck,Machinery,257,Cancelled
+10188,Pune,Kolkata_WH,2025-04-22,2025-05-08,2025-05-10,1647,Bike,Groceries,153,In Transit
+10189,Bangalore,Bangalore_WH,2025-04-15,2025-05-19,2025-05-20,1281,Ship,Groceries,295,In Transit
+10190,Ahmedabad,Pune_WH,2025-04-21,2025-05-14,2025-05-18,1212,Bike,Electronics,136,In Transit
+10191,Delhi,Kolkata_WH,2025-04-23,2025-05-18,2025-06-05,2475,Truck,Apparel,369,Pending
+10192,Ahmedabad,Chennai_WH,2025-05-03,2025-05-07,2025-05-23,1742,Air,Machinery,456,In Transit
+10193,Pune,Bangalore_WH,2025-04-29,2025-05-16,2025-05-31,11,Truck,Electronics,118,Cancelled
+10194,Jaipur,Bangalore_WH,2025-05-02,2025-05-15,2025-06-01,1824,Truck,Furniture,237,Delivered
+10195,Kolkata,Delhi_WH,2025-04-21,2025-04-22,2025-05-12,1835,Train,Apparel,3,Delivered
+10196,Jaipur,Bangalore_WH,2025-05-09,2025-05-09,2025-05-16,1550,Air,Groceries,327,Cancelled
+10197,Kolkata,Kolkata_WH,2025-05-04,2025-05-11,2025-05-30,1630,Ship,Electronics,366,Cancelled
+10198,Lucknow,Kolkata_WH,2025-04-19,2025-04-19,2025-06-08,1628,Train,Toys,346,In Transit
+10199,Lucknow,Pune_WH,2025-04-13,2025-05-11,2025-05-14,311,Bike,Toys,129,Delivered
+10200,Chennai,Bangalore_WH,2025-05-07,2025-05-12,2025-05-20,1888,Ship,Groceries,195,In Transit
+10201,Pune,Hyderabad_WH,2025-04-14,2025-05-02,2025-05-15,842,Bike,Groceries,424,Delivered
+10202,Jaipur,Jaipur_WH,2025-05-01,2025-05-10,2025-06-06,140,Air,Electronics,217,Delivered
+10203,Delhi,Jaipur_WH,2025-04-18,2025-05-10,2025-06-06,2251,Bike,Furniture,113,Cancelled
+10204,Delhi,Chennai_WH,2025-04-16,2025-05-06,2025-05-13,1791,Ship,Machinery,255,Delivered
+10205,Bangalore,Kolkata_WH,2025-04-17,2025-05-17,2025-05-19,182,Air,Apparel,193,Cancelled
+10206,Lucknow,Jaipur_WH,2025-04-25,2025-04-27,2025-06-02,1400,Air,Books,61,Delivered
+10207,Lucknow,Lucknow_WH,2025-05-08,2025-05-13,2025-05-19,1207,Truck,Groceries,217,Delivered
+10208,Kolkata,Hyderabad_WH,2025-05-03,2025-05-03,2025-06-02,1060,Bike,Groceries,498,Delivered
+10209,Lucknow,Chennai_WH,2025-05-01,2025-05-04,2025-05-09,1426,Train,Apparel,343,Cancelled
+10210,Kolkata,Ahmedabad_WH,2025-04-17,2025-05-05,2025-06-05,410,Truck,Pharma,252,Cancelled
+10211,Bangalore,Mumbai_WH,2025-04-26,2025-05-16,2025-05-27,313,Bike,Electronics,297,In Transit
+10212,Lucknow,Lucknow_WH,2025-04-25,2025-05-02,2025-05-21,2352,Train,Apparel,32,Delivered
+10213,Hyderabad,Kolkata_WH,2025-04-10,2025-04-15,2025-05-24,16,Bike,Toys,16,Delivered
+10214,Ahmedabad,Hyderabad_WH,2025-04-10,2025-05-14,2025-06-01,2396,Ship,Apparel,457,In Transit
+10215,Pune,Pune_WH,2025-04-26,2025-05-16,2025-05-23,1716,Truck,Electronics,445,Delivered
+10216,Pune,Lucknow_WH,2025-04-28,2025-05-03,2025-06-01,1369,Train,Electronics,100,Cancelled
+10217,Delhi,Pune_WH,2025-04-10,2025-05-19,2025-05-28,2228,Ship,Apparel,364,Delivered
+10218,Chennai,Pune_WH,2025-04-13,2025-04-27,2025-06-01,765,Truck,Groceries,191,Pending
+10219,Delhi,Chennai_WH,2025-05-02,2025-05-18,2025-05-23,619,Train,Machinery,210,Pending
+10220,Mumbai,Kolkata_WH,2025-04-13,2025-05-17,2025-05-28,1845,Truck,Toys,467,Delivered
+10221,Mumbai,Pune_WH,2025-04-19,2025-04-29,2025-05-23,1740,Truck,Apparel,231,Pending
+10222,Chennai,Delhi_WH,2025-04-30,2025-05-13,2025-05-31,2209,Air,Electronics,159,Cancelled
+10223,Ahmedabad,Bangalore_WH,2025-04-15,2025-04-16,2025-04-25,399,Air,Books,234,Pending
+10224,Chennai,Chennai_WH,2025-05-05,2025-05-19,2025-06-06,942,Truck,Groceries,215,Cancelled
+10225,Delhi,Chennai_WH,2025-04-28,2025-05-16,2025-05-24,182,Ship,Furniture,257,In Transit
+10226,Hyderabad,Delhi_WH,2025-04-17,2025-04-30,2025-05-28,913,Truck,Books,95,Pending
+10227,Ahmedabad,Jaipur_WH,2025-05-04,2025-05-15,2025-05-19,739,Bike,Furniture,500,Delivered
+10228,Chennai,Lucknow_WH,2025-05-02,2025-05-05,2025-05-20,1408,Bike,Electronics,432,In Transit
+10229,Chennai,Pune_WH,2025-04-12,2025-04-19,2025-04-26,717,Bike,Furniture,363,Delivered
+10230,Lucknow,Mumbai_WH,2025-04-26,2025-04-30,2025-05-20,225,Truck,Electronics,159,Delivered
+10231,Chennai,Lucknow_WH,2025-04-24,2025-05-19,2025-05-27,2416,Truck,Furniture,210,In Transit
+10232,Hyderabad,Mumbai_WH,2025-05-09,2025-05-12,2025-05-23,760,Truck,Furniture,475,In Transit
+10233,Ahmedabad,Jaipur_WH,2025-04-14,2025-04-30,2025-05-21,272,Train,Machinery,296,Cancelled
+10234,Delhi,Pune_WH,2025-04-11,2025-05-04,2025-05-20,1932,Air,Electronics,199,Cancelled
+10235,Mumbai,Pune_WH,2025-04-16,2025-05-02,2025-05-30,2293,Truck,Groceries,326,In Transit
+10236,Jaipur,Mumbai_WH,2025-04-29,2025-05-06,2025-06-03,762,Train,Pharma,60,Cancelled
+10237,Bangalore,Lucknow_WH,2025-04-28,2025-05-11,2025-05-21,1958,Bike,Furniture,129,Cancelled
+10238,Bangalore,Jaipur_WH,2025-05-07,2025-05-16,2025-05-22,894,Ship,Groceries,79,Pending
+10239,Delhi,Lucknow_WH,2025-05-08,2025-05-10,2025-05-24,1698,Ship,Furniture,94,Delivered
+10240,Pune,Hyderabad_WH,2025-05-06,2025-05-08,2025-05-29,252,Train,Toys,414,In Transit
+10241,Mumbai,Ahmedabad_WH,2025-04-16,2025-05-17,2025-05-21,1386,Air,Groceries,467,Cancelled
+10242,Lucknow,Pune_WH,2025-04-24,2025-05-19,2025-05-28,1095,Train,Books,37,Cancelled
+10243,Jaipur,Ahmedabad_WH,2025-04-27,2025-05-19,2025-05-30,1788,Truck,Groceries,407,Pending
+10244,Delhi,Delhi_WH,2025-04-10,2025-05-17,2025-05-29,2031,Air,Groceries,438,Pending
+10245,Delhi,Hyderabad_WH,2025-04-24,2025-05-06,2025-06-03,164,Train,Apparel,134,Delivered
+10246,Lucknow,Hyderabad_WH,2025-05-09,2025-05-16,2025-05-19,1847,Bike,Groceries,485,Delivered
+10247,Ahmedabad,Mumbai_WH,2025-04-19,2025-05-02,2025-05-10,476,Air,Pharma,461,In Transit
+10248,Hyderabad,Mumbai_WH,2025-05-09,2025-05-11,2025-05-16,2417,Bike,Electronics,374,In Transit
+10249,Mumbai,Lucknow_WH,2025-04-17,2025-04-30,2025-05-17,2486,Ship,Apparel,335,In Transit
+10250,Mumbai,Pune_WH,2025-04-14,2025-05-02,2025-05-08,1643,Ship,Electronics,23,Delivered
+10251,Chennai,Chennai_WH,2025-04-30,2025-05-17,2025-05-29,1691,Train,Electronics,86,Delivered
+10252,Kolkata,Jaipur_WH,2025-04-21,2025-05-18,2025-06-04,496,Ship,Apparel,447,In Transit
+10253,Hyderabad,Chennai_WH,2025-04-24,2025-04-24,2025-06-01,2263,Train,Machinery,39,Delivered
+10254,Jaipur,Jaipur_WH,2025-05-02,2025-05-12,2025-06-04,1141,Ship,Apparel,61,In Transit
+10255,Hyderabad,Kolkata_WH,2025-05-08,2025-05-17,2025-06-01,1349,Air,Apparel,247,Pending
+10256,Lucknow,Chennai_WH,2025-04-13,2025-05-16,2025-06-02,2071,Train,Furniture,285,Cancelled
+10257,Delhi,Delhi_WH,2025-04-21,2025-05-15,2025-06-04,97,Air,Toys,23,Cancelled
+10258,Pune,Jaipur_WH,2025-04-23,2025-05-12,2025-05-22,743,Train,Electronics,401,Pending
+10259,Ahmedabad,Hyderabad_WH,2025-04-18,2025-05-01,2025-05-18,1455,Ship,Furniture,390,Pending
+10260,Bangalore,Kolkata_WH,2025-04-28,2025-05-19,2025-06-06,1394,Air,Furniture,457,In Transit
+10261,Mumbai,Pune_WH,2025-04-28,2025-04-30,2025-05-20,226,Truck,Toys,342,In Transit
+10262,Ahmedabad,Jaipur_WH,2025-05-01,2025-05-14,2025-05-22,1042,Train,Toys,491,Cancelled
+10263,Kolkata,Ahmedabad_WH,2025-05-04,2025-05-08,2025-05-13,2383,Air,Electronics,472,Cancelled
+10264,Lucknow,Ahmedabad_WH,2025-05-06,2025-05-11,2025-06-04,2488,Air,Books,164,Cancelled
+10265,Jaipur,Lucknow_WH,2025-04-12,2025-05-18,2025-05-20,45,Train,Apparel,2,Pending
+10266,Hyderabad,Ahmedabad_WH,2025-05-05,2025-05-12,2025-06-05,1320,Truck,Groceries,53,Cancelled
+10267,Delhi,Chennai_WH,2025-05-05,2025-05-13,2025-05-31,1326,Air,Pharma,233,Pending
+10268,Jaipur,Bangalore_WH,2025-04-26,2025-05-16,2025-06-07,466,Truck,Pharma,391,Pending
+10269,Lucknow,Kolkata_WH,2025-04-22,2025-05-01,2025-05-28,2283,Air,Electronics,427,Delivered
+10270,Ahmedabad,Hyderabad_WH,2025-04-20,2025-04-20,2025-06-01,1936,Truck,Groceries,170,In Transit
+10271,Jaipur,Delhi_WH,2025-04-18,2025-04-21,2025-04-30,1201,Bike,Groceries,95,Cancelled
+10272,Kolkata,Kolkata_WH,2025-04-17,2025-05-03,2025-05-13,631,Ship,Books,458,Cancelled
+10273,Delhi,Bangalore_WH,2025-04-13,2025-05-07,2025-05-07,2236,Bike,Furniture,245,Pending
+10274,Hyderabad,Mumbai_WH,2025-04-14,2025-05-04,2025-05-19,1673,Train,Groceries,386,Delivered
+10275,Delhi,Jaipur_WH,2025-05-06,2025-05-14,2025-06-04,464,Ship,Electronics,3,Delivered
+10276,Chennai,Bangalore_WH,2025-04-30,2025-05-04,2025-05-22,1092,Ship,Groceries,257,In Transit
+10277,Bangalore,Bangalore_WH,2025-04-27,2025-04-30,2025-05-28,223,Bike,Apparel,276,Cancelled
+10278,Chennai,Mumbai_WH,2025-05-02,2025-05-14,2025-05-22,2247,Bike,Machinery,32,Pending
+10279,Delhi,Bangalore_WH,2025-05-06,2025-05-14,2025-05-31,1064,Bike,Toys,456,Delivered
+10280,Pune,Bangalore_WH,2025-04-16,2025-04-27,2025-05-09,1814,Truck,Books,169,Cancelled
+10281,Jaipur,Pune_WH,2025-05-05,2025-05-16,2025-05-18,1499,Ship,Books,417,Delivered
+10282,Chennai,Kolkata_WH,2025-04-17,2025-04-26,2025-05-03,986,Bike,Groceries,45,In Transit
+10283,Hyderabad,Lucknow_WH,2025-04-22,2025-05-10,2025-06-06,95,Bike,Pharma,102,Pending
+10284,Mumbai,Delhi_WH,2025-04-30,2025-05-01,2025-05-03,1247,Air,Apparel,9,In Transit
+10285,Pune,Bangalore_WH,2025-05-05,2025-05-17,2025-05-30,1752,Air,Furniture,494,Pending
+10286,Hyderabad,Hyderabad_WH,2025-04-24,2025-05-06,2025-05-18,61,Ship,Electronics,62,In Transit
+10287,Bangalore,Ahmedabad_WH,2025-05-09,2025-05-18,2025-06-02,1915,Truck,Books,345,In Transit
+10288,Mumbai,Hyderabad_WH,2025-04-16,2025-04-24,2025-05-19,404,Bike,Machinery,169,Pending
+10289,Ahmedabad,Hyderabad_WH,2025-04-22,2025-05-09,2025-06-08,1271,Ship,Books,149,Pending
+10290,Jaipur,Chennai_WH,2025-04-30,2025-05-11,2025-06-05,1807,Ship,Machinery,310,Cancelled
+10291,Hyderabad,Kolkata_WH,2025-05-01,2025-05-01,2025-05-01,900,Ship,Machinery,422,In Transit
+10292,Mumbai,Delhi_WH,2025-04-13,2025-04-21,2025-05-29,2293,Train,Pharma,430,Pending
+10293,Jaipur,Bangalore_WH,2025-04-26,2025-05-01,2025-05-18,483,Bike,Machinery,248,In Transit
+10294,Jaipur,Kolkata_WH,2025-04-17,2025-05-05,2025-05-13,1397,Air,Apparel,423,Cancelled
+10295,Jaipur,Pune_WH,2025-04-18,2025-05-02,2025-05-05,2367,Air,Furniture,205,Pending
+10296,Delhi,Bangalore_WH,2025-04-21,2025-04-24,2025-05-26,1925,Ship,Pharma,161,Cancelled
+10297,Kolkata,Pune_WH,2025-04-22,2025-05-12,2025-06-08,457,Ship,Apparel,267,Delivered
+10298,Jaipur,Kolkata_WH,2025-04-11,2025-05-19,2025-05-28,133,Train,Electronics,496,Pending
+10299,Jaipur,Hyderabad_WH,2025-05-08,2025-05-08,2025-05-13,2327,Ship,Groceries,35,In Transit
+10300,Ahmedabad,Lucknow_WH,2025-05-01,2025-05-06,2025-05-25,1997,Train,Apparel,102,Cancelled
+10301,Kolkata,Lucknow_WH,2025-04-15,2025-04-19,2025-06-06,186,Truck,Toys,457,Pending
+10302,Ahmedabad,Bangalore_WH,2025-04-16,2025-04-23,2025-05-01,352,Truck,Groceries,40,Delivered
+10303,Mumbai,Hyderabad_WH,2025-04-24,2025-05-01,2025-05-24,1618,Truck,Toys,443,Cancelled
+10304,Chennai,Mumbai_WH,2025-05-02,2025-05-16,2025-05-17,1360,Bike,Electronics,97,In Transit
+10305,Ahmedabad,Hyderabad_WH,2025-04-28,2025-05-18,2025-05-19,138,Train,Machinery,334,Cancelled
+10306,Hyderabad,Mumbai_WH,2025-04-16,2025-04-17,2025-04-17,1140,Train,Books,77,In Transit
+10307,Delhi,Delhi_WH,2025-04-19,2025-05-09,2025-05-18,2399,Train,Toys,477,In Transit
+10308,Ahmedabad,Kolkata_WH,2025-04-21,2025-05-05,2025-05-13,380,Air,Electronics,398,In Transit
+10309,Kolkata,Jaipur_WH,2025-04-16,2025-04-24,2025-05-07,765,Train,Furniture,138,Delivered
+10310,Chennai,Pune_WH,2025-04-19,2025-05-16,2025-06-01,1934,Bike,Furniture,93,In Transit
+10311,Bangalore,Pune_WH,2025-05-07,2025-05-17,2025-06-08,325,Train,Pharma,23,Delivered
+10312,Mumbai,Ahmedabad_WH,2025-04-19,2025-05-08,2025-05-23,111,Train,Toys,208,Cancelled
+10313,Jaipur,Hyderabad_WH,2025-05-07,2025-05-08,2025-05-14,1969,Truck,Electronics,493,Delivered
+10314,Ahmedabad,Delhi_WH,2025-05-07,2025-05-07,2025-05-10,594,Air,Groceries,245,Delivered
+10315,Ahmedabad,Hyderabad_WH,2025-05-02,2025-05-19,2025-05-31,1353,Truck,Books,396,In Transit
+10316,Bangalore,Delhi_WH,2025-05-06,2025-05-13,2025-05-26,1958,Train,Toys,287,In Transit
+10317,Jaipur,Pune_WH,2025-05-09,2025-05-14,2025-05-27,900,Air,Furniture,59,Cancelled
+10318,Mumbai,Bangalore_WH,2025-05-07,2025-05-17,2025-05-29,555,Ship,Apparel,336,Cancelled
+10319,Jaipur,Kolkata_WH,2025-04-10,2025-04-19,2025-04-26,253,Air,Pharma,358,Cancelled
+10320,Lucknow,Mumbai_WH,2025-05-03,2025-05-13,2025-05-23,1322,Bike,Pharma,433,Pending
+10321,Kolkata,Bangalore_WH,2025-05-08,2025-05-18,2025-06-01,2143,Truck,Electronics,254,In Transit
+10322,Lucknow,Mumbai_WH,2025-05-06,2025-05-09,2025-05-16,2500,Ship,Groceries,380,Cancelled
+10323,Hyderabad,Mumbai_WH,2025-05-06,2025-05-12,2025-05-19,208,Bike,Furniture,108,Cancelled
+10324,Pune,Hyderabad_WH,2025-05-02,2025-05-12,2025-06-03,50,Truck,Machinery,165,Cancelled
+10325,Mumbai,Ahmedabad_WH,2025-05-05,2025-05-19,2025-05-24,168,Truck,Furniture,206,In Transit
+10326,Mumbai,Chennai_WH,2025-04-28,2025-04-28,2025-04-28,2199,Truck,Apparel,30,In Transit
+10327,Bangalore,Lucknow_WH,2025-05-07,2025-05-10,2025-05-17,371,Train,Apparel,12,Delivered
+10328,Bangalore,Hyderabad_WH,2025-04-30,2025-05-07,2025-05-25,559,Bike,Toys,266,Delivered
+10329,Hyderabad,Pune_WH,2025-04-18,2025-04-29,2025-05-31,2245,Truck,Pharma,54,Pending
+10330,Pune,Jaipur_WH,2025-04-20,2025-04-28,2025-05-30,414,Air,Pharma,326,In Transit
+10331,Chennai,Mumbai_WH,2025-05-06,2025-05-11,2025-05-24,396,Bike,Machinery,85,In Transit
+10332,Chennai,Mumbai_WH,2025-04-22,2025-04-23,2025-05-05,536,Bike,Apparel,214,In Transit
+10333,Ahmedabad,Lucknow_WH,2025-04-17,2025-05-10,2025-06-01,1973,Truck,Furniture,470,Delivered
+10334,Bangalore,Chennai_WH,2025-04-16,2025-05-19,2025-06-06,1364,Bike,Apparel,38,In Transit
+10335,Mumbai,Bangalore_WH,2025-04-29,2025-05-05,2025-06-01,1912,Truck,Furniture,335,Cancelled
+10336,Delhi,Kolkata_WH,2025-04-12,2025-04-29,2025-06-01,593,Train,Pharma,53,Cancelled
+10337,Jaipur,Kolkata_WH,2025-04-10,2025-04-18,2025-05-24,263,Ship,Groceries,289,Pending
+10338,Lucknow,Delhi_WH,2025-05-01,2025-05-17,2025-05-26,1497,Bike,Electronics,18,Cancelled
+10339,Chennai,Delhi_WH,2025-05-05,2025-05-05,2025-06-03,2227,Train,Furniture,227,Cancelled
+10340,Ahmedabad,Ahmedabad_WH,2025-04-28,2025-05-06,2025-06-05,2117,Air,Electronics,155,Delivered
+10341,Lucknow,Kolkata_WH,2025-04-26,2025-05-11,2025-05-22,2019,Truck,Pharma,68,Delivered
+10342,Ahmedabad,Lucknow_WH,2025-04-10,2025-04-12,2025-04-18,2478,Train,Apparel,93,Delivered
+10343,Delhi,Lucknow_WH,2025-04-26,2025-05-12,2025-06-06,2028,Train,Furniture,492,Cancelled
+10344,Hyderabad,Bangalore_WH,2025-04-27,2025-04-27,2025-06-07,1074,Air,Electronics,240,Pending
+10345,Kolkata,Pune_WH,2025-04-13,2025-04-25,2025-05-13,77,Air,Machinery,107,Pending
+10346,Ahmedabad,Kolkata_WH,2025-04-10,2025-05-16,2025-05-26,206,Ship,Books,6,Delivered
+10347,Chennai,Kolkata_WH,2025-05-04,2025-05-05,2025-06-02,2491,Truck,Toys,408,In Transit
+10348,Ahmedabad,Chennai_WH,2025-05-02,2025-05-06,2025-06-07,1706,Truck,Groceries,419,Delivered
+10349,Jaipur,Lucknow_WH,2025-04-16,2025-04-22,2025-05-10,159,Ship,Apparel,239,Pending
+10350,Ahmedabad,Kolkata_WH,2025-04-22,2025-05-06,2025-05-20,535,Train,Electronics,438,In Transit
+10351,Mumbai,Chennai_WH,2025-04-15,2025-05-09,2025-05-11,1382,Truck,Apparel,157,Pending
+10352,Mumbai,Hyderabad_WH,2025-05-04,2025-05-10,2025-06-05,1235,Bike,Pharma,436,In Transit
+10353,Jaipur,Mumbai_WH,2025-04-17,2025-05-17,2025-05-26,1249,Air,Furniture,44,Cancelled
+10354,Chennai,Bangalore_WH,2025-04-22,2025-05-13,2025-05-31,2276,Air,Books,344,Delivered
+10355,Mumbai,Mumbai_WH,2025-05-08,2025-05-17,2025-06-07,462,Train,Pharma,10,Delivered
+10356,Mumbai,Pune_WH,2025-05-02,2025-05-13,2025-05-24,2092,Bike,Pharma,85,Delivered
+10357,Jaipur,Delhi_WH,2025-04-28,2025-05-04,2025-06-06,819,Truck,Books,151,In Transit
+10358,Mumbai,Hyderabad_WH,2025-05-07,2025-05-15,2025-05-27,1712,Train,Groceries,173,Delivered
+10359,Ahmedabad,Delhi_WH,2025-04-28,2025-05-06,2025-05-26,1738,Train,Machinery,167,Delivered
+10360,Bangalore,Hyderabad_WH,2025-04-26,2025-05-15,2025-06-05,933,Train,Apparel,160,In Transit
+10361,Chennai,Hyderabad_WH,2025-04-30,2025-05-12,2025-06-02,823,Ship,Electronics,105,Delivered
+10362,Kolkata,Hyderabad_WH,2025-05-04,2025-05-17,2025-06-04,824,Train,Books,227,Pending
+10363,Kolkata,Kolkata_WH,2025-05-09,2025-05-16,2025-05-27,492,Truck,Apparel,215,Delivered
+10364,Chennai,Jaipur_WH,2025-05-07,2025-05-13,2025-05-21,1108,Bike,Pharma,136,Pending
+10365,Hyderabad,Pune_WH,2025-04-24,2025-05-11,2025-06-08,2357,Air,Electronics,193,Delivered
+10366,Jaipur,Jaipur_WH,2025-04-17,2025-05-17,2025-06-07,1334,Bike,Furniture,345,Cancelled
+10367,Mumbai,Kolkata_WH,2025-05-02,2025-05-11,2025-05-26,463,Bike,Books,103,Cancelled
+10368,Mumbai,Kolkata_WH,2025-04-19,2025-05-18,2025-05-25,1049,Bike,Apparel,127,Pending
+10369,Mumbai,Delhi_WH,2025-04-12,2025-04-30,2025-05-09,1033,Air,Apparel,81,Pending
+10370,Pune,Lucknow_WH,2025-04-16,2025-05-07,2025-05-13,1166,Truck,Machinery,476,Pending
+10371,Kolkata,Delhi_WH,2025-04-20,2025-05-09,2025-06-03,286,Ship,Books,328,Cancelled
+10372,Jaipur,Bangalore_WH,2025-04-24,2025-05-01,2025-05-30,195,Ship,Pharma,236,Pending
+10373,Pune,Hyderabad_WH,2025-04-22,2025-05-08,2025-06-01,235,Ship,Apparel,25,Delivered
+10374,Ahmedabad,Chennai_WH,2025-04-14,2025-04-16,2025-05-19,1697,Bike,Books,408,Pending
+10375,Hyderabad,Mumbai_WH,2025-05-02,2025-05-17,2025-06-01,1128,Air,Pharma,473,In Transit
+10376,Delhi,Bangalore_WH,2025-05-07,2025-05-12,2025-05-30,1033,Air,Furniture,69,In Transit
+10377,Jaipur,Ahmedabad_WH,2025-05-07,2025-05-10,2025-05-13,393,Air,Electronics,213,Cancelled
+10378,Hyderabad,Kolkata_WH,2025-05-07,2025-05-10,2025-05-26,1563,Train,Electronics,120,Cancelled
+10379,Chennai,Bangalore_WH,2025-04-15,2025-05-06,2025-06-02,1592,Bike,Apparel,168,Cancelled
+10380,Ahmedabad,Mumbai_WH,2025-04-26,2025-05-08,2025-05-18,280,Train,Books,102,Cancelled
+10381,Delhi,Mumbai_WH,2025-04-18,2025-05-17,2025-06-05,257,Ship,Books,261,Cancelled
+10382,Lucknow,Chennai_WH,2025-04-22,2025-04-30,2025-06-03,1859,Train,Apparel,376,Pending
+10383,Kolkata,Jaipur_WH,2025-04-18,2025-05-10,2025-05-27,851,Ship,Electronics,458,Delivered
+10384,Kolkata,Chennai_WH,2025-05-08,2025-05-08,2025-05-25,122,Truck,Furniture,71,In Transit
+10385,Lucknow,Jaipur_WH,2025-05-02,2025-05-13,2025-05-20,911,Truck,Books,243,Delivered
+10386,Chennai,Hyderabad_WH,2025-04-22,2025-05-10,2025-05-24,886,Ship,Machinery,240,In Transit
+10387,Ahmedabad,Pune_WH,2025-05-01,2025-05-11,2025-05-30,1826,Bike,Apparel,424,Pending
+10388,Kolkata,Ahmedabad_WH,2025-04-10,2025-04-13,2025-05-29,2047,Train,Pharma,56,Delivered
+10389,Hyderabad,Kolkata_WH,2025-04-19,2025-04-26,2025-05-03,2186,Air,Books,134,Delivered
+10390,Pune,Delhi_WH,2025-05-07,2025-05-10,2025-05-28,2155,Air,Books,363,Pending
+10391,Hyderabad,Chennai_WH,2025-05-07,2025-05-11,2025-05-29,2090,Train,Apparel,52,In Transit
+10392,Hyderabad,Pune_WH,2025-04-25,2025-05-01,2025-05-13,479,Bike,Machinery,376,In Transit
+10393,Mumbai,Kolkata_WH,2025-05-06,2025-05-18,2025-06-03,1341,Truck,Furniture,208,In Transit
+10394,Jaipur,Chennai_WH,2025-05-01,2025-05-11,2025-05-13,345,Bike,Furniture,13,Pending
+10395,Jaipur,Chennai_WH,2025-04-14,2025-05-14,2025-05-25,671,Ship,Machinery,16,Cancelled
+10396,Jaipur,Bangalore_WH,2025-04-27,2025-05-12,2025-05-14,1393,Air,Books,227,Pending
+10397,Pune,Hyderabad_WH,2025-05-08,2025-05-08,2025-05-11,57,Air,Machinery,450,Pending
+10398,Delhi,Bangalore_WH,2025-04-16,2025-04-24,2025-05-08,1908,Train,Furniture,282,Cancelled
+10399,Hyderabad,Chennai_WH,2025-05-07,2025-05-13,2025-05-16,2220,Bike,Groceries,309,Cancelled
+10400,Ahmedabad,Pune_WH,2025-04-11,2025-05-18,2025-05-30,860,Bike,Furniture,339,Pending
+10401,Mumbai,Hyderabad_WH,2025-05-06,2025-05-10,2025-05-18,1308,Air,Furniture,383,Pending
+10402,Lucknow,Bangalore_WH,2025-04-29,2025-05-12,2025-05-18,1596,Train,Groceries,493,Pending
+10403,Kolkata,Jaipur_WH,2025-05-09,2025-05-18,2025-05-19,603,Train,Books,249,Delivered
+10404,Kolkata,Kolkata_WH,2025-04-30,2025-05-06,2025-06-02,2280,Air,Pharma,493,Delivered
+10405,Bangalore,Delhi_WH,2025-05-09,2025-05-16,2025-05-24,1338,Air,Apparel,379,Delivered
+10406,Pune,Hyderabad_WH,2025-04-24,2025-05-19,2025-05-31,2260,Ship,Books,460,Pending
+10407,Hyderabad,Pune_WH,2025-05-02,2025-05-09,2025-05-25,218,Train,Furniture,218,Delivered
+10408,Mumbai,Pune_WH,2025-04-20,2025-05-14,2025-06-08,2149,Train,Apparel,155,Pending
+10409,Mumbai,Ahmedabad_WH,2025-04-18,2025-05-06,2025-05-09,1707,Train,Books,356,Cancelled
+10410,Hyderabad,Lucknow_WH,2025-05-04,2025-05-09,2025-05-20,1968,Ship,Machinery,411,Delivered
+10411,Pune,Kolkata_WH,2025-04-16,2025-05-17,2025-05-31,1863,Air,Machinery,116,Cancelled
+10412,Jaipur,Chennai_WH,2025-04-25,2025-05-17,2025-06-02,1109,Air,Furniture,455,Pending
+10413,Pune,Chennai_WH,2025-04-26,2025-04-30,2025-05-03,1346,Ship,Books,325,In Transit
+10414,Delhi,Ahmedabad_WH,2025-05-03,2025-05-19,2025-05-22,472,Bike,Machinery,190,Cancelled
+10415,Chennai,Ahmedabad_WH,2025-04-25,2025-05-14,2025-05-29,1686,Ship,Machinery,27,Cancelled
+10416,Chennai,Pune_WH,2025-05-05,2025-05-13,2025-06-04,2048,Truck,Furniture,457,Delivered
+10417,Kolkata,Hyderabad_WH,2025-05-04,2025-05-16,2025-05-23,1031,Truck,Machinery,475,Delivered
+10418,Kolkata,Pune_WH,2025-04-30,2025-05-14,2025-05-18,1165,Truck,Groceries,407,Delivered
+10419,Ahmedabad,Hyderabad_WH,2025-05-08,2025-05-09,2025-05-28,1462,Truck,Furniture,220,Delivered
+10420,Mumbai,Lucknow_WH,2025-04-30,2025-05-11,2025-05-24,476,Ship,Electronics,86,Pending
+10421,Pune,Mumbai_WH,2025-04-26,2025-04-30,2025-05-09,133,Ship,Toys,471,Pending
+10422,Bangalore,Bangalore_WH,2025-04-16,2025-04-28,2025-05-23,787,Ship,Pharma,296,Delivered
+10423,Lucknow,Chennai_WH,2025-04-20,2025-04-29,2025-05-29,1672,Bike,Furniture,26,Cancelled
+10424,Ahmedabad,Delhi_WH,2025-04-16,2025-04-27,2025-05-20,1469,Bike,Machinery,222,In Transit
+10425,Lucknow,Chennai_WH,2025-05-05,2025-05-19,2025-05-20,526,Ship,Apparel,481,In Transit
+10426,Bangalore,Jaipur_WH,2025-05-07,2025-05-10,2025-05-27,635,Bike,Furniture,15,Cancelled
+10427,Jaipur,Mumbai_WH,2025-05-08,2025-05-09,2025-05-21,854,Air,Groceries,10,Cancelled
+10428,Jaipur,Hyderabad_WH,2025-04-15,2025-04-18,2025-05-30,67,Train,Books,320,Pending
+10429,Kolkata,Ahmedabad_WH,2025-04-25,2025-05-06,2025-05-25,2029,Train,Furniture,309,In Transit
+10430,Kolkata,Chennai_WH,2025-04-30,2025-05-04,2025-05-17,1069,Ship,Groceries,49,Cancelled
+10431,Mumbai,Mumbai_WH,2025-05-04,2025-05-18,2025-05-29,1721,Train,Pharma,224,Delivered
+10432,Hyderabad,Delhi_WH,2025-04-16,2025-05-11,2025-05-22,2487,Truck,Electronics,351,In Transit
+10433,Kolkata,Mumbai_WH,2025-05-07,2025-05-19,2025-05-24,1379,Bike,Electronics,160,Delivered
+10434,Lucknow,Delhi_WH,2025-05-08,2025-05-13,2025-06-03,603,Train,Electronics,153,Cancelled
+10435,Hyderabad,Delhi_WH,2025-05-07,2025-05-17,2025-06-02,2180,Bike,Machinery,32,Cancelled
+10436,Bangalore,Pune_WH,2025-05-07,2025-05-08,2025-06-08,1985,Ship,Groceries,39,Delivered
+10437,Kolkata,Pune_WH,2025-04-18,2025-05-14,2025-05-17,393,Bike,Groceries,15,Cancelled
+10438,Hyderabad,Hyderabad_WH,2025-05-05,2025-05-14,2025-05-22,609,Train,Groceries,306,Delivered
+10439,Ahmedabad,Ahmedabad_WH,2025-05-09,2025-05-12,2025-05-12,9,Ship,Toys,91,Cancelled
+10440,Hyderabad,Chennai_WH,2025-05-02,2025-05-09,2025-05-20,782,Air,Pharma,495,In Transit
+10441,Jaipur,Jaipur_WH,2025-04-15,2025-05-18,2025-06-08,2106,Train,Pharma,182,In Transit
+10442,Lucknow,Hyderabad_WH,2025-05-04,2025-05-05,2025-05-31,820,Air,Books,193,Delivered
+10443,Hyderabad,Lucknow_WH,2025-04-11,2025-04-29,2025-05-14,1873,Air,Pharma,238,Delivered
+10444,Delhi,Mumbai_WH,2025-04-18,2025-04-26,2025-05-07,1741,Train,Machinery,157,Delivered
+10445,Kolkata,Hyderabad_WH,2025-04-17,2025-04-22,2025-05-05,2262,Bike,Books,36,Delivered
+10446,Ahmedabad,Pune_WH,2025-04-17,2025-04-22,2025-06-05,1260,Ship,Apparel,373,Delivered
+10447,Ahmedabad,Chennai_WH,2025-04-25,2025-05-13,2025-05-25,1346,Air,Furniture,382,Cancelled
+10448,Mumbai,Delhi_WH,2025-04-19,2025-05-16,2025-05-19,1930,Truck,Machinery,357,In Transit
+10449,Pune,Delhi_WH,2025-04-18,2025-04-18,2025-04-21,838,Bike,Furniture,267,Cancelled
+10450,Chennai,Bangalore_WH,2025-04-29,2025-05-05,2025-05-16,1844,Train,Groceries,338,In Transit
+10451,Hyderabad,Hyderabad_WH,2025-05-09,2025-05-13,2025-05-18,1071,Bike,Electronics,340,Cancelled
+10452,Kolkata,Bangalore_WH,2025-05-08,2025-05-16,2025-05-31,883,Ship,Furniture,254,Pending
+10453,Lucknow,Chennai_WH,2025-05-09,2025-05-14,2025-05-21,2045,Bike,Pharma,205,Pending
+10454,Lucknow,Chennai_WH,2025-04-13,2025-04-19,2025-05-26,2041,Ship,Electronics,484,Pending
+10455,Delhi,Pune_WH,2025-04-25,2025-05-16,2025-06-03,2479,Ship,Groceries,367,Pending
+10456,Delhi,Ahmedabad_WH,2025-04-29,2025-05-07,2025-06-06,768,Bike,Pharma,14,In Transit
+10457,Jaipur,Pune_WH,2025-04-17,2025-05-07,2025-05-21,1935,Air,Books,197,Delivered
+10458,Ahmedabad,Chennai_WH,2025-04-27,2025-05-10,2025-06-06,1727,Train,Pharma,268,Delivered
+10459,Mumbai,Kolkata_WH,2025-04-22,2025-04-23,2025-05-09,2418,Air,Pharma,441,Pending
+10460,Kolkata,Chennai_WH,2025-04-15,2025-04-17,2025-04-29,2185,Bike,Groceries,369,Pending
+10461,Ahmedabad,Jaipur_WH,2025-04-12,2025-04-19,2025-05-03,1438,Train,Furniture,209,Delivered
+10462,Hyderabad,Delhi_WH,2025-05-06,2025-05-12,2025-05-17,1257,Air,Books,179,In Transit
+10463,Hyderabad,Chennai_WH,2025-05-05,2025-05-06,2025-05-12,1998,Air,Groceries,3,Cancelled
+10464,Kolkata,Mumbai_WH,2025-04-17,2025-05-18,2025-05-29,1810,Ship,Machinery,282,In Transit
+10465,Pune,Jaipur_WH,2025-05-09,2025-05-19,2025-05-21,431,Ship,Groceries,78,Delivered
+10466,Pune,Delhi_WH,2025-04-25,2025-04-25,2025-05-19,1188,Ship,Pharma,189,Pending
+10467,Pune,Bangalore_WH,2025-04-23,2025-04-29,2025-05-24,1298,Train,Pharma,262,Pending
+10468,Hyderabad,Mumbai_WH,2025-05-02,2025-05-17,2025-06-06,762,Bike,Pharma,36,Pending
+10469,Jaipur,Ahmedabad_WH,2025-04-13,2025-04-27,2025-05-20,504,Ship,Electronics,344,Cancelled
+10470,Kolkata,Pune_WH,2025-04-18,2025-05-13,2025-05-17,1217,Bike,Books,274,In Transit
+10471,Chennai,Pune_WH,2025-04-26,2025-05-15,2025-05-26,1737,Truck,Furniture,223,In Transit
+10472,Delhi,Bangalore_WH,2025-04-28,2025-05-07,2025-05-22,2053,Truck,Furniture,468,Delivered
+10473,Bangalore,Mumbai_WH,2025-04-10,2025-04-18,2025-05-12,1106,Air,Books,82,Delivered
+10474,Lucknow,Hyderabad_WH,2025-04-30,2025-04-30,2025-06-02,725,Ship,Books,310,Pending
+10475,Bangalore,Chennai_WH,2025-04-14,2025-05-02,2025-05-26,1489,Truck,Furniture,415,Pending
+10476,Lucknow,Delhi_WH,2025-04-25,2025-04-26,2025-05-11,1653,Air,Groceries,433,Pending
+10477,Chennai,Lucknow_WH,2025-04-26,2025-05-17,2025-05-29,1160,Ship,Groceries,387,In Transit
+10478,Delhi,Jaipur_WH,2025-04-29,2025-04-30,2025-06-02,1508,Air,Toys,486,Delivered
+10479,Mumbai,Delhi_WH,2025-05-01,2025-05-05,2025-05-05,246,Truck,Toys,94,In Transit
+10480,Mumbai,Ahmedabad_WH,2025-05-04,2025-05-07,2025-05-22,827,Truck,Electronics,480,Delivered
+10481,Lucknow,Pune_WH,2025-04-13,2025-04-30,2025-05-15,896,Truck,Furniture,428,In Transit
+10482,Chennai,Mumbai_WH,2025-04-21,2025-05-09,2025-06-04,1275,Truck,Toys,250,Pending
+10483,Kolkata,Lucknow_WH,2025-04-24,2025-05-14,2025-05-24,1680,Ship,Machinery,440,Delivered
+10484,Bangalore,Lucknow_WH,2025-05-02,2025-05-10,2025-05-11,2316,Ship,Apparel,482,Pending
+10485,Chennai,Pune_WH,2025-04-18,2025-05-10,2025-05-31,2125,Bike,Books,427,Delivered
+10486,Pune,Bangalore_WH,2025-05-09,2025-05-11,2025-05-23,909,Air,Pharma,466,Cancelled
+10487,Chennai,Lucknow_WH,2025-04-25,2025-05-07,2025-05-30,1068,Ship,Books,385,Cancelled
+10488,Bangalore,Kolkata_WH,2025-05-06,2025-05-17,2025-05-21,23,Train,Pharma,389,In Transit
+10489,Pune,Ahmedabad_WH,2025-04-21,2025-05-19,2025-05-28,1664,Bike,Pharma,260,Delivered
+10490,Pune,Bangalore_WH,2025-04-20,2025-05-19,2025-05-24,936,Bike,Toys,24,Cancelled
+10491,Delhi,Lucknow_WH,2025-04-22,2025-05-14,2025-05-30,2297,Air,Books,312,Pending
+10492,Mumbai,Delhi_WH,2025-04-19,2025-05-03,2025-05-17,752,Train,Groceries,252,Pending
+10493,Kolkata,Lucknow_WH,2025-04-28,2025-05-17,2025-05-23,1748,Truck,Apparel,468,Pending
+10494,Hyderabad,Lucknow_WH,2025-05-02,2025-05-16,2025-06-03,558,Bike,Groceries,465,Pending
+10495,Mumbai,Jaipur_WH,2025-04-12,2025-04-27,2025-05-23,80,Truck,Pharma,79,Delivered
+10496,Lucknow,Mumbai_WH,2025-05-06,2025-05-08,2025-05-21,1254,Truck,Furniture,263,Cancelled
+10497,Jaipur,Kolkata_WH,2025-05-07,2025-05-19,2025-06-04,947,Truck,Apparel,463,Pending
+10498,Pune,Pune_WH,2025-04-19,2025-05-07,2025-06-02,396,Train,Apparel,12,Cancelled
+10499,Mumbai,Lucknow_WH,2025-05-04,2025-05-10,2025-06-06,1978,Air,Furniture,30,Pending
+10500,Ahmedabad,Delhi_WH,2025-05-01,2025-05-05,2025-05-12,2213,Ship,Machinery,380,Delivered
+10501,Delhi,Lucknow_WH,2025-04-26,2025-05-01,2025-06-04,1254,Train,Furniture,494,Delivered
+10502,Delhi,Kolkata_WH,2025-04-30,2025-05-05,2025-05-31,705,Air,Electronics,27,Delivered
+10503,Jaipur,Jaipur_WH,2025-04-13,2025-04-29,2025-06-01,264,Truck,Electronics,106,Cancelled
+10504,Jaipur,Lucknow_WH,2025-04-23,2025-05-08,2025-05-21,209,Ship,Furniture,136,Cancelled
+10505,Bangalore,Bangalore_WH,2025-04-12,2025-05-04,2025-05-17,1124,Bike,Furniture,315,Delivered
+10506,Mumbai,Hyderabad_WH,2025-04-28,2025-05-10,2025-06-04,864,Bike,Books,400,In Transit
+10507,Delhi,Lucknow_WH,2025-04-12,2025-05-16,2025-05-22,1749,Bike,Apparel,446,Delivered
+10508,Delhi,Mumbai_WH,2025-05-03,2025-05-14,2025-06-08,1890,Ship,Pharma,61,Delivered
+10509,Lucknow,Hyderabad_WH,2025-04-25,2025-05-18,2025-06-01,254,Bike,Furniture,217,Pending
+10510,Kolkata,Bangalore_WH,2025-04-13,2025-05-09,2025-06-03,1000,Air,Apparel,304,Delivered
+10511,Ahmedabad,Pune_WH,2025-05-05,2025-05-19,2025-05-24,37,Bike,Apparel,68,Cancelled
+10512,Jaipur,Mumbai_WH,2025-05-06,2025-05-14,2025-05-25,1025,Bike,Books,298,In Transit
+10513,Pune,Lucknow_WH,2025-04-29,2025-05-11,2025-06-02,1671,Truck,Books,252,In Transit
+10514,Mumbai,Pune_WH,2025-05-01,2025-05-02,2025-05-07,746,Bike,Electronics,28,In Transit
+10515,Pune,Mumbai_WH,2025-04-29,2025-05-11,2025-05-25,1286,Air,Groceries,330,Pending
+10516,Hyderabad,Lucknow_WH,2025-04-19,2025-05-03,2025-05-04,687,Train,Toys,282,Cancelled
+10517,Hyderabad,Kolkata_WH,2025-04-28,2025-05-05,2025-05-20,1850,Air,Books,89,Delivered
+10518,Kolkata,Kolkata_WH,2025-05-07,2025-05-12,2025-05-27,1053,Train,Machinery,457,Delivered
+10519,Chennai,Ahmedabad_WH,2025-04-19,2025-05-14,2025-05-20,2348,Ship,Electronics,76,Delivered
+10520,Mumbai,Jaipur_WH,2025-04-17,2025-04-26,2025-05-19,911,Train,Books,86,Cancelled
+10521,Lucknow,Jaipur_WH,2025-04-30,2025-05-11,2025-06-04,61,Bike,Toys,466,Cancelled
+10522,Bangalore,Delhi_WH,2025-05-09,2025-05-10,2025-05-26,2281,Bike,Toys,357,In Transit
+10523,Kolkata,Mumbai_WH,2025-04-13,2025-04-15,2025-06-03,2284,Ship,Electronics,274,Pending
+10524,Lucknow,Pune_WH,2025-04-11,2025-04-24,2025-05-17,170,Train,Apparel,196,Delivered
+10525,Lucknow,Delhi_WH,2025-04-27,2025-05-11,2025-06-03,439,Air,Furniture,23,Pending
+10526,Chennai,Ahmedabad_WH,2025-04-30,2025-05-02,2025-05-20,1835,Train,Machinery,465,In Transit
+10527,Hyderabad,Kolkata_WH,2025-04-26,2025-05-04,2025-05-31,2105,Train,Apparel,274,Pending
+10528,Ahmedabad,Mumbai_WH,2025-05-03,2025-05-12,2025-05-19,1275,Bike,Books,201,Pending
+10529,Bangalore,Bangalore_WH,2025-04-28,2025-05-01,2025-05-21,734,Bike,Electronics,453,Cancelled
+10530,Ahmedabad,Kolkata_WH,2025-05-01,2025-05-15,2025-06-03,935,Ship,Furniture,293,In Transit
+10531,Jaipur,Hyderabad_WH,2025-04-20,2025-04-30,2025-05-01,660,Bike,Machinery,295,Cancelled
+10532,Bangalore,Bangalore_WH,2025-05-08,2025-05-08,2025-05-10,365,Air,Electronics,74,Pending
+10533,Lucknow,Kolkata_WH,2025-04-18,2025-04-28,2025-05-14,1383,Ship,Furniture,372,Pending
+10534,Kolkata,Kolkata_WH,2025-05-07,2025-05-18,2025-05-19,1467,Truck,Toys,86,Delivered
+10535,Delhi,Kolkata_WH,2025-05-06,2025-05-18,2025-05-19,1477,Train,Books,40,Cancelled
+10536,Kolkata,Pune_WH,2025-05-05,2025-05-19,2025-05-19,2018,Air,Pharma,197,Pending
+10537,Jaipur,Chennai_WH,2025-05-08,2025-05-17,2025-05-28,314,Bike,Pharma,87,In Transit
+10538,Ahmedabad,Mumbai_WH,2025-04-24,2025-05-18,2025-06-08,1169,Bike,Electronics,207,Delivered
+10539,Kolkata,Pune_WH,2025-05-08,2025-05-19,2025-06-03,614,Air,Apparel,442,Pending
+10540,Hyderabad,Bangalore_WH,2025-04-13,2025-04-28,2025-05-20,1353,Bike,Apparel,482,Pending
+10541,Jaipur,Chennai_WH,2025-04-13,2025-04-19,2025-05-29,1115,Air,Machinery,442,In Transit
+10542,Bangalore,Kolkata_WH,2025-05-06,2025-05-15,2025-05-24,819,Truck,Books,287,Cancelled
+10543,Ahmedabad,Kolkata_WH,2025-04-20,2025-05-18,2025-05-28,1301,Train,Apparel,91,Pending
+10544,Mumbai,Lucknow_WH,2025-04-11,2025-04-26,2025-06-08,804,Ship,Books,32,In Transit
+10545,Delhi,Pune_WH,2025-04-15,2025-05-05,2025-05-16,355,Bike,Toys,231,Cancelled
+10546,Ahmedabad,Ahmedabad_WH,2025-04-20,2025-04-25,2025-05-12,1101,Truck,Machinery,181,Cancelled
+10547,Chennai,Bangalore_WH,2025-05-07,2025-05-14,2025-06-08,2202,Truck,Machinery,24,Cancelled
+10548,Pune,Mumbai_WH,2025-04-28,2025-04-29,2025-05-03,1585,Train,Apparel,56,In Transit
+10549,Chennai,Chennai_WH,2025-04-17,2025-05-03,2025-05-23,804,Train,Groceries,147,Cancelled
+10550,Ahmedabad,Chennai_WH,2025-04-20,2025-05-04,2025-05-06,846,Truck,Furniture,176,In Transit
+10551,Bangalore,Pune_WH,2025-05-07,2025-05-18,2025-05-30,1868,Ship,Groceries,45,Delivered
+10552,Pune,Ahmedabad_WH,2025-05-02,2025-05-14,2025-05-27,342,Air,Machinery,279,Delivered
+10553,Ahmedabad,Lucknow_WH,2025-04-26,2025-05-01,2025-05-24,2177,Train,Machinery,119,Cancelled
+10554,Chennai,Hyderabad_WH,2025-05-01,2025-05-18,2025-05-26,2391,Air,Electronics,209,Pending
+10555,Bangalore,Delhi_WH,2025-04-29,2025-05-05,2025-05-16,1592,Truck,Toys,325,Cancelled
+10556,Jaipur,Hyderabad_WH,2025-05-01,2025-05-14,2025-05-18,1946,Truck,Groceries,56,In Transit
+10557,Hyderabad,Delhi_WH,2025-04-20,2025-05-14,2025-05-28,862,Bike,Apparel,34,Delivered
+10558,Delhi,Kolkata_WH,2025-04-28,2025-05-03,2025-05-10,1171,Bike,Furniture,464,Cancelled
+10559,Hyderabad,Jaipur_WH,2025-04-27,2025-05-12,2025-05-13,1907,Ship,Apparel,200,Cancelled
+10560,Mumbai,Jaipur_WH,2025-04-21,2025-04-27,2025-05-22,844,Truck,Groceries,135,In Transit
+10561,Ahmedabad,Lucknow_WH,2025-04-29,2025-05-16,2025-05-21,213,Air,Groceries,120,Delivered
+10562,Chennai,Pune_WH,2025-04-12,2025-05-16,2025-05-20,846,Air,Furniture,14,In Transit
+10563,Jaipur,Chennai_WH,2025-05-05,2025-05-18,2025-06-08,81,Train,Furniture,19,Cancelled
+10564,Hyderabad,Delhi_WH,2025-04-22,2025-05-14,2025-05-20,1082,Bike,Electronics,500,Pending
+10565,Hyderabad,Ahmedabad_WH,2025-05-09,2025-05-12,2025-05-30,2488,Bike,Books,117,Pending
+10566,Kolkata,Bangalore_WH,2025-05-08,2025-05-08,2025-05-24,1830,Air,Toys,88,Delivered
+10567,Lucknow,Ahmedabad_WH,2025-05-01,2025-05-15,2025-05-24,1289,Truck,Books,492,In Transit
+10568,Lucknow,Delhi_WH,2025-04-18,2025-04-28,2025-05-29,2111,Ship,Apparel,262,Cancelled
+10569,Pune,Chennai_WH,2025-04-14,2025-04-15,2025-05-19,2428,Ship,Electronics,44,In Transit
+10570,Bangalore,Kolkata_WH,2025-04-15,2025-05-14,2025-05-16,181,Ship,Machinery,175,In Transit
+10571,Lucknow,Jaipur_WH,2025-04-19,2025-05-16,2025-06-06,2398,Ship,Pharma,437,In Transit
+10572,Jaipur,Lucknow_WH,2025-04-23,2025-05-09,2025-05-23,99,Truck,Pharma,293,Pending
+10573,Ahmedabad,Ahmedabad_WH,2025-05-02,2025-05-18,2025-05-28,511,Train,Electronics,248,Delivered
+10574,Delhi,Bangalore_WH,2025-05-03,2025-05-03,2025-05-16,1839,Ship,Machinery,495,Delivered
+10575,Kolkata,Jaipur_WH,2025-04-24,2025-05-16,2025-05-22,142,Ship,Toys,486,In Transit
+10576,Pune,Delhi_WH,2025-05-01,2025-05-07,2025-05-21,1250,Bike,Pharma,227,Cancelled
+10577,Hyderabad,Pune_WH,2025-04-16,2025-04-25,2025-04-29,1338,Train,Electronics,96,Cancelled
+10578,Lucknow,Pune_WH,2025-04-26,2025-05-03,2025-05-21,1282,Truck,Pharma,44,In Transit
+10579,Jaipur,Bangalore_WH,2025-04-23,2025-05-12,2025-06-04,2492,Air,Pharma,70,Cancelled
+10580,Lucknow,Jaipur_WH,2025-05-01,2025-05-06,2025-06-03,2451,Train,Apparel,394,In Transit
+10581,Lucknow,Kolkata_WH,2025-04-27,2025-05-17,2025-05-24,1625,Truck,Electronics,81,Delivered
+10582,Ahmedabad,Mumbai_WH,2025-04-12,2025-05-17,2025-05-24,12,Ship,Furniture,467,Delivered
+10583,Hyderabad,Jaipur_WH,2025-04-20,2025-04-23,2025-05-14,1695,Ship,Furniture,302,Pending
+10584,Lucknow,Pune_WH,2025-04-15,2025-05-03,2025-05-12,1369,Ship,Books,370,Pending
+10585,Hyderabad,Chennai_WH,2025-04-28,2025-05-02,2025-05-10,723,Air,Machinery,163,In Transit
+10586,Chennai,Jaipur_WH,2025-05-08,2025-05-17,2025-06-06,1137,Truck,Machinery,159,Delivered
+10587,Jaipur,Ahmedabad_WH,2025-04-23,2025-04-29,2025-05-22,2107,Truck,Furniture,324,Pending
+10588,Lucknow,Kolkata_WH,2025-04-29,2025-05-08,2025-05-28,1759,Ship,Furniture,99,Cancelled
+10589,Lucknow,Chennai_WH,2025-05-09,2025-05-14,2025-05-20,2037,Bike,Machinery,433,Cancelled
+10590,Jaipur,Bangalore_WH,2025-04-14,2025-04-24,2025-05-28,860,Ship,Furniture,259,Pending
+10591,Bangalore,Hyderabad_WH,2025-04-19,2025-05-05,2025-05-07,2231,Ship,Books,32,Cancelled
+10592,Mumbai,Ahmedabad_WH,2025-04-29,2025-05-10,2025-05-15,1921,Truck,Pharma,112,Pending
+10593,Kolkata,Hyderabad_WH,2025-04-17,2025-05-15,2025-05-29,1142,Truck,Groceries,129,Delivered
+10594,Jaipur,Lucknow_WH,2025-04-15,2025-05-17,2025-06-07,1425,Train,Groceries,101,Pending
+10595,Jaipur,Hyderabad_WH,2025-04-21,2025-05-17,2025-05-18,1688,Air,Groceries,446,In Transit
+10596,Bangalore,Pune_WH,2025-05-04,2025-05-10,2025-06-04,1657,Truck,Machinery,58,Pending
+10597,Kolkata,Chennai_WH,2025-04-13,2025-05-13,2025-05-28,1658,Bike,Books,65,Cancelled
+10598,Kolkata,Pune_WH,2025-04-14,2025-04-20,2025-05-06,420,Bike,Books,225,Cancelled
+10599,Pune,Bangalore_WH,2025-04-16,2025-04-23,2025-05-25,2346,Air,Machinery,326,Cancelled
+10600,Jaipur,Bangalore_WH,2025-04-30,2025-05-11,2025-05-20,103,Truck,Groceries,256,Pending
+10601,Ahmedabad,Hyderabad_WH,2025-04-28,2025-05-19,2025-05-30,1069,Air,Toys,417,Cancelled
+10602,Delhi,Mumbai_WH,2025-04-29,2025-05-06,2025-05-13,1494,Ship,Machinery,303,Delivered
+10603,Chennai,Pune_WH,2025-04-20,2025-04-20,2025-06-06,2116,Truck,Machinery,410,Cancelled
+10604,Lucknow,Mumbai_WH,2025-05-04,2025-05-12,2025-05-21,1864,Air,Groceries,348,Cancelled
+10605,Pune,Bangalore_WH,2025-05-05,2025-05-12,2025-05-13,1520,Ship,Electronics,304,Cancelled
+10606,Bangalore,Kolkata_WH,2025-05-09,2025-05-11,2025-05-19,1637,Train,Furniture,346,Cancelled
+10607,Lucknow,Hyderabad_WH,2025-04-29,2025-05-01,2025-06-08,801,Truck,Electronics,155,In Transit
+10608,Kolkata,Kolkata_WH,2025-05-01,2025-05-18,2025-05-22,2431,Ship,Pharma,257,Delivered
+10609,Kolkata,Lucknow_WH,2025-04-26,2025-04-27,2025-05-20,151,Bike,Toys,337,Pending
+10610,Chennai,Chennai_WH,2025-04-27,2025-04-29,2025-06-07,1286,Bike,Toys,444,Delivered
+10611,Bangalore,Ahmedabad_WH,2025-04-13,2025-05-08,2025-05-25,2343,Truck,Groceries,292,Pending
+10612,Jaipur,Hyderabad_WH,2025-04-22,2025-05-07,2025-06-08,1276,Air,Furniture,38,Pending
+10613,Pune,Delhi_WH,2025-05-01,2025-05-18,2025-05-23,479,Ship,Groceries,191,Delivered
+10614,Mumbai,Pune_WH,2025-05-02,2025-05-02,2025-06-02,744,Ship,Toys,456,Delivered
+10615,Kolkata,Jaipur_WH,2025-04-21,2025-04-24,2025-05-31,1278,Air,Toys,314,Delivered
+10616,Jaipur,Ahmedabad_WH,2025-04-21,2025-04-26,2025-05-17,2225,Air,Groceries,433,Cancelled
+10617,Hyderabad,Delhi_WH,2025-04-16,2025-05-14,2025-05-14,2097,Train,Books,307,Delivered
+10618,Delhi,Hyderabad_WH,2025-04-15,2025-05-02,2025-05-30,290,Ship,Books,416,Delivered
+10619,Jaipur,Mumbai_WH,2025-05-09,2025-05-15,2025-05-20,1835,Air,Groceries,204,Delivered
+10620,Chennai,Kolkata_WH,2025-04-27,2025-05-12,2025-06-03,1742,Ship,Furniture,73,In Transit
+10621,Kolkata,Delhi_WH,2025-04-10,2025-04-19,2025-04-24,1857,Truck,Groceries,19,Delivered
+10622,Bangalore,Bangalore_WH,2025-05-05,2025-05-10,2025-05-24,1379,Bike,Toys,478,Delivered
+10623,Lucknow,Delhi_WH,2025-04-20,2025-05-17,2025-05-19,1180,Air,Apparel,233,Delivered
+10624,Bangalore,Lucknow_WH,2025-05-06,2025-05-13,2025-05-31,1423,Bike,Groceries,123,Delivered
+10625,Kolkata,Lucknow_WH,2025-04-16,2025-05-07,2025-06-03,231,Ship,Toys,460,Pending
+10626,Pune,Lucknow_WH,2025-05-09,2025-05-09,2025-05-22,890,Ship,Groceries,39,Pending
+10627,Bangalore,Jaipur_WH,2025-04-18,2025-04-28,2025-04-29,1730,Bike,Electronics,373,Delivered
+10628,Jaipur,Chennai_WH,2025-05-07,2025-05-12,2025-06-01,1876,Bike,Furniture,249,Pending
+10629,Kolkata,Mumbai_WH,2025-04-29,2025-05-02,2025-06-06,1633,Air,Toys,201,Pending
+10630,Ahmedabad,Lucknow_WH,2025-05-02,2025-05-11,2025-05-13,855,Air,Groceries,208,Cancelled
+10631,Delhi,Kolkata_WH,2025-04-21,2025-05-01,2025-05-03,1982,Bike,Toys,98,Pending
+10632,Pune,Lucknow_WH,2025-04-11,2025-05-06,2025-05-22,1359,Air,Groceries,89,In Transit
+10633,Jaipur,Kolkata_WH,2025-05-03,2025-05-10,2025-05-27,2374,Bike,Electronics,213,Pending
+10634,Kolkata,Pune_WH,2025-04-25,2025-05-06,2025-05-14,1964,Truck,Pharma,398,Delivered
+10635,Hyderabad,Delhi_WH,2025-04-28,2025-05-16,2025-06-08,2342,Bike,Books,290,In Transit
+10636,Bangalore,Jaipur_WH,2025-05-02,2025-05-15,2025-06-02,1792,Ship,Electronics,169,Cancelled
+10637,Mumbai,Bangalore_WH,2025-05-01,2025-05-08,2025-05-26,742,Bike,Furniture,39,In Transit
+10638,Delhi,Hyderabad_WH,2025-04-24,2025-05-06,2025-05-23,1753,Truck,Pharma,49,Pending
+10639,Kolkata,Bangalore_WH,2025-05-04,2025-05-04,2025-05-30,842,Air,Machinery,147,Delivered
+10640,Jaipur,Pune_WH,2025-04-27,2025-04-27,2025-05-23,1997,Bike,Groceries,321,Delivered
+10641,Ahmedabad,Hyderabad_WH,2025-05-06,2025-05-11,2025-05-31,525,Truck,Machinery,241,Delivered
+10642,Kolkata,Delhi_WH,2025-04-18,2025-05-08,2025-05-08,910,Air,Electronics,347,Pending
+10643,Ahmedabad,Jaipur_WH,2025-05-02,2025-05-16,2025-05-26,2323,Truck,Furniture,276,Delivered
+10644,Bangalore,Jaipur_WH,2025-04-10,2025-05-06,2025-05-10,2309,Truck,Pharma,103,Cancelled
+10645,Kolkata,Pune_WH,2025-04-18,2025-04-30,2025-05-04,2406,Ship,Pharma,80,Delivered
+10646,Hyderabad,Delhi_WH,2025-04-15,2025-04-26,2025-05-22,1050,Ship,Electronics,159,In Transit
+10647,Pune,Jaipur_WH,2025-04-18,2025-05-11,2025-06-07,1055,Air,Books,71,In Transit
+10648,Pune,Mumbai_WH,2025-04-25,2025-04-30,2025-05-14,1447,Ship,Books,11,In Transit
+10649,Bangalore,Pune_WH,2025-05-07,2025-05-08,2025-05-09,1106,Air,Groceries,209,Cancelled
+10650,Pune,Jaipur_WH,2025-04-16,2025-05-16,2025-05-29,1758,Air,Books,346,In Transit
+10651,Bangalore,Ahmedabad_WH,2025-04-13,2025-04-22,2025-05-06,1657,Ship,Apparel,186,In Transit
+10652,Delhi,Bangalore_WH,2025-04-10,2025-05-06,2025-06-04,1754,Train,Machinery,414,Delivered
+10653,Chennai,Jaipur_WH,2025-04-12,2025-04-19,2025-05-09,2086,Train,Furniture,187,Cancelled
+10654,Kolkata,Hyderabad_WH,2025-04-25,2025-05-04,2025-05-30,1738,Truck,Toys,74,Pending
+10655,Pune,Ahmedabad_WH,2025-04-13,2025-05-15,2025-05-16,811,Air,Toys,23,Pending
+10656,Kolkata,Chennai_WH,2025-04-25,2025-05-11,2025-05-13,2328,Train,Furniture,301,In Transit
+10657,Delhi,Ahmedabad_WH,2025-04-21,2025-05-09,2025-06-01,1059,Train,Electronics,32,Cancelled
+10658,Lucknow,Ahmedabad_WH,2025-04-26,2025-05-05,2025-05-25,543,Bike,Toys,416,Pending
+10659,Jaipur,Jaipur_WH,2025-04-21,2025-04-28,2025-05-02,1894,Air,Machinery,27,Pending
+10660,Kolkata,Delhi_WH,2025-04-20,2025-05-15,2025-05-20,556,Air,Toys,451,Delivered
+10661,Lucknow,Ahmedabad_WH,2025-04-23,2025-05-12,2025-06-02,1758,Train,Books,294,Delivered
+10662,Chennai,Bangalore_WH,2025-04-30,2025-05-02,2025-05-08,1499,Truck,Toys,261,In Transit
+10663,Pune,Pune_WH,2025-05-07,2025-05-09,2025-05-09,1195,Air,Pharma,172,Cancelled
+10664,Lucknow,Lucknow_WH,2025-04-15,2025-05-10,2025-06-04,1872,Bike,Books,237,Pending
+10665,Hyderabad,Delhi_WH,2025-05-07,2025-05-12,2025-05-28,1608,Truck,Electronics,414,In Transit
+10666,Lucknow,Hyderabad_WH,2025-04-28,2025-05-19,2025-06-02,2301,Bike,Books,253,Pending
+10667,Bangalore,Kolkata_WH,2025-04-17,2025-04-17,2025-06-01,593,Train,Furniture,223,Pending
+10668,Kolkata,Jaipur_WH,2025-04-16,2025-05-07,2025-05-07,294,Train,Machinery,469,Cancelled
+10669,Chennai,Hyderabad_WH,2025-04-13,2025-04-26,2025-05-08,550,Train,Apparel,308,Delivered
+10670,Mumbai,Chennai_WH,2025-04-10,2025-04-20,2025-06-04,2433,Ship,Groceries,332,Cancelled
+10671,Chennai,Mumbai_WH,2025-05-06,2025-05-10,2025-05-11,27,Bike,Furniture,106,Delivered
+10672,Pune,Mumbai_WH,2025-04-29,2025-05-14,2025-05-24,1306,Truck,Furniture,78,Delivered
+10673,Delhi,Hyderabad_WH,2025-04-13,2025-04-16,2025-04-24,1708,Air,Toys,497,Pending
+10674,Chennai,Jaipur_WH,2025-04-19,2025-05-15,2025-06-03,1081,Truck,Apparel,345,Cancelled
+10675,Chennai,Kolkata_WH,2025-04-13,2025-04-28,2025-05-31,562,Truck,Pharma,34,Delivered
+10676,Pune,Kolkata_WH,2025-04-26,2025-05-15,2025-06-01,1755,Truck,Groceries,461,Delivered
+10677,Ahmedabad,Mumbai_WH,2025-04-11,2025-05-14,2025-05-15,1942,Truck,Toys,330,Pending
+10678,Mumbai,Delhi_WH,2025-04-22,2025-04-27,2025-04-30,1657,Bike,Groceries,9,Delivered
+10679,Delhi,Chennai_WH,2025-04-20,2025-05-01,2025-05-06,186,Train,Apparel,243,In Transit
+10680,Delhi,Delhi_WH,2025-05-08,2025-05-12,2025-05-31,858,Ship,Pharma,414,Delivered
+10681,Bangalore,Lucknow_WH,2025-04-22,2025-04-29,2025-05-04,1417,Air,Toys,255,Cancelled
+10682,Lucknow,Mumbai_WH,2025-04-18,2025-05-13,2025-05-22,541,Bike,Apparel,123,Delivered
+10683,Hyderabad,Jaipur_WH,2025-04-16,2025-05-05,2025-05-05,1791,Air,Apparel,285,In Transit
+10684,Jaipur,Lucknow_WH,2025-04-14,2025-04-28,2025-06-05,743,Ship,Furniture,336,Cancelled
+10685,Delhi,Bangalore_WH,2025-04-18,2025-05-04,2025-05-08,1990,Bike,Pharma,298,Pending
+10686,Hyderabad,Hyderabad_WH,2025-04-23,2025-04-23,2025-05-31,1018,Bike,Toys,468,Cancelled
+10687,Mumbai,Mumbai_WH,2025-04-19,2025-04-26,2025-04-30,2091,Train,Toys,4,Cancelled
+10688,Jaipur,Pune_WH,2025-04-29,2025-05-11,2025-05-12,1100,Train,Electronics,353,Delivered
+10689,Bangalore,Ahmedabad_WH,2025-04-10,2025-05-12,2025-05-17,218,Truck,Furniture,492,Pending
+10690,Kolkata,Lucknow_WH,2025-05-01,2025-05-10,2025-05-19,1073,Ship,Apparel,23,Delivered
+10691,Chennai,Chennai_WH,2025-04-18,2025-05-05,2025-05-27,823,Air,Books,22,Delivered
+10692,Ahmedabad,Kolkata_WH,2025-04-21,2025-05-07,2025-05-24,277,Air,Apparel,401,Cancelled
+10693,Ahmedabad,Mumbai_WH,2025-04-13,2025-05-09,2025-05-10,16,Train,Groceries,128,In Transit
+10694,Ahmedabad,Kolkata_WH,2025-04-11,2025-04-11,2025-05-29,1656,Air,Electronics,230,Cancelled
+10695,Mumbai,Kolkata_WH,2025-05-06,2025-05-09,2025-06-07,2312,Train,Machinery,404,Pending
+10696,Bangalore,Delhi_WH,2025-04-21,2025-04-27,2025-05-16,850,Train,Books,488,In Transit
+10697,Bangalore,Pune_WH,2025-04-13,2025-04-23,2025-04-24,1947,Train,Toys,364,In Transit
+10698,Mumbai,Lucknow_WH,2025-04-17,2025-04-26,2025-05-14,717,Train,Pharma,381,Delivered
+10699,Hyderabad,Bangalore_WH,2025-05-07,2025-05-19,2025-06-08,351,Train,Furniture,322,In Transit
+10700,Jaipur,Hyderabad_WH,2025-05-04,2025-05-14,2025-05-17,672,Air,Toys,46,Cancelled
+10701,Kolkata,Lucknow_WH,2025-04-24,2025-05-11,2025-05-24,113,Train,Pharma,114,Cancelled
+10702,Pune,Jaipur_WH,2025-04-11,2025-04-16,2025-04-20,2242,Air,Electronics,110,In Transit
+10703,Delhi,Bangalore_WH,2025-05-09,2025-05-14,2025-05-29,742,Air,Electronics,381,Cancelled
+10704,Jaipur,Ahmedabad_WH,2025-05-06,2025-05-09,2025-05-31,810,Train,Toys,78,In Transit
+10705,Pune,Lucknow_WH,2025-04-12,2025-04-30,2025-06-04,796,Bike,Machinery,87,Delivered
+10706,Mumbai,Kolkata_WH,2025-04-29,2025-05-04,2025-05-08,1749,Truck,Electronics,339,Pending
+10707,Hyderabad,Kolkata_WH,2025-04-22,2025-05-06,2025-05-20,2108,Train,Furniture,289,Pending
+10708,Mumbai,Mumbai_WH,2025-04-22,2025-05-19,2025-05-25,623,Train,Groceries,20,Pending
+10709,Delhi,Bangalore_WH,2025-04-13,2025-05-16,2025-05-22,2260,Train,Apparel,180,Cancelled
+10710,Jaipur,Bangalore_WH,2025-04-26,2025-05-06,2025-05-10,535,Bike,Machinery,442,Delivered
+10711,Hyderabad,Mumbai_WH,2025-04-24,2025-05-13,2025-05-18,1893,Train,Pharma,201,Cancelled
+10712,Kolkata,Jaipur_WH,2025-04-22,2025-05-04,2025-05-23,1280,Train,Apparel,216,Delivered
+10713,Bangalore,Pune_WH,2025-05-04,2025-05-18,2025-05-30,2373,Bike,Machinery,148,In Transit
+10714,Pune,Hyderabad_WH,2025-04-19,2025-05-07,2025-05-16,352,Air,Books,244,In Transit
+10715,Lucknow,Hyderabad_WH,2025-04-13,2025-05-16,2025-06-03,1699,Bike,Apparel,209,Pending
+10716,Ahmedabad,Kolkata_WH,2025-04-18,2025-05-03,2025-05-13,822,Truck,Groceries,412,In Transit
+10717,Chennai,Lucknow_WH,2025-04-20,2025-05-05,2025-05-09,234,Air,Electronics,353,Pending
+10718,Bangalore,Bangalore_WH,2025-05-04,2025-05-10,2025-06-04,2414,Train,Groceries,248,Cancelled
+10719,Kolkata,Jaipur_WH,2025-05-06,2025-05-18,2025-05-22,885,Air,Books,95,In Transit
+10720,Pune,Bangalore_WH,2025-05-04,2025-05-12,2025-05-19,29,Air,Electronics,488,Pending
+10721,Lucknow,Hyderabad_WH,2025-04-24,2025-05-02,2025-05-16,1507,Bike,Furniture,179,Delivered
+10722,Chennai,Hyderabad_WH,2025-05-01,2025-05-10,2025-05-25,499,Train,Furniture,188,Cancelled
+10723,Chennai,Ahmedabad_WH,2025-04-21,2025-04-22,2025-06-02,1593,Air,Furniture,204,In Transit
+10724,Hyderabad,Delhi_WH,2025-04-10,2025-04-16,2025-05-12,1772,Ship,Pharma,360,Delivered
+10725,Delhi,Jaipur_WH,2025-04-25,2025-04-25,2025-05-04,599,Bike,Pharma,287,In Transit
+10726,Bangalore,Bangalore_WH,2025-04-27,2025-04-28,2025-04-28,256,Truck,Machinery,335,In Transit
+10727,Jaipur,Pune_WH,2025-04-17,2025-05-09,2025-05-20,1378,Air,Furniture,98,Pending
+10728,Kolkata,Kolkata_WH,2025-04-16,2025-04-24,2025-05-19,252,Truck,Pharma,274,In Transit
+10729,Kolkata,Pune_WH,2025-05-04,2025-05-11,2025-05-28,1356,Bike,Groceries,303,Cancelled
+10730,Kolkata,Pune_WH,2025-05-01,2025-05-14,2025-06-07,41,Truck,Books,98,Cancelled
+10731,Bangalore,Hyderabad_WH,2025-05-08,2025-05-14,2025-05-16,1588,Bike,Apparel,196,Pending
+10732,Delhi,Chennai_WH,2025-04-20,2025-05-04,2025-05-15,2350,Truck,Electronics,222,Pending
+10733,Bangalore,Chennai_WH,2025-05-04,2025-05-15,2025-05-21,499,Bike,Electronics,128,Pending
+10734,Pune,Jaipur_WH,2025-04-13,2025-04-26,2025-05-15,2008,Truck,Pharma,288,Cancelled
+10735,Ahmedabad,Lucknow_WH,2025-04-19,2025-05-19,2025-06-02,1842,Train,Toys,179,Delivered
+10736,Kolkata,Lucknow_WH,2025-05-01,2025-05-15,2025-06-06,480,Ship,Pharma,26,In Transit
+10737,Bangalore,Chennai_WH,2025-05-09,2025-05-13,2025-05-14,2123,Train,Toys,194,Pending
+10738,Chennai,Lucknow_WH,2025-04-29,2025-04-30,2025-06-01,1927,Air,Apparel,276,Cancelled
+10739,Ahmedabad,Bangalore_WH,2025-04-17,2025-05-05,2025-06-02,1332,Truck,Pharma,238,In Transit
+10740,Pune,Pune_WH,2025-04-12,2025-05-08,2025-05-21,1738,Bike,Books,181,Pending
+10741,Delhi,Bangalore_WH,2025-05-04,2025-05-08,2025-05-24,2097,Ship,Pharma,339,In Transit
+10742,Mumbai,Hyderabad_WH,2025-04-27,2025-05-12,2025-05-27,2149,Air,Toys,361,Delivered
+10743,Pune,Jaipur_WH,2025-05-06,2025-05-15,2025-05-28,901,Train,Furniture,447,Cancelled
+10744,Chennai,Delhi_WH,2025-05-05,2025-05-10,2025-05-30,1232,Ship,Groceries,488,Cancelled
+10745,Mumbai,Pune_WH,2025-04-22,2025-05-01,2025-05-24,2139,Truck,Machinery,102,In Transit
+10746,Chennai,Hyderabad_WH,2025-04-26,2025-05-02,2025-05-28,1905,Ship,Electronics,79,Delivered
+10747,Ahmedabad,Lucknow_WH,2025-04-28,2025-05-16,2025-05-28,380,Ship,Groceries,61,In Transit
+10748,Bangalore,Jaipur_WH,2025-04-14,2025-05-09,2025-06-02,1566,Bike,Furniture,330,Pending
+10749,Chennai,Delhi_WH,2025-04-26,2025-04-29,2025-06-08,1091,Air,Electronics,124,Pending
+10750,Chennai,Hyderabad_WH,2025-04-10,2025-05-07,2025-06-05,1669,Air,Apparel,68,Delivered
+10751,Lucknow,Pune_WH,2025-04-30,2025-05-18,2025-05-29,1971,Train,Pharma,22,Cancelled
+10752,Chennai,Pune_WH,2025-05-02,2025-05-08,2025-05-13,1642,Ship,Books,210,Cancelled
+10753,Hyderabad,Hyderabad_WH,2025-04-21,2025-05-08,2025-05-21,811,Bike,Groceries,354,Delivered
+10754,Ahmedabad,Ahmedabad_WH,2025-04-24,2025-05-10,2025-06-07,489,Train,Electronics,157,Delivered
+10755,Hyderabad,Chennai_WH,2025-04-15,2025-05-15,2025-05-19,2051,Bike,Groceries,115,Pending
+10756,Lucknow,Chennai_WH,2025-04-20,2025-05-02,2025-05-03,1967,Train,Machinery,288,Cancelled
+10757,Bangalore,Hyderabad_WH,2025-04-27,2025-05-05,2025-05-26,432,Air,Apparel,274,Cancelled
+10758,Delhi,Ahmedabad_WH,2025-05-01,2025-05-07,2025-06-08,308,Bike,Machinery,374,Cancelled
+10759,Lucknow,Hyderabad_WH,2025-05-09,2025-05-10,2025-05-10,1482,Ship,Books,364,Delivered
+10760,Mumbai,Delhi_WH,2025-05-01,2025-05-03,2025-05-30,1653,Air,Apparel,7,In Transit
+10761,Hyderabad,Hyderabad_WH,2025-04-21,2025-05-17,2025-05-27,409,Air,Toys,310,Cancelled
+10762,Delhi,Pune_WH,2025-05-07,2025-05-11,2025-05-30,188,Ship,Apparel,46,Delivered
+10763,Delhi,Mumbai_WH,2025-05-07,2025-05-08,2025-05-14,63,Train,Furniture,206,Cancelled
+10764,Ahmedabad,Pune_WH,2025-04-18,2025-05-12,2025-06-06,368,Ship,Electronics,6,Cancelled
+10765,Jaipur,Jaipur_WH,2025-04-18,2025-04-25,2025-06-05,1847,Train,Groceries,110,Delivered
+10766,Delhi,Chennai_WH,2025-05-03,2025-05-10,2025-05-22,385,Train,Machinery,186,In Transit
+10767,Delhi,Kolkata_WH,2025-04-26,2025-05-12,2025-06-02,459,Train,Electronics,348,In Transit
+10768,Hyderabad,Kolkata_WH,2025-04-22,2025-05-13,2025-05-18,1966,Ship,Groceries,49,Pending
+10769,Delhi,Pune_WH,2025-05-06,2025-05-13,2025-06-08,1463,Train,Books,178,Delivered
+10770,Kolkata,Ahmedabad_WH,2025-04-20,2025-04-24,2025-05-13,1110,Truck,Toys,316,In Transit
+10771,Chennai,Kolkata_WH,2025-04-15,2025-04-18,2025-05-30,1184,Train,Books,76,Delivered
+10772,Jaipur,Lucknow_WH,2025-04-28,2025-05-07,2025-05-19,1343,Air,Books,324,Cancelled
+10773,Delhi,Ahmedabad_WH,2025-05-08,2025-05-18,2025-05-21,47,Ship,Toys,205,Cancelled
+10774,Mumbai,Jaipur_WH,2025-05-02,2025-05-05,2025-05-30,813,Air,Furniture,288,Delivered
+10775,Bangalore,Chennai_WH,2025-04-12,2025-05-19,2025-06-02,1921,Train,Apparel,80,Delivered
+10776,Pune,Jaipur_WH,2025-04-10,2025-04-13,2025-05-04,309,Ship,Books,415,Pending
+10777,Kolkata,Jaipur_WH,2025-05-07,2025-05-08,2025-05-21,329,Bike,Groceries,376,Cancelled
+10778,Kolkata,Chennai_WH,2025-04-12,2025-05-12,2025-05-30,574,Bike,Pharma,351,In Transit
+10779,Pune,Chennai_WH,2025-04-28,2025-04-30,2025-05-17,2266,Ship,Pharma,122,Delivered
+10780,Kolkata,Hyderabad_WH,2025-04-13,2025-05-08,2025-06-03,2486,Bike,Books,443,Pending
+10781,Lucknow,Jaipur_WH,2025-05-01,2025-05-13,2025-05-27,76,Air,Groceries,184,Cancelled
+10782,Kolkata,Mumbai_WH,2025-05-09,2025-05-14,2025-05-30,470,Truck,Groceries,389,Cancelled
+10783,Kolkata,Jaipur_WH,2025-05-08,2025-05-18,2025-05-21,784,Train,Apparel,191,Delivered
+10784,Mumbai,Lucknow_WH,2025-04-25,2025-05-10,2025-05-24,2223,Train,Furniture,273,Delivered
+10785,Mumbai,Pune_WH,2025-04-30,2025-05-10,2025-05-18,2208,Truck,Groceries,406,Delivered
+10786,Ahmedabad,Bangalore_WH,2025-04-11,2025-04-22,2025-04-29,441,Air,Groceries,471,Delivered
+10787,Kolkata,Bangalore_WH,2025-05-03,2025-05-05,2025-06-06,2252,Air,Groceries,446,Cancelled
+10788,Jaipur,Mumbai_WH,2025-04-29,2025-05-02,2025-05-02,1621,Bike,Pharma,61,Pending
+10789,Chennai,Jaipur_WH,2025-04-23,2025-05-12,2025-05-17,265,Train,Pharma,138,Cancelled
+10790,Bangalore,Bangalore_WH,2025-04-13,2025-04-28,2025-04-28,265,Bike,Toys,358,In Transit
+10791,Ahmedabad,Lucknow_WH,2025-04-18,2025-04-22,2025-05-05,2349,Train,Apparel,439,In Transit
+10792,Chennai,Chennai_WH,2025-05-03,2025-05-08,2025-06-03,1059,Ship,Furniture,458,Cancelled
+10793,Ahmedabad,Ahmedabad_WH,2025-04-18,2025-05-10,2025-05-28,155,Train,Books,62,In Transit
+10794,Kolkata,Jaipur_WH,2025-05-04,2025-05-09,2025-05-11,75,Bike,Electronics,439,Pending
+10795,Pune,Kolkata_WH,2025-04-14,2025-05-05,2025-06-01,84,Truck,Electronics,203,Pending
+10796,Jaipur,Jaipur_WH,2025-05-04,2025-05-12,2025-06-02,1432,Air,Groceries,334,Pending
+10797,Lucknow,Jaipur_WH,2025-04-25,2025-04-28,2025-06-07,1724,Air,Pharma,489,In Transit
+10798,Bangalore,Bangalore_WH,2025-04-30,2025-05-18,2025-06-07,713,Bike,Machinery,246,In Transit
+10799,Delhi,Ahmedabad_WH,2025-04-14,2025-05-05,2025-05-25,1571,Train,Toys,445,Pending
+10800,Mumbai,Lucknow_WH,2025-05-07,2025-05-19,2025-05-30,1764,Ship,Machinery,289,Delivered
+10801,Mumbai,Lucknow_WH,2025-04-24,2025-04-30,2025-05-26,1711,Train,Furniture,355,Cancelled
+10802,Mumbai,Hyderabad_WH,2025-04-19,2025-05-09,2025-06-03,1596,Ship,Machinery,177,In Transit
+10803,Lucknow,Delhi_WH,2025-04-16,2025-05-19,2025-06-06,1738,Train,Books,142,In Transit
+10804,Hyderabad,Jaipur_WH,2025-04-15,2025-05-03,2025-05-20,1073,Truck,Furniture,312,Pending
+10805,Chennai,Jaipur_WH,2025-04-13,2025-04-20,2025-05-22,232,Bike,Toys,198,Delivered
+10806,Pune,Jaipur_WH,2025-04-17,2025-05-14,2025-06-02,1056,Train,Apparel,28,Pending
+10807,Hyderabad,Chennai_WH,2025-04-23,2025-05-09,2025-05-18,621,Bike,Groceries,316,Delivered
+10808,Delhi,Delhi_WH,2025-04-14,2025-05-13,2025-05-18,770,Bike,Furniture,419,Cancelled
+10809,Mumbai,Mumbai_WH,2025-05-01,2025-05-05,2025-05-05,221,Bike,Furniture,265,In Transit
+10810,Pune,Jaipur_WH,2025-04-19,2025-05-04,2025-05-08,1177,Truck,Apparel,290,In Transit
+10811,Lucknow,Ahmedabad_WH,2025-04-16,2025-05-12,2025-05-13,241,Train,Books,50,Cancelled
+10812,Bangalore,Ahmedabad_WH,2025-05-04,2025-05-07,2025-06-06,2424,Bike,Groceries,19,In Transit
+10813,Hyderabad,Bangalore_WH,2025-05-09,2025-05-18,2025-05-26,430,Air,Apparel,216,Delivered
+10814,Hyderabad,Bangalore_WH,2025-04-11,2025-04-22,2025-04-28,903,Bike,Groceries,395,Delivered
+10815,Hyderabad,Mumbai_WH,2025-05-04,2025-05-18,2025-06-07,1526,Ship,Apparel,55,In Transit
+10816,Jaipur,Mumbai_WH,2025-04-22,2025-05-19,2025-05-29,1086,Train,Toys,303,Delivered
+10817,Jaipur,Pune_WH,2025-05-05,2025-05-19,2025-05-29,515,Truck,Pharma,374,Cancelled
+10818,Delhi,Lucknow_WH,2025-04-28,2025-05-17,2025-05-27,1368,Train,Groceries,289,In Transit
+10819,Chennai,Pune_WH,2025-04-24,2025-05-18,2025-05-26,91,Train,Toys,281,Delivered
+10820,Mumbai,Pune_WH,2025-04-27,2025-05-12,2025-06-02,1753,Air,Machinery,469,Delivered
+10821,Ahmedabad,Bangalore_WH,2025-04-21,2025-05-03,2025-06-01,1663,Train,Books,206,Pending
+10822,Ahmedabad,Lucknow_WH,2025-04-17,2025-04-21,2025-05-28,1357,Air,Toys,499,Delivered
+10823,Lucknow,Ahmedabad_WH,2025-04-29,2025-05-17,2025-06-04,785,Train,Apparel,220,Delivered
+10824,Delhi,Delhi_WH,2025-04-19,2025-05-01,2025-05-04,454,Train,Machinery,376,Delivered
+10825,Bangalore,Kolkata_WH,2025-04-20,2025-05-03,2025-05-30,1407,Train,Toys,454,In Transit
+10826,Delhi,Delhi_WH,2025-04-12,2025-05-19,2025-06-06,2244,Ship,Books,247,In Transit
+10827,Pune,Kolkata_WH,2025-04-30,2025-05-10,2025-05-17,176,Bike,Pharma,334,Cancelled
+10828,Lucknow,Bangalore_WH,2025-04-19,2025-05-14,2025-05-30,2352,Bike,Electronics,222,Pending
+10829,Chennai,Mumbai_WH,2025-05-06,2025-05-14,2025-05-28,2230,Truck,Groceries,229,In Transit
+10830,Lucknow,Delhi_WH,2025-05-02,2025-05-11,2025-05-15,373,Ship,Toys,346,Pending
+10831,Chennai,Pune_WH,2025-04-24,2025-05-16,2025-05-19,1198,Ship,Books,233,Pending
+10832,Bangalore,Bangalore_WH,2025-04-14,2025-05-14,2025-05-24,909,Ship,Groceries,161,In Transit
+10833,Hyderabad,Delhi_WH,2025-04-29,2025-05-10,2025-05-18,1669,Truck,Pharma,27,Cancelled
+10834,Bangalore,Chennai_WH,2025-04-13,2025-04-23,2025-05-21,208,Air,Machinery,229,In Transit
+10835,Kolkata,Delhi_WH,2025-05-02,2025-05-14,2025-05-24,284,Ship,Pharma,315,Delivered
+10836,Hyderabad,Ahmedabad_WH,2025-04-12,2025-05-15,2025-05-29,276,Air,Books,72,Delivered
+10837,Hyderabad,Bangalore_WH,2025-04-15,2025-04-28,2025-04-30,1319,Train,Toys,86,In Transit
+10838,Delhi,Ahmedabad_WH,2025-05-07,2025-05-15,2025-05-24,429,Truck,Furniture,297,Cancelled
+10839,Delhi,Pune_WH,2025-04-20,2025-05-03,2025-05-26,1398,Bike,Electronics,67,Delivered
+10840,Kolkata,Bangalore_WH,2025-04-23,2025-05-12,2025-06-06,1997,Bike,Machinery,347,Delivered
+10841,Bangalore,Jaipur_WH,2025-05-05,2025-05-12,2025-06-02,1949,Train,Apparel,423,In Transit
+10842,Pune,Pune_WH,2025-04-18,2025-05-04,2025-05-26,2034,Ship,Apparel,462,Pending
+10843,Ahmedabad,Hyderabad_WH,2025-05-09,2025-05-19,2025-06-06,1569,Train,Groceries,303,Cancelled
+10844,Delhi,Bangalore_WH,2025-04-23,2025-05-03,2025-06-01,2017,Air,Electronics,473,Cancelled
+10845,Hyderabad,Delhi_WH,2025-04-15,2025-04-15,2025-05-10,2274,Ship,Apparel,21,Pending
+10846,Chennai,Bangalore_WH,2025-05-04,2025-05-17,2025-05-17,515,Air,Machinery,164,Cancelled
+10847,Hyderabad,Bangalore_WH,2025-04-26,2025-05-12,2025-05-31,1626,Ship,Machinery,300,Pending
+10848,Bangalore,Hyderabad_WH,2025-04-28,2025-05-13,2025-05-15,1765,Air,Electronics,267,In Transit
+10849,Pune,Jaipur_WH,2025-04-21,2025-05-19,2025-05-25,2244,Truck,Groceries,357,In Transit
+10850,Lucknow,Kolkata_WH,2025-04-10,2025-05-12,2025-05-25,2389,Ship,Toys,376,In Transit
+10851,Ahmedabad,Jaipur_WH,2025-05-01,2025-05-03,2025-05-23,1033,Truck,Apparel,174,Pending
+10852,Kolkata,Kolkata_WH,2025-04-30,2025-05-03,2025-06-08,178,Ship,Groceries,433,Pending
+10853,Chennai,Hyderabad_WH,2025-04-11,2025-04-22,2025-05-25,1556,Truck,Pharma,401,Pending
+10854,Ahmedabad,Hyderabad_WH,2025-04-15,2025-05-06,2025-05-28,2424,Air,Machinery,201,Cancelled
+10855,Delhi,Chennai_WH,2025-05-06,2025-05-11,2025-05-12,284,Train,Machinery,211,Pending
+10856,Kolkata,Hyderabad_WH,2025-04-17,2025-05-11,2025-05-12,2035,Ship,Groceries,484,Delivered
+10857,Ahmedabad,Mumbai_WH,2025-05-04,2025-05-05,2025-05-25,1276,Train,Furniture,352,In Transit
+10858,Mumbai,Delhi_WH,2025-04-27,2025-05-16,2025-05-16,1495,Truck,Books,152,Delivered
+10859,Delhi,Ahmedabad_WH,2025-04-23,2025-05-03,2025-05-17,1318,Bike,Toys,46,Pending
+10860,Chennai,Kolkata_WH,2025-05-01,2025-05-06,2025-05-27,1994,Train,Toys,413,Pending
+10861,Pune,Ahmedabad_WH,2025-05-01,2025-05-18,2025-06-03,2193,Truck,Apparel,185,Cancelled
+10862,Ahmedabad,Delhi_WH,2025-04-12,2025-04-28,2025-05-07,1490,Air,Furniture,429,Cancelled
+10863,Chennai,Pune_WH,2025-04-14,2025-05-18,2025-06-07,2325,Train,Pharma,300,Delivered
+10864,Kolkata,Delhi_WH,2025-05-07,2025-05-09,2025-05-13,883,Truck,Books,304,Cancelled
+10865,Pune,Ahmedabad_WH,2025-04-10,2025-05-11,2025-05-28,1623,Truck,Furniture,467,Pending
+10866,Bangalore,Bangalore_WH,2025-04-20,2025-04-20,2025-04-22,58,Train,Apparel,212,Pending
+10867,Bangalore,Pune_WH,2025-05-05,2025-05-10,2025-06-01,1282,Bike,Electronics,302,Pending
+10868,Chennai,Chennai_WH,2025-04-30,2025-05-02,2025-05-10,1688,Truck,Electronics,151,Cancelled
+10869,Delhi,Lucknow_WH,2025-04-10,2025-04-12,2025-06-07,1147,Train,Groceries,84,Cancelled
+10870,Bangalore,Kolkata_WH,2025-04-18,2025-05-10,2025-05-23,1555,Air,Groceries,142,Cancelled
+10871,Bangalore,Lucknow_WH,2025-04-29,2025-05-10,2025-05-22,146,Ship,Books,397,Cancelled
+10872,Chennai,Chennai_WH,2025-04-10,2025-05-02,2025-05-08,1958,Air,Apparel,246,Pending
+10873,Chennai,Lucknow_WH,2025-04-19,2025-04-28,2025-05-09,2066,Truck,Furniture,472,Cancelled
+10874,Jaipur,Pune_WH,2025-04-24,2025-05-07,2025-05-14,885,Train,Furniture,296,Delivered
+10875,Mumbai,Chennai_WH,2025-05-02,2025-05-07,2025-05-13,1528,Air,Furniture,50,Cancelled
+10876,Jaipur,Bangalore_WH,2025-04-12,2025-04-29,2025-05-20,574,Train,Machinery,262,Pending
+10877,Jaipur,Lucknow_WH,2025-05-01,2025-05-02,2025-05-09,912,Truck,Electronics,403,Pending
+10878,Jaipur,Chennai_WH,2025-05-09,2025-05-16,2025-05-27,1133,Truck,Groceries,419,Delivered
+10879,Pune,Chennai_WH,2025-05-06,2025-05-09,2025-06-06,765,Ship,Toys,29,Delivered
+10880,Bangalore,Lucknow_WH,2025-04-16,2025-04-29,2025-05-17,198,Truck,Groceries,242,Delivered
+10881,Pune,Pune_WH,2025-04-10,2025-05-17,2025-05-30,1137,Bike,Toys,125,In Transit
+10882,Mumbai,Jaipur_WH,2025-04-15,2025-05-11,2025-05-11,291,Train,Toys,144,Delivered
+10883,Lucknow,Lucknow_WH,2025-04-25,2025-05-03,2025-05-23,317,Ship,Apparel,287,In Transit
+10884,Pune,Lucknow_WH,2025-05-09,2025-05-10,2025-05-24,40,Ship,Pharma,44,Cancelled
+10885,Mumbai,Pune_WH,2025-05-07,2025-05-07,2025-05-26,94,Train,Toys,492,Delivered
+10886,Jaipur,Kolkata_WH,2025-05-08,2025-05-19,2025-05-20,1825,Ship,Pharma,159,Pending
+10887,Chennai,Delhi_WH,2025-05-08,2025-05-18,2025-06-05,1178,Bike,Furniture,2,In Transit
+10888,Kolkata,Ahmedabad_WH,2025-05-06,2025-05-16,2025-05-25,1068,Ship,Furniture,303,Cancelled
+10889,Lucknow,Kolkata_WH,2025-05-03,2025-05-18,2025-05-27,1369,Ship,Apparel,285,Delivered
+10890,Ahmedabad,Chennai_WH,2025-04-12,2025-05-07,2025-06-06,1529,Truck,Books,177,In Transit
+10891,Delhi,Kolkata_WH,2025-04-10,2025-04-23,2025-06-05,1661,Ship,Pharma,39,Pending
+10892,Lucknow,Ahmedabad_WH,2025-04-27,2025-05-16,2025-05-27,1289,Bike,Furniture,442,Cancelled
+10893,Ahmedabad,Kolkata_WH,2025-04-12,2025-05-14,2025-05-17,1948,Truck,Toys,104,Cancelled
+10894,Lucknow,Pune_WH,2025-04-22,2025-04-26,2025-05-19,1223,Ship,Furniture,182,Pending
+10895,Ahmedabad,Bangalore_WH,2025-04-26,2025-05-08,2025-05-11,1842,Train,Pharma,192,Cancelled
+10896,Kolkata,Chennai_WH,2025-05-08,2025-05-09,2025-05-17,1712,Bike,Groceries,94,Cancelled
+10897,Mumbai,Pune_WH,2025-05-05,2025-05-19,2025-06-08,1796,Train,Machinery,272,Pending
+10898,Lucknow,Hyderabad_WH,2025-04-13,2025-05-17,2025-05-22,585,Air,Pharma,36,Cancelled
+10899,Ahmedabad,Delhi_WH,2025-04-12,2025-04-27,2025-05-23,2417,Train,Apparel,255,Pending
+10900,Ahmedabad,Ahmedabad_WH,2025-05-02,2025-05-02,2025-05-15,1368,Bike,Apparel,344,Pending
+10901,Lucknow,Chennai_WH,2025-04-18,2025-04-21,2025-04-26,2294,Bike,Electronics,297,Delivered
+10902,Hyderabad,Delhi_WH,2025-04-22,2025-05-01,2025-05-23,1049,Air,Books,388,Delivered
+10903,Delhi,Jaipur_WH,2025-04-30,2025-05-03,2025-06-01,2030,Bike,Toys,174,In Transit
+10904,Chennai,Jaipur_WH,2025-04-18,2025-05-10,2025-05-15,1479,Truck,Groceries,334,In Transit
+10905,Jaipur,Jaipur_WH,2025-05-06,2025-05-07,2025-05-10,2391,Air,Pharma,343,In Transit
+10906,Lucknow,Jaipur_WH,2025-04-21,2025-05-19,2025-05-25,618,Air,Electronics,54,In Transit
+10907,Lucknow,Kolkata_WH,2025-04-26,2025-04-26,2025-05-18,1056,Train,Electronics,376,Delivered
+10908,Pune,Kolkata_WH,2025-04-25,2025-04-28,2025-05-15,835,Air,Furniture,475,Cancelled
+10909,Bangalore,Pune_WH,2025-04-15,2025-04-30,2025-05-26,1209,Truck,Furniture,79,Delivered
+10910,Chennai,Lucknow_WH,2025-05-01,2025-05-12,2025-05-20,473,Truck,Furniture,479,Delivered
+10911,Delhi,Lucknow_WH,2025-04-23,2025-05-14,2025-05-29,243,Ship,Toys,393,In Transit
+10912,Delhi,Lucknow_WH,2025-04-15,2025-05-05,2025-05-21,2362,Bike,Toys,106,Cancelled
+10913,Chennai,Hyderabad_WH,2025-04-11,2025-04-15,2025-05-31,44,Air,Groceries,414,In Transit
+10914,Kolkata,Bangalore_WH,2025-04-22,2025-05-09,2025-06-07,1828,Train,Toys,46,Cancelled
+10915,Ahmedabad,Delhi_WH,2025-04-26,2025-05-09,2025-05-09,218,Truck,Groceries,297,In Transit
+10916,Ahmedabad,Delhi_WH,2025-04-19,2025-04-28,2025-05-16,625,Truck,Apparel,116,Pending
+10917,Delhi,Chennai_WH,2025-05-08,2025-05-09,2025-06-06,2361,Train,Electronics,399,Pending
+10918,Lucknow,Mumbai_WH,2025-04-12,2025-04-25,2025-06-07,2307,Truck,Toys,153,In Transit
+10919,Ahmedabad,Lucknow_WH,2025-04-23,2025-04-27,2025-04-30,1790,Ship,Machinery,106,Pending
+10920,Mumbai,Bangalore_WH,2025-04-26,2025-04-28,2025-05-19,1759,Air,Machinery,84,In Transit
+10921,Kolkata,Pune_WH,2025-04-23,2025-04-26,2025-05-26,1260,Bike,Apparel,418,Cancelled
+10922,Ahmedabad,Jaipur_WH,2025-04-29,2025-05-05,2025-05-28,1696,Ship,Electronics,314,Cancelled
+10923,Bangalore,Jaipur_WH,2025-05-07,2025-05-09,2025-06-02,1545,Bike,Apparel,183,In Transit
+10924,Lucknow,Chennai_WH,2025-05-07,2025-05-09,2025-05-22,1607,Truck,Apparel,331,Cancelled
+10925,Mumbai,Mumbai_WH,2025-04-27,2025-05-19,2025-06-02,1893,Bike,Electronics,151,Delivered
+10926,Ahmedabad,Hyderabad_WH,2025-04-23,2025-04-26,2025-04-28,1795,Air,Electronics,409,Pending
+10927,Mumbai,Jaipur_WH,2025-05-08,2025-05-09,2025-05-29,2186,Train,Apparel,8,Cancelled
+10928,Bangalore,Bangalore_WH,2025-04-24,2025-04-29,2025-05-21,1496,Train,Pharma,226,In Transit
+10929,Kolkata,Kolkata_WH,2025-04-19,2025-05-07,2025-05-18,1459,Ship,Pharma,339,Pending
+10930,Jaipur,Hyderabad_WH,2025-04-23,2025-05-13,2025-05-29,987,Truck,Books,473,Delivered
+10931,Delhi,Pune_WH,2025-04-10,2025-04-13,2025-04-18,79,Bike,Pharma,157,Delivered
+10932,Pune,Lucknow_WH,2025-05-03,2025-05-15,2025-05-16,1147,Train,Books,469,In Transit
+10933,Delhi,Pune_WH,2025-04-20,2025-04-23,2025-06-08,443,Train,Groceries,13,In Transit
+10934,Lucknow,Ahmedabad_WH,2025-05-04,2025-05-17,2025-06-08,424,Train,Machinery,84,Delivered
+10935,Mumbai,Jaipur_WH,2025-05-02,2025-05-05,2025-06-07,464,Air,Apparel,464,In Transit
+10936,Pune,Mumbai_WH,2025-04-25,2025-05-08,2025-05-10,1521,Ship,Electronics,196,Delivered
+10937,Mumbai,Kolkata_WH,2025-04-20,2025-04-21,2025-04-26,958,Truck,Furniture,457,Cancelled
+10938,Ahmedabad,Kolkata_WH,2025-04-22,2025-05-07,2025-05-13,2416,Bike,Machinery,9,Pending
+10939,Pune,Delhi_WH,2025-04-17,2025-04-21,2025-05-10,1464,Truck,Books,95,Delivered
+10940,Jaipur,Jaipur_WH,2025-04-23,2025-04-30,2025-06-07,2255,Truck,Books,146,Delivered
+10941,Lucknow,Delhi_WH,2025-05-03,2025-05-14,2025-05-23,1301,Bike,Pharma,488,Pending
+10942,Pune,Hyderabad_WH,2025-04-15,2025-05-19,2025-05-22,2220,Train,Groceries,293,Cancelled
+10943,Jaipur,Pune_WH,2025-04-20,2025-05-01,2025-05-09,2463,Truck,Pharma,183,Delivered
+10944,Mumbai,Kolkata_WH,2025-04-20,2025-05-16,2025-05-29,2378,Air,Apparel,254,Cancelled
+10945,Hyderabad,Jaipur_WH,2025-04-29,2025-05-05,2025-05-09,132,Air,Machinery,257,Delivered
+10946,Pune,Chennai_WH,2025-04-29,2025-04-29,2025-05-06,114,Ship,Apparel,430,Pending
+10947,Chennai,Bangalore_WH,2025-04-13,2025-05-19,2025-06-05,1273,Air,Furniture,464,Delivered
+10948,Pune,Pune_WH,2025-04-11,2025-04-30,2025-05-27,747,Truck,Books,438,Delivered
+10949,Jaipur,Bangalore_WH,2025-05-03,2025-05-06,2025-05-26,2058,Train,Pharma,161,Cancelled
+10950,Pune,Pune_WH,2025-04-28,2025-05-06,2025-05-06,577,Train,Electronics,446,Pending
+10951,Mumbai,Kolkata_WH,2025-04-21,2025-05-03,2025-05-22,1839,Train,Books,350,Cancelled
+10952,Ahmedabad,Lucknow_WH,2025-05-04,2025-05-07,2025-05-15,1327,Truck,Furniture,241,Pending
+10953,Pune,Pune_WH,2025-05-02,2025-05-13,2025-05-27,2323,Truck,Toys,352,Pending
+10954,Lucknow,Mumbai_WH,2025-04-23,2025-04-26,2025-05-29,595,Bike,Pharma,43,Delivered
+10955,Lucknow,Jaipur_WH,2025-05-02,2025-05-15,2025-05-17,183,Bike,Pharma,45,Cancelled
+10956,Jaipur,Mumbai_WH,2025-04-16,2025-05-15,2025-05-22,1809,Bike,Pharma,362,In Transit
+10957,Mumbai,Kolkata_WH,2025-04-23,2025-05-08,2025-05-22,2489,Truck,Furniture,474,Cancelled
+10958,Lucknow,Jaipur_WH,2025-05-09,2025-05-12,2025-06-02,1315,Truck,Toys,405,Cancelled
+10959,Kolkata,Delhi_WH,2025-04-28,2025-05-14,2025-05-19,652,Truck,Books,159,Delivered
+10960,Kolkata,Delhi_WH,2025-04-29,2025-05-19,2025-05-19,1506,Train,Toys,404,Pending
+10961,Lucknow,Ahmedabad_WH,2025-04-26,2025-05-14,2025-05-17,1395,Train,Machinery,148,Pending
+10962,Lucknow,Chennai_WH,2025-04-22,2025-04-28,2025-05-17,175,Train,Apparel,79,In Transit
+10963,Lucknow,Bangalore_WH,2025-04-12,2025-04-17,2025-04-22,821,Air,Apparel,61,Pending
+10964,Mumbai,Hyderabad_WH,2025-04-26,2025-04-28,2025-05-24,1683,Train,Toys,303,Delivered
+10965,Kolkata,Delhi_WH,2025-04-21,2025-05-17,2025-05-23,1047,Bike,Groceries,101,Delivered
+10966,Pune,Hyderabad_WH,2025-04-29,2025-05-08,2025-05-26,721,Air,Furniture,14,Cancelled
+10967,Delhi,Hyderabad_WH,2025-04-12,2025-04-13,2025-04-23,1527,Truck,Furniture,371,In Transit
+10968,Chennai,Delhi_WH,2025-04-24,2025-05-12,2025-06-01,1313,Train,Apparel,398,Cancelled
+10969,Delhi,Ahmedabad_WH,2025-05-02,2025-05-11,2025-05-27,409,Truck,Pharma,9,Delivered
+10970,Mumbai,Ahmedabad_WH,2025-05-08,2025-05-16,2025-06-04,1810,Air,Toys,436,Delivered
+10971,Bangalore,Ahmedabad_WH,2025-04-16,2025-05-04,2025-05-17,1728,Bike,Toys,433,Cancelled
+10972,Delhi,Chennai_WH,2025-04-30,2025-05-09,2025-05-30,1010,Truck,Machinery,415,Delivered
+10973,Kolkata,Mumbai_WH,2025-04-23,2025-04-24,2025-05-06,1941,Train,Furniture,335,Pending
+10974,Chennai,Hyderabad_WH,2025-04-11,2025-04-13,2025-05-06,1902,Train,Books,237,Pending
+10975,Hyderabad,Bangalore_WH,2025-04-28,2025-05-19,2025-05-31,487,Bike,Books,80,Delivered
+10976,Pune,Chennai_WH,2025-05-09,2025-05-11,2025-05-11,1832,Train,Books,282,Delivered
+10977,Chennai,Pune_WH,2025-05-09,2025-05-09,2025-05-27,872,Ship,Apparel,127,Delivered
+10978,Lucknow,Ahmedabad_WH,2025-05-09,2025-05-11,2025-05-21,2337,Train,Toys,386,Pending
+10979,Mumbai,Kolkata_WH,2025-04-26,2025-05-19,2025-05-28,1195,Air,Machinery,290,Pending
+10980,Bangalore,Bangalore_WH,2025-04-23,2025-05-10,2025-05-11,1090,Ship,Furniture,209,Cancelled
+10981,Chennai,Mumbai_WH,2025-04-14,2025-05-13,2025-05-16,614,Ship,Apparel,12,Pending
+10982,Delhi,Bangalore_WH,2025-04-23,2025-05-12,2025-05-25,1311,Ship,Machinery,224,Cancelled
+10983,Lucknow,Jaipur_WH,2025-04-25,2025-05-15,2025-05-20,30,Train,Groceries,126,Pending
+10984,Hyderabad,Jaipur_WH,2025-05-03,2025-05-06,2025-05-28,1941,Bike,Apparel,214,Pending
+10985,Delhi,Jaipur_WH,2025-05-08,2025-05-12,2025-05-18,904,Truck,Apparel,346,Pending
+10986,Kolkata,Jaipur_WH,2025-05-02,2025-05-19,2025-05-23,1904,Truck,Furniture,341,In Transit
+10987,Delhi,Bangalore_WH,2025-04-18,2025-05-12,2025-05-14,1994,Truck,Apparel,474,Delivered
+10988,Delhi,Delhi_WH,2025-04-17,2025-05-19,2025-06-02,2181,Truck,Books,405,Pending
+10989,Hyderabad,Pune_WH,2025-04-24,2025-05-10,2025-05-10,437,Bike,Electronics,468,Pending
+10990,Kolkata,Kolkata_WH,2025-05-02,2025-05-18,2025-05-24,722,Ship,Apparel,187,Pending
+10991,Delhi,Pune_WH,2025-05-08,2025-05-15,2025-06-07,130,Train,Pharma,464,Delivered
+10992,Delhi,Bangalore_WH,2025-04-15,2025-05-18,2025-05-28,2432,Train,Machinery,148,In Transit
+10993,Chennai,Bangalore_WH,2025-04-18,2025-05-12,2025-06-06,898,Train,Machinery,301,Delivered
+10994,Delhi,Hyderabad_WH,2025-05-06,2025-05-13,2025-05-23,1591,Ship,Toys,248,Pending
+10995,Bangalore,Kolkata_WH,2025-05-01,2025-05-17,2025-06-03,562,Air,Books,128,In Transit
+10996,Jaipur,Pune_WH,2025-05-02,2025-05-03,2025-05-05,2381,Train,Electronics,97,Pending
+10997,Bangalore,Hyderabad_WH,2025-04-26,2025-05-10,2025-05-12,1422,Truck,Books,418,Cancelled
+10998,Mumbai,Chennai_WH,2025-04-28,2025-05-12,2025-05-30,863,Truck,Toys,408,In Transit
+10999,Ahmedabad,Mumbai_WH,2025-04-30,2025-05-11,2025-06-08,399,Train,Apparel,346,Cancelled
+11000,Bangalore,Hyderabad_WH,2025-05-06,2025-05-14,2025-05-27,1751,Truck,Books,363,Delivered

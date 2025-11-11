@@ -321,8 +321,100 @@ class UserSession(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     is_active = Column(Boolean, default=True)
 
+    # Relationships
+    chat_sessions = relationship("ChatSession", back_populates="user_session")
+
     def __repr__(self):
         return f"<UserSession(session_id='{self.session_id[:8]}...', active={self.is_active})>"
+
+
+class ChatSession(Base):
+    """Chat session for RAG chatbot"""
+
+    __tablename__ = "chat_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String(100), nullable=False, unique=True, index=True)
+    user_session_id = Column(Integer, ForeignKey("user_sessions.id"), nullable=True)
+    
+    # Session metadata
+    session_title = Column(String(255), nullable=True)
+    context_data = Column(JSON, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    is_active = Column(Boolean, default=True)
+
+    # Relationships
+    user_session = relationship("UserSession", back_populates="chat_sessions")
+    messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<ChatSession(session_id='{self.session_id[:8]}...', active={self.is_active})>"
+
+
+class ChatMessage(Base):
+    """Individual chat message in a session"""
+
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("chat_sessions.id"), nullable=False)
+    
+    # Message content
+    role = Column(String(20), nullable=False)  # 'user' or 'assistant'
+    content = Column(Text, nullable=False)
+    
+    # RAG metadata
+    sources_used = Column(JSON, nullable=True)  # Documents retrieved
+    confidence_score = Column(Float, nullable=True)
+    tokens_used = Column(Integer, nullable=True)
+    
+    # File attachments
+    attached_files = Column(JSON, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    session = relationship("ChatSession", back_populates="messages")
+
+    def __repr__(self):
+        return f"<ChatMessage(role='{self.role}', session_id={self.session_id})>"
+
+
+class DocumentStore(Base):
+    """Store for RAG documents and embeddings"""
+
+    __tablename__ = "document_store"
+
+    id = Column(Integer, primary_key=True, index=True)
+    
+    # Document metadata
+    document_id = Column(String(100), nullable=False, unique=True, index=True)
+    source = Column(String(255), nullable=False)  # File name or source
+    document_type = Column(String(50), nullable=False)  # 'knowledge_base', 'uploaded_file', 'business_data'
+    
+    # Content
+    content = Column(Text, nullable=False)
+    content_summary = Column(Text, nullable=True)
+    
+    # Embeddings (stored as JSON for simplicity; in production, use vector DB)
+    embedding = Column(JSON, nullable=True)
+    
+    # Metadata
+    doc_metadata = Column(JSON, nullable=True)
+    tags = Column(JSON, nullable=True)
+    
+    # Access control
+    business_id = Column(Integer, ForeignKey("businesses.id"), nullable=True)
+    is_public = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    is_active = Column(Boolean, default=True)
+
+    def __repr__(self):
+        return f"<DocumentStore(id='{self.document_id}', type='{self.document_type}')>"
 
 
 # Database utility functions

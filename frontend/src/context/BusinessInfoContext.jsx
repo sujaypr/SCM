@@ -8,9 +8,29 @@ export const BusinessInfoProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const saveBusinessInfo = (info) => {
+  const saveBusinessInfo = async (info) => {
     setBusinessInfo(info);
     localStorage.setItem('businessInfo', JSON.stringify(info));
+
+    const payload = {
+      businessName: info.businessName || null,
+      businessType: info.businessType,
+      businessScale: info.businessScale,
+      location: info.location,
+      state: info.state,
+      currentSales: info.currentSales ? Number(info.currentSales) : null,
+    };
+
+    const res = await fetch('/api/demand/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data?.success === false) {
+      throw new Error(data?.error || 'Failed to save business settings');
+    }
+    return data;
   };
 
   return (

@@ -10,7 +10,7 @@ const Navbar = ({ activeComponent, onToggleSidebar }) => {
     'demand-forecasting': { title: 'Demand Forecasting', subtitle: 'AI-powered demand predictions and trends' },
     'inventory': { title: 'Inventory Management', subtitle: 'Stock levels and inventory optimization' },
     'logistics': { title: 'Logistics Operations', subtitle: 'Supply chain and delivery management' },
-    'scenarios': { title: 'What-if Scenarios', subtitle: 'Strategic planning and impact analysis' },
+    'scenarios': { title: 'AI Chat Assistant', subtitle: 'Ask questions and upload files for insights' },
     'reports': { title: 'Business Reports', subtitle: 'Analytics and performance insights' },
     'settings': { title: 'Business Settings', subtitle: 'Configure your business information' }
   };

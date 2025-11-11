@@ -53,6 +53,91 @@ class SuggestionResponse(BaseModel):
     error: Optional[str] = None
 
 
+class SaveSettingsRequest(BaseModel):
+    businessName: Optional[str] = Field(None, max_length=255)
+    businessType: str
+    businessScale: str
+    location: str
+    state: Optional[str] = None
+    currentSales: Optional[float] = None
+
+
+@router.post("/settings")
+async def save_business_settings(request: SaveSettingsRequest, db: Session = Depends(get_db)):
+    """Save business settings and set this as the single active business (others deactivated)."""
+    try:
+        supported_business_types = [
+            "Grocery Store",
+            "Electronics Store",
+            "Clothing Store",
+            "Medical Store",
+            "Cosmetics Store",
+            "Food & Beverage",
+        ]
+        supported_scales = ["Micro", "Small", "Medium", "Large"]
+
+        if request.businessType not in supported_business_types:
+            raise HTTPException(status_code=400, detail={"success": False, "error": "Invalid business type"})
+        if request.businessScale not in supported_scales:
+            raise HTTPException(status_code=400, detail={"success": False, "error": "Invalid business scale"})
+
+        state = request.state or request.location
+        biz_name = request.businessName or f"{request.businessType} @ {state}"
+
+        # Deactivate all businesses first to enforce a single active business
+        db.query(Business).update({Business.is_active: False})
+
+        # Find existing business row
+        business = (
+            db.query(Business)
+            .filter(
+                Business.name == biz_name,
+                Business.type == request.businessType,
+                Business.location == request.location,
+                Business.state == state,
+            )
+            .first()
+        )
+
+        if not business:
+            business = Business(
+                name=biz_name,
+                type=request.businessType,
+                scale=request.businessScale,
+                location=request.location,
+                state=state,
+                is_active=True,
+            )
+            db.add(business)
+            db.flush()
+        else:
+            # Update fields and mark active
+            business.scale = request.businessScale
+            business.location = request.location
+            business.state = state
+            business.is_active = True
+
+        db.commit()
+        db.refresh(business)
+
+        return {
+            "success": True,
+            "business": {
+                "id": business.id,
+                "name": business.name,
+                "type": business.type,
+                "scale": business.scale,
+                "location": business.location,
+                "state": business.state,
+                "is_active": business.is_active,
+                "updated_at": business.updated_at.isoformat() if business.updated_at else None,
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"success": False, "error": str(e)})
+
 @router.post("/forecast")
 async def generate_forecast(request: ForecastRequest, db: Session = Depends(get_db)):
     """
@@ -125,6 +210,15 @@ async def generate_forecast(request: ForecastRequest, db: Session = Depends(get_
             )
             db.add(business)
             db.flush()
+        else:
+            # Keep settings in sync
+            business.scale = payload["businessScale"]
+            business.location = payload["location"]
+            business.state = state
+
+        # Ensure this is the only active business
+        db.query(Business).update({Business.is_active: False})
+        business.is_active = True
 
         model_used = "Gemini 2.5 Pro" if get_config().gemini_api_key else "Fallback"
         recommendations = tabbed_data.get("suggestions") or []

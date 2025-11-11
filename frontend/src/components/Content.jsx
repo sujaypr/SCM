@@ -42,7 +42,9 @@ const Content = ({ activeComponent }) => {
   };
 
   return (
-    <div className="flex-1 px-4 md:px-6 lg:px-8 py-4 md:py-6 overflow-y-auto hide-scrollbar min-w-0">
+    <div className={`${activeComponent === 'scenarios' 
+      ? 'flex-1 px-4 md:px-6 lg:px-8 py-4 md:py-6 overflow-hidden min-w-0' 
+      : 'flex-1 px-4 md:px-6 lg:px-8 py-4 md:py-6 overflow-y-auto hide-scrollbar min-w-0'}`}>
       <div className="relative">
         {prevKey && (
           <div key={`prev-${prevKey}`} className="page-leave">

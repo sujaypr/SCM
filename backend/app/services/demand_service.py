@@ -407,7 +407,7 @@ class DemandService:
                 "adjustment_factor": 0.85,
             },
             "festival_seasons": {
-                "diwali": {"period": "Oct-Nov", "impact": "+50-70%"},
+                # "diwali": {"period": "Oct-Nov", "impact": "+50-70%"},
                 "regional": {"period": "varies", "impact": "+20-35%"},
                 "wedding": {"period": "Nov-Feb, Apr-May", "impact": "+25-40%"},
             },
