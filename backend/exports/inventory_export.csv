@@ -1,0 +1,2 @@
+name,category,sku,current_stock,min_stock_level,max_stock_level,unit_cost,selling_price,supplier,description,status
+sugar,grocery,SKU-0001,0,0,1,45.0,50.0,krishna,,critical

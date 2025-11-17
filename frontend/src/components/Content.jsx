@@ -1,6 +1,6 @@
 import React from 'react';
 import ErrorBoundary from './ErrorBoundary';
-import Dashboard from '../pages/Dashboard';
+import DashboardV2 from '../pages/DashboardV2';
 import DemandForecasting from '../pages/DemandForecasting';
 import InventoryManagement from '../pages/InventoryManagement';
 import Logistics from '../pages/Logistics';
@@ -24,7 +24,7 @@ const Content = ({ activeComponent }) => {
   const renderBy = (key) => {
     switch(key) {
       case 'dashboard':
-        return <Dashboard />;
+        return <DashboardV2 />;
       case 'demand-forecasting':
         return <DemandForecasting />;
       case 'inventory':
@@ -38,7 +38,7 @@ const Content = ({ activeComponent }) => {
       case 'settings':
         return <Settings />;
       default:
-        return <Dashboard />;
+        return <DashboardV2 />;
     }
   };
 

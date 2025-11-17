@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+import re
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 from app.services.inventory_service_db import InventoryService
@@ -218,34 +219,53 @@ class CSVService:
     def _suggest_column_mapping(self, columns: List[str]) -> Dict[str, str]:
         """Suggest column mappings based on column names"""
         
-        mapping = {}
-        
-        # Common variations of column names
+        def norm(s: str) -> str:
+            return re.sub(r"[^a-z0-9]", "", s.lower().strip())
+
+        mapping: Dict[str, str] = {}
+
+        # Expand and normalize synonyms
         name_variations = {
-            "name": ["name", "product", "item", "product_name", "item_name"],
-            "category": ["category", "type", "product_category", "item_category"],
-            "sku": ["sku", "code", "product_code", "item_code", "barcode"],
-            "current_stock": ["stock", "quantity", "qty", "current_stock", "available"],
-            "min_stock_level": ["min", "minimum", "min_stock", "min_level", "reorder_level"],
-            "max_stock_level": ["max", "maximum", "max_stock", "max_level"],
-            "unit_cost": ["cost", "unit_cost", "purchase_price", "buying_price"],
-            "selling_price": ["price", "selling_price", "sale_price", "retail_price"],
+            "name": ["name", "product", "item", "productname", "itemname"],
+            "category": ["category", "type", "productcategory", "itemcategory"],
+            "sku": ["sku", "code", "productcode", "itemcode", "barcode"],
+            "current_stock": ["stock", "quantity", "qty", "currentstock", "available"],
+            "min_stock_level": ["min", "minimum", "minstock", "minlevel", "reorderlevel"],
+            "max_stock_level": ["max", "maximum", "maxstock", "maxlevel"],
+            # Cost synonyms
+            "unit_cost": [
+                "unitcost", "cost", "costprice", "purchaseprice", "buyingprice",
+                "unit_cost", "unit cost", "purchase_price", "buy_price", "buyprice"
+            ],
+            # Selling price synonyms
+            "selling_price": [
+                "sellingprice", "saleprice", "retailprice", "price", "mrp",
+                "selling_price", "selling price", "listprice", "list_price"
+            ],
             "supplier": ["supplier", "vendor", "distributor"],
             "description": ["description", "desc", "details", "notes"]
         }
-        
+
+        # Pre-normalize variations for fast lookup
+        normalized_variations: Dict[str, List[str]] = {
+            field: [norm(v) for v in variations]
+            for field, variations in name_variations.items()
+        }
+
         for col in columns:
-            col_lower = col.lower().strip()
-            
-            for field, variations in name_variations.items():
-                if col_lower in variations:
+            col_norm = norm(col)
+            matched = False
+
+            for field, variations in normalized_variations.items():
+                if col_norm in variations:
                     mapping[col] = field
+                    matched = True
                     break
-            
-            # If no match found, keep original column name
-            if col not in mapping:
+
+            if not matched:
+                # No match found: keep original header as the field name
                 mapping[col] = col
-        
+
         return mapping
     
     def _map_columns(self, row: Dict, mapping: Dict[str, str]) -> Dict:

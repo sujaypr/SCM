@@ -67,7 +67,9 @@ const CSVUploadModal = ({ open, onClose, onSuccess, businessInfo }) => {
     'sku',
     'current_stock',
     'min_stock_level',
-    'max_stock_level'
+    'max_stock_level',
+    'unit_cost',
+    'selling_price'
   ];
 
   // Dropzone configuration
@@ -259,23 +261,35 @@ const CSVUploadModal = ({ open, onClose, onSuccess, businessInfo }) => {
                   <FormControl size="small" fullWidth>
                     <Select
                       value={columnMapping[column] || ''}
-                      onChange={(e) => setColumnMapping({
-                        ...columnMapping,
-                        [column]: e.target.value
-                      })}
-                      MenuProps={{ PaperProps: { sx: { backgroundColor: 'var(--sidebar)', color: 'var(--foreground)', border: '1px solid var(--border)' } } }}
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        const newMapping = { ...columnMapping };
+                        // Ensure uniqueness: clear this selected field from any other column
+                        Object.keys(newMapping).forEach((k) => {
+                          if (k !== column && newMapping[k] === selected) {
+                            newMapping[k] = '';
+                          }
+                        });
+                        newMapping[column] = selected;
+                        setColumnMapping(newMapping);
+                      }}
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
+                            backgroundColor: 'var(--sidebar)',
+                            color: 'var(--foreground)',
+                            border: '1px solid var(--border)',
+                            zIndex: 1600
+                          }
+                        }
+                      }}
                     >
                       <MenuItem value="">Skip</MenuItem>
-                      {systemFields.map(field => {
-                        const alreadyUsed = Object.keys(columnMapping).some(
-                          (k) => k !== column && columnMapping[k] === field
-                        );
-                        return (
-                          <MenuItem key={field} value={field} disabled={alreadyUsed}>
-                            {field.replace('_', ' ').toUpperCase()}
-                          </MenuItem>
-                        );
-                      })}
+                      {systemFields.map(field => (
+                        <MenuItem key={field} value={field}>
+                          {field.replace('_', ' ').toUpperCase()}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </TableCell>

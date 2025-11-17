@@ -2498,9 +2498,45 @@ Be realistic and accurate for Indian logistics.
         return arrival_time.strftime('%H:%M on %Y-%m-%d')
 
     def _get_mock_shipments(self) -> List[Dict[str, Any]]:
-        """Get mock shipment data"""
-
+        """Generate mock shipments for demo purposes"""
+        # This can be expanded with more realistic mock data
         return [
+            {
+                'id': 'SHP-mock-1',
+                'origin': 'Mumbai',
+                'destination': 'Delhi',
+                'status': 'Delivered',
+                'items_count': 10,
+                'total_weight': 50.0,
+                'transport_mode': 'road',
+                'priority': 'standard',
+                'created_date': '2023-10-01',
+                'shipped_date': '2023-10-01',
+                'eta': '2023-10-05',
+                'actual_delivery': '2023-10-05',
+                'tracking_info': {
+                    'progress_percentage': 100
+                },
+                'cost': 5000
+            },
+            {
+                'id': 'SHP-mock-2',
+                'origin': 'Bangalore',
+                'destination': 'Chennai',
+                'status': 'Delivered',
+                'items_count': 5,
+                'total_weight': 20.0,
+                'transport_mode': 'rail',
+                'priority': 'express',
+                'created_date': '2023-10-02',
+                'shipped_date': '2023-10-02',
+                'eta': '2023-10-04',
+                'actual_delivery': '2023-10-03',
+                'tracking_info': {
+                    'progress_percentage': 100
+                },
+                'cost': 3000
+            },
             {
                 'id': 'SHP-A1B2C3D4',
                 'origin': 'Bangalore Distribution Center',
@@ -2650,6 +2686,186 @@ Be realistic and accurate for Indian logistics.
                         {'status': 'Processing', 'timestamp': '2025-09-13T08:00:00', 'location': 'Bangalore', 'message': 'Express air shipment processed'},
                         {'status': 'In Transit', 'timestamp': '2025-09-13T12:00:00', 'location': 'Bangalore Airport', 'message': 'Loaded for air transport'},
                         {'status': 'In Transit', 'timestamp': '2025-09-13T16:00:00', 'location': 'In Flight', 'message': 'En route to Kolkata'}
+                    ]
+                }
+            },
+            {
+                'id': 'SHP-U1V2W3X4',
+                'origin': 'Bangalore Distribution Center',
+                'destination': 'Pune',
+                'status': 'Delivered',
+                'items_count': 14,
+                'total_weight': 28.0,
+                'cost': 3100.0,
+                'transport_mode': 'road',
+                'priority': 'standard',
+                'created_date': '2025-09-07',
+                'shipped_date': '2025-09-08',
+                'eta': '2025-09-10',
+                'actual_delivery': '2025-09-11',  # late
+                'items': [
+                    {'description': 'Auto Parts', 'quantity': 9, 'weight': 18.0},
+                    {'description': 'Packaging Material', 'quantity': 5, 'weight': 10.0}
+                ],
+                'notes': 'Standard service',
+                'tracking_info': {
+                    'last_update': '2025-09-11T15:10:00',
+                    'location': 'Pune',
+                    'progress_percentage': 100,
+                    'status_history': [
+                        {'status': 'Processing', 'timestamp': '2025-09-07T11:00:00', 'location': 'Bangalore', 'message': 'Order created'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-08T09:30:00', 'location': 'Bangalore Hub', 'message': 'Dispatched'},
+                        {'status': 'Delivered', 'timestamp': '2025-09-11T15:10:00', 'location': 'Pune', 'message': 'Delivered'}
+                    ]
+                }
+            },
+            {
+                'id': 'SHP-Y5Z6A7B8',
+                'origin': 'Bangalore Distribution Center',
+                'destination': 'Ahmedabad',
+                'status': 'Delivered',
+                'items_count': 20,
+                'total_weight': 40.0,
+                'cost': 5200.0,
+                'transport_mode': 'road',
+                'priority': 'standard',
+                'created_date': '2025-09-08',
+                'shipped_date': '2025-09-09',
+                'eta': '2025-09-12',
+                'actual_delivery': '2025-09-12',  # on time
+                'items': [
+                    {'description': 'Consumer Electronics', 'quantity': 12, 'weight': 26.0},
+                    {'description': 'Accessories', 'quantity': 8, 'weight': 14.0}
+                ],
+                'notes': 'Regular delivery',
+                'tracking_info': {
+                    'last_update': '2025-09-12T18:00:00',
+                    'location': 'Ahmedabad',
+                    'progress_percentage': 100,
+                    'status_history': [
+                        {'status': 'Processing', 'timestamp': '2025-09-08T10:30:00', 'location': 'Bangalore', 'message': 'Scheduled'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-09T13:00:00', 'location': 'Bangalore Hub', 'message': 'Dispatched'},
+                        {'status': 'Delivered', 'timestamp': '2025-09-12T18:00:00', 'location': 'Ahmedabad', 'message': 'Delivered'}
+                    ]
+                }
+            },
+            {
+                'id': 'SHP-C9D0E1F2',
+                'origin': 'Bangalore Distribution Center',
+                'destination': 'Jaipur',
+                'status': 'Delivered',
+                'items_count': 16,
+                'total_weight': 34.0,
+                'cost': 6000.0,
+                'transport_mode': 'rail',
+                'priority': 'standard',
+                'created_date': '2025-09-06',
+                'shipped_date': '2025-09-06',
+                'eta': '2025-09-09',
+                'actual_delivery': '2025-09-09',  # on time
+                'items': [
+                    {'description': 'Textiles', 'quantity': 10, 'weight': 20.0},
+                    {'description': 'Footwear', 'quantity': 6, 'weight': 14.0}
+                ],
+                'notes': 'Rail consignment',
+                'tracking_info': {
+                    'last_update': '2025-09-09T17:40:00',
+                    'location': 'Jaipur',
+                    'progress_percentage': 100,
+                    'status_history': [
+                        {'status': 'Processing', 'timestamp': '2025-09-06T07:30:00', 'location': 'Bangalore', 'message': 'Created'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-06T20:00:00', 'location': 'Bangalore Junction', 'message': 'Onboarded'},
+                        {'status': 'Delivered', 'timestamp': '2025-09-09T17:40:00', 'location': 'Jaipur', 'message': 'Delivered'}
+                    ]
+                }
+            },
+            {
+                'id': 'SHP-R1S2T3U4',
+                'origin': 'Bangalore Distribution Center',
+                'destination': 'Surat',
+                'status': 'Delivered',
+                'items_count': 19,
+                'total_weight': 36.0,
+                'cost': 4100.0,
+                'transport_mode': 'road',
+                'priority': 'standard',
+                'created_date': '2025-09-09',
+                'shipped_date': '2025-09-10',
+                'eta': '2025-09-12',
+                'actual_delivery': '2025-09-12',  # on time
+                'items': [
+                    {'description': 'Fabric Rolls', 'quantity': 9, 'weight': 20.0},
+                    {'description': 'Dyes & Chemicals', 'quantity': 10, 'weight': 16.0}
+                ],
+                'notes': 'Surat textile market delivery',
+                'tracking_info': {
+                    'last_update': '2025-09-12T16:20:00',
+                    'location': 'Surat',
+                    'progress_percentage': 100,
+                    'status_history': [
+                        {'status': 'Processing', 'timestamp': '2025-09-09T12:00:00', 'location': 'Bangalore', 'message': 'Order created'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-10T09:00:00', 'location': 'Bangalore Hub', 'message': 'Dispatched'},
+                        {'status': 'Delivered', 'timestamp': '2025-09-12T16:20:00', 'location': 'Surat', 'message': 'Delivered'}
+                    ]
+                }
+            },
+            {
+                'id': 'SHP-V5W6X7Y8',
+                'origin': 'Bangalore Distribution Center',
+                'destination': 'Visakhapatnam',
+                'status': 'Delivered',
+                'items_count': 17,
+                'total_weight': 38.0,
+                'cost': 5900.0,
+                'transport_mode': 'rail',
+                'priority': 'standard',
+                'created_date': '2025-09-06',
+                'shipped_date': '2025-09-07',
+                'eta': '2025-09-10',
+                'actual_delivery': '2025-09-09',  # early/on time
+                'items': [
+                    {'description': 'Steel Components', 'quantity': 7, 'weight': 22.0},
+                    {'description': 'Packing Cases', 'quantity': 10, 'weight': 16.0}
+                ],
+                'notes': 'Port-adjacent industry delivery',
+                'tracking_info': {
+                    'last_update': '2025-09-09T19:05:00',
+                    'location': 'Visakhapatnam',
+                    'progress_percentage': 100,
+                    'status_history': [
+                        {'status': 'Processing', 'timestamp': '2025-09-06T14:30:00', 'location': 'Bangalore', 'message': 'Scheduled'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-07T08:00:00', 'location': 'Bangalore Junction', 'message': 'Loaded on rail'},
+                        {'status': 'Delivered', 'timestamp': '2025-09-09T19:05:00', 'location': 'Visakhapatnam', 'message': 'Delivered'}
+                    ]
+                }
+            },
+            {
+                'id': 'SHP-Z9A0B1C2',
+                'origin': 'Bangalore Distribution Center',
+                'destination': 'Nagpur',
+                'status': 'Delivered',
+                'items_count': 21,
+                'total_weight': 44.5,
+                'cost': 4800.0,
+                'transport_mode': 'road',
+                'priority': 'standard',
+                'created_date': '2025-09-12',
+                'shipped_date': '2025-09-12',
+                'eta': '2025-09-14',
+                'actual_delivery': '2025-09-14',  # on time
+                'items': [
+                    {'description': 'FMCG Cartons', 'quantity': 15, 'weight': 30.0},
+                    {'description': 'Promotional Materials', 'quantity': 6, 'weight': 14.5}
+                ],
+                'notes': 'End-of-week dispatch',
+                'tracking_info': {
+                    'last_update': '2025-09-14T18:10:00',
+                    'location': 'Nagpur',
+                    'progress_percentage': 100,
+                    'status_history': [
+                        {'status': 'Processing', 'timestamp': '2025-09-12T09:20:00', 'location': 'Bangalore', 'message': 'Order processed'},
+                        {'status': 'In Transit', 'timestamp': '2025-09-12T12:40:00', 'location': 'Bangalore Hub', 'message': 'Dispatched'},
+                        {'status': 'Delivered', 'timestamp': '2025-09-14T18:10:00', 'location': 'Nagpur', 'message': 'Delivered on schedule'}
                     ]
                 }
             }

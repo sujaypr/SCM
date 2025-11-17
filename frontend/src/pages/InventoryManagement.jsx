@@ -98,6 +98,7 @@ const InventoryManagement = () => {
       case 'critical': return 'bg-red-100 text-red-600';
       case 'low': return 'bg-orange-100 text-orange-500';
       case 'normal': return 'bg-green-100 text-green-600';
+      case 'healthy': return 'bg-green-100 text-green-600';
       case 'overstock': return 'bg-blue-100 text-blue-600';
       default: return 'bg-gray-200 text-gray-700';
     }
@@ -168,7 +169,7 @@ const InventoryManagement = () => {
             <i className="fas fa-check-circle"></i>
           </div>
           <div>
-            <h3 className="text-xl text-[--foreground] leading-6">{items.filter(item => item.status === 'normal').length}</h3>
+            <h3 className="text-xl text-[--foreground] leading-6">{items.filter(item => item.status === 'healthy' || item.status === 'normal').length}</h3>
             <p className="text-[--muted-foreground] text-xs">Healthy Stock</p>
           </div>
         </div>
@@ -196,7 +197,7 @@ const InventoryManagement = () => {
             <option value="">All Status</option>
             <option value="critical">Critical</option>
             <option value="low">Low Stock</option>
-            <option value="normal">Normal</option>
+            <option value="normal">Healthy</option>
             <option value="overstock">Overstock</option>
           </select>
 

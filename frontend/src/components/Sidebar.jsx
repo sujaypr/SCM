@@ -8,7 +8,6 @@ const Sidebar = ({ activeComponent, setActiveComponent, isOpen = false, onClose 
     { id: 'inventory', label: 'Inventory Management', icon: <i className="fas fa-boxes"></i> },
     { id: 'logistics', label: 'Logistics', icon: <i className="fas fa-truck"></i> },
     { id: 'scenarios', label: 'AI Chat Assistant', icon: <i className="fas fa-comments"></i> },
-    { id: 'reports', label: 'Reports', icon: <i className="fas fa-file-alt"></i> },
     { id: 'settings', label: 'Settings', icon: <i className="fas fa-cog"></i> }
   ];
 

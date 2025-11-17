@@ -131,7 +131,7 @@ const DemandForecasting = () => {
   const [history, setHistory] = useState([]);
   const [overlayLoading, setOverlayLoading] = useState(false);
   const [selectedId, setSelectedId] = useState('');
-  
+  const [calendarFestivals, setCalendarFestivals] = useState([]);
 
   const palette = (() => {
     const root = document.documentElement;
@@ -248,11 +248,31 @@ const DemandForecasting = () => {
       end: toLocalDate(s.end),
     }));
     const seasonNames = Array.from(new Set(seasons.map((s) => s.name)));
-    const festivals = (forecast.festival_demands?.chart || []).map((f) => ({
+    // Merge and clamp festivals to the upcoming window for the timeline
+    const today = new Date(); today.setHours(0,0,0,0);
+    const baseStart = toLocalDate(forecast.forecast_start);
+    const windowStart = baseStart && baseStart.getTime() > today.getTime() ? baseStart : today;
+    const windowEnd = toLocalDate(forecast.forecast_end);
+    const ff = (forecast.festival_demands?.chart || []).map((f) => ({
       label: f.festival,
       date: toLocalDate(f.date),
       inc: Number(f.demand_increase) || 0,
     }));
+    const cf = (calendarFestivals || []).map((f) => ({
+      label: f.festival,
+      date: toLocalDate(f.date),
+      inc: Number(f.demand_increase) || 0,
+    }));
+    const mergedMap = new Map();
+    [...ff, ...cf].forEach((f) => {
+      if (!f?.date) return;
+      const ts = f.date.getTime();
+      if (!(ts > windowStart.getTime() && ts <= windowEnd.getTime())) return;
+      const key = `${f.label}|${f.date.toISOString().slice(0,10)}`;
+      const prev = mergedMap.get(key);
+      if (!prev || f.inc > prev.inc) mergedMap.set(key, f);
+    });
+    const festivals = Array.from(mergedMap.values());
     const minDate = new Date(
       Math.min(
         ...[
@@ -274,7 +294,7 @@ const DemandForecasting = () => {
     );
     const yLabels = [...seasonNames, 'Festivals'];
     return { seasons, festivals, yLabels, minDate, maxDate };
-  }, [forecast]);
+  }, [forecast, calendarFestivals]);
 
   const coordinationSeries = React.useMemo(() => {
     if (!forecast) return null;
@@ -296,9 +316,32 @@ const DemandForecasting = () => {
       surge: Number(s.demand_surge) || 0,
     }));
 
-    const festivals = (forecast.festival_demands?.chart || []).map((f) => ({
-      date: toLocalDate(f.date)?.getTime?.() || 0,
+    // Merge forecast and calendar festivals and clamp to [max(today,start), end]
+    const today = new Date(); today.setHours(0,0,0,0);
+    const windowStart = start && start.getTime() > today.getTime() ? start : today;
+    const windowEnd = end;
+    const ff = (forecast.festival_demands?.chart || []).map((f) => ({
+      label: f.festival,
+      date: toLocalDate(f.date),
       inc: Number(f.demand_increase) || 0,
+    }));
+    const cf = (calendarFestivals || []).map((f) => ({
+      label: f.festival,
+      date: toLocalDate(f.date),
+      inc: Number(f.demand_increase) || 0,
+    }));
+    const mergedMap = new Map();
+    [...ff, ...cf].forEach((f) => {
+      if (!f?.date) return;
+      const ts = f.date.getTime();
+      if (!(ts >= windowStart.getTime() && ts <= windowEnd.getTime())) return;
+      const key = `${f.label}|${f.date.toISOString().slice(0,10)}`;
+      const prev = mergedMap.get(key);
+      if (!prev || f.inc > prev.inc) mergedMap.set(key, f);
+    });
+    const festivals = Array.from(mergedMap.values()).map((f) => ({
+      date: f.date?.getTime?.() || 0,
+      inc: f.inc,
     }));
 
     const weekLabels = weeks.map((d) => d);
@@ -329,7 +372,7 @@ const DemandForecasting = () => {
     const mids = weekLabels.map((w) => w.getTime() + 3.5 * DAY_MS);
 
     return { labels: weekLabels, seasonVals, festVals, mids };
-  }, [forecast]);
+  }, [forecast, calendarFestivals]);
 
   
   const downloadEntireForecastPDF = async () => {
@@ -394,7 +437,7 @@ const DemandForecasting = () => {
     autoTable(doc, {
       startY: y,
       head: [['Festival', 'Date', 'Month', 'Year', 'Increase %']],
-      body: ((forecast.festival_demands && forecast.festival_demands.chart) || []).map((d) => [
+      body: (festivalItems || []).map((d) => [
         d.festival,
         d.date,
         d.month,
@@ -565,16 +608,80 @@ const DemandForecasting = () => {
     );
   }
 
-  // Compute in-window festivals and sort by date
-  const allFestivals = (forecast?.festival_demands?.chart || []).map((d) => ({
+  // Fetch and merge festival calendar with forecast festivals when forecast changes
+  useEffect(() => {
+    const loadCalendar = async () => {
+      if (!forecast?.forecast_start || !forecast?.forecast_end) { setCalendarFestivals([]); return; }
+      try {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const fs = new Date(forecast.forecast_start);
+        const fe = new Date(forecast.forecast_end);
+        const startYear = (fs instanceof Date && !isNaN(fs) && fs.getTime() > today.getTime()) ? fs.getFullYear() : today.getFullYear();
+        const endYear = (fe instanceof Date && !isNaN(fe)) ? fe.getFullYear() : startYear;
+        const ys = new Set([startYear, endYear]);
+        const results = await Promise.all(
+          Array.from(ys).map(async (y) => {
+            const resp = await fetch(`${API_BASE}/demand/festival-calendar?year=${y}`);
+            const data = await resp.json().catch(() => ({}));
+            return { year: y, data };
+          })
+        );
+        const items = [];
+        const pct = (impact) => impact === 'Very High' ? 70 : impact === 'High' ? 45 : 25;
+        for (const r of results) {
+          const cal = r.data || {};
+          for (const m of (cal.major_festivals || [])) {
+            items.push({
+              festival: m.name,
+              date: m.date,
+              demand_increase: pct(m.impact || 'Medium'),
+            });
+          }
+          for (const rg of (cal.regional_festivals || [])) {
+            items.push({
+              festival: rg.name,
+              date: rg.date,
+              demand_increase: pct(rg.impact || 'Medium'),
+            });
+          }
+        }
+        setCalendarFestivals(items);
+      } catch {
+        setCalendarFestivals([]);
+      }
+    };
+    loadCalendar();
+  }, [forecast?.forecast_start, forecast?.forecast_end]);
+
+  // Compute upcoming (clamped to today..forecast_end) merged festivals and sort by date
+  const forecastFestivals = (forecast?.festival_demands?.chart || []).map((d) => ({
+    festival: d.festival,
+    date: d.date,
+    demand_increase: Number(d.demand_increase) || 0,
+  }));
+  const mergedAll = [...forecastFestivals, ...calendarFestivals].map((d) => ({
     ...d,
     _ts: (() => { try { return new Date(d.date).getTime(); } catch { return NaN; } })(),
   }));
-  const windowStart = forecast?.forecast_start ? new Date(forecast.forecast_start).getTime() : NaN;
-  const windowEnd = forecast?.forecast_end ? new Date(forecast.forecast_end).getTime() : NaN;
-  const festivalItems = allFestivals
-    .filter((d) => Number.isFinite(d._ts) && (!Number.isFinite(windowStart) || d._ts >= windowStart) && (!Number.isFinite(windowEnd) || d._ts <= windowEnd))
-    .sort((a, b) => a._ts - b._ts);
+  const todayStartTs = (() => { const t = new Date(); t.setHours(0,0,0,0); return t.getTime(); })();
+  const baseStartTs = forecast?.forecast_start ? new Date(forecast.forecast_start).getTime() : NaN;
+  const clampedStartTs = Number.isFinite(baseStartTs) ? Math.max(todayStartTs, baseStartTs) : todayStartTs;
+  const windowEndTs = forecast?.forecast_end ? new Date(forecast.forecast_end).getTime() : NaN;
+  const festivalItems = (() => {
+    // Merge by (festival|date) with max increase
+    const map = new Map();
+    for (const d of mergedAll) {
+      if (!Number.isFinite(d._ts)) continue;
+      if (!(d._ts >= clampedStartTs && (Number.isNaN(windowEndTs) ? true : d._ts <= windowEndTs))) continue;
+      const key = `${d.festival}|${new Date(d._ts).toISOString().slice(0,10)}`;
+      const prev = map.get(key);
+      if (!prev || (Number(d.demand_increase) || 0) > (Number(prev.demand_increase) || 0)) {
+        map.set(key, d);
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a._ts - b._ts);
+  })();
+
   const festivalLabels = festivalItems.map((d) => d.festival || '');
   const festivalLabelsTrunc = festivalLabels.map((l) => truncate(l, 14));
 
@@ -628,7 +735,7 @@ const DemandForecasting = () => {
                   {fmtDate(forecast.forecast_end)}
                 </div>
                 <div style={{ fontSize: 13 }}>
-                  Festivals: {forecast.festival_demands?.chart?.length || 0} · Seasons: {forecast.seasonal_demands?.chart?.length || 0}
+                  Festivals: {festivalItems.length || 0} · Seasons: {forecast.seasonal_demands?.chart?.length || 0}
                   {lastUpdated && (
                     <span style={{ marginLeft: 8, color: 'var(--foreground)' }}>
                       · Last updated: {fmtDate(lastUpdated)}
@@ -875,26 +982,32 @@ const DemandForecasting = () => {
                               data: (() => {
                                 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
                                 const starts = coordinationSeries.labels.map((w) => w.getTime());
-                                return timelineData.festivals.map((f) => {
-                                  const ts = f.date?.getTime?.() || 0;
-                                  let idx = -1;
-                                  for (let i = 0; i < starts.length; i++) {
-                                    const s = starts[i];
-                                    if (ts >= s && ts <= s + WEEK_MS - 1) { idx = i; break; }
-                                  }
-                                  if (idx === -1) {
-                                    // fallback to nearest week
-                                    let best = 0, bestDiff = Infinity;
+                                return timelineData.festivals
+                                  .filter((f) => {
+                                    const ts0 = f.date?.getTime?.() || 0;
+                                    const inStart = Number.isFinite(ts0) && (Number.isNaN(clampedStartTs) ? true : ts0 >= clampedStartTs);
+                                    const inEnd = Number.isNaN(windowEndTs) ? true : ts0 <= windowEndTs;
+                                    return inStart && inEnd && ts0 >= Date.now();
+                                  })
+                                  .map((f) => {
+                                    const ts = f.date?.getTime?.() || 0;
+                                    let idx = -1;
                                     for (let i = 0; i < starts.length; i++) {
-                                      const diff = Math.abs(ts - (starts[i] + WEEK_MS / 2));
-                                      if (diff < bestDiff) { bestDiff = diff; best = i; }
+                                      const s = starts[i];
+                                      if (ts >= s && ts <= s + WEEK_MS - 1) { idx = i; break; }
                                     }
-                                    idx = best;
-                                  }
-                                  const x = coordinationSeries.mids?.[idx] ?? (starts[idx] + WEEK_MS / 2);
-                                  const y = coordinationSeries.festVals?.[idx] ?? Math.min(100, Math.max(0, f.inc || 0));
-                                  return { x, y, label: f.label, inc: Number(f.inc) || 0, originalTs: ts };
-                                });
+                                    if (idx === -1) {
+                                      let best = 0, bestDiff = Infinity;
+                                      for (let i = 0; i < starts.length; i++) {
+                                        const diff = Math.abs(ts - (starts[i] + WEEK_MS / 2));
+                                        if (diff < bestDiff) { bestDiff = diff; best = i; }
+                                      }
+                                      idx = best;
+                                    }
+                                    const x = coordinationSeries.mids?.[idx] ?? (starts[idx] + WEEK_MS / 2);
+                                    const y = coordinationSeries.festVals?.[idx] ?? Math.min(100, Math.max(0, f.inc || 0));
+                                    return { x, y, label: f.label, inc: Number(f.inc) || 0, originalTs: ts };
+                                  });
                               })(),
                               parsing: false,
                               pointRadius: 3,
@@ -985,7 +1098,15 @@ const DemandForecasting = () => {
                           },
                         },
                         festivalGuides: {
-                          dates: (timelineData?.festivals || []).map((f) => f.date?.getTime?.() || 0).filter(Number.isFinite),
+                          dates: (timelineData?.festivals || [])
+                            .map((f) => f.date?.getTime?.() || 0)
+                            .filter((ts) => {
+                              const ws = clampedStartTs;
+                              const we = windowEndTs;
+                              const inStart = Number.isFinite(ts) && (Number.isNaN(ws) ? true : ts > ws);
+                              const inEnd = Number.isNaN(we) ? true : ts <= we;
+                              return inStart && inEnd;
+                            }),
                         },
                         datalabels: { display: false },
                       },

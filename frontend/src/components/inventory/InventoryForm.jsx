@@ -22,7 +22,9 @@ const InventoryForm = ({ open, onClose, onSubmit, item = null, categories = [] }
     sku: '',
     current_stock: 0,
     min_stock_level: 10,
-    max_stock_level: 100
+    max_stock_level: 100,
+    unit_cost: '',
+    selling_price: ''
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -35,7 +37,9 @@ const InventoryForm = ({ open, onClose, onSubmit, item = null, categories = [] }
         sku: item.sku || '',
         current_stock: item.current_stock || 0,
         min_stock_level: item.min_stock_level || 10,
-        max_stock_level: item.max_stock_level || 100
+        max_stock_level: item.max_stock_level || 100,
+        unit_cost: item.unit_cost ?? '',
+        selling_price: item.selling_price ?? ''
       });
     } else {
       setFormData({
@@ -44,7 +48,9 @@ const InventoryForm = ({ open, onClose, onSubmit, item = null, categories = [] }
         sku: '',
         current_stock: 0,
         min_stock_level: 10,
-        max_stock_level: 100
+        max_stock_level: 100,
+        unit_cost: '',
+        selling_price: ''
       });
     }
     setErrors({});
@@ -81,6 +87,13 @@ const InventoryForm = ({ open, onClose, onSubmit, item = null, categories = [] }
       newErrors.min_stock_level = 'Min stock must be less than max stock';
       newErrors.max_stock_level = 'Max stock must be greater than min stock';
     }
+
+    if (formData.unit_cost !== '' && Number(formData.unit_cost) < 0) {
+      newErrors.unit_cost = 'Unit cost cannot be negative';
+    }
+    if (formData.selling_price !== '' && Number(formData.selling_price) < 0) {
+      newErrors.selling_price = 'Selling price cannot be negative';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -100,6 +113,9 @@ const InventoryForm = ({ open, onClose, onSubmit, item = null, categories = [] }
         min_stock_level: parseInt(formData.min_stock_level) || 10,
         max_stock_level: parseInt(formData.max_stock_level) || 100
       };
+      // Parse pricing fields
+      submitData.unit_cost = formData.unit_cost === '' ? null : parseFloat(formData.unit_cost);
+      submitData.selling_price = formData.selling_price === '' ? null : parseFloat(formData.selling_price);
       
       // Remove empty strings
       Object.keys(submitData).forEach(key => {
@@ -124,7 +140,9 @@ const InventoryForm = ({ open, onClose, onSubmit, item = null, categories = [] }
       sku: '',
       current_stock: 0,
       min_stock_level: 10,
-      max_stock_level: 100
+      max_stock_level: 100,
+      unit_cost: '',
+      selling_price: ''
     });
     setErrors({});
     onClose();
@@ -242,6 +260,31 @@ const InventoryForm = ({ open, onClose, onSubmit, item = null, categories = [] }
               error={!!errors.max_stock_level}
               helperText={errors.max_stock_level}
               inputProps={{ min: 1 }}
+            />
+          </Grid>
+          
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Unit Cost (INR)"
+              type="number"
+              value={formData.unit_cost}
+              onChange={handleChange('unit_cost')}
+              error={!!errors.unit_cost}
+              helperText={errors.unit_cost}
+              inputProps={{ min: 0, step: '0.01' }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Selling Price (INR)"
+              type="number"
+              value={formData.selling_price}
+              onChange={handleChange('selling_price')}
+              error={!!errors.selling_price}
+              helperText={errors.selling_price}
+              inputProps={{ min: 0, step: '0.01' }}
             />
           </Grid>
         </Grid>
