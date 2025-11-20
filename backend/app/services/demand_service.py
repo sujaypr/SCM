@@ -107,6 +107,82 @@ class DemandService:
         _now = self._now().replace(hour=0, minute=0, second=0, microsecond=0)
         _period = business_data.get("forecastPeriod", 6)
         _end = self._compute_end_date(_now, _period)
+        
+        # Filter out past festivals from AI output
+        if festival_demands and "chart" in festival_demands:
+            import difflib
+            
+            # Build truth map from known calendar (unfiltered)
+            # Store list of dates for each festival to handle multiple years
+            known_festivals = {}
+            current_year = _now.year
+            # Check current and next year to cover the forecast window
+            for y in [current_year, current_year + 1]:
+                cal = self.get_festival_calendar(y, filter_past=False)
+                for cat in ["major_festivals", "regional_festivals"]:
+                    for f in cal.get(cat, []):
+                        name_key = f["name"].lower()
+                        if name_key not in known_festivals:
+                            known_festivals[name_key] = []
+                        known_festivals[name_key].append(f["date"])
+
+            valid_chart = []
+            for f in festival_demands["chart"]:
+                f_name = f.get("festival", "").strip()
+                f_date_str = f.get("date")
+                
+                if not f_name or not f_date_str:
+                    continue
+                    
+                # Check against known festivals
+                real_dates = known_festivals.get(f_name.lower())
+                
+                # Fuzzy match if not found
+                if not real_dates:
+                    matches = difflib.get_close_matches(f_name.lower(), known_festivals.keys(), n=1, cutoff=0.8)
+                    if matches:
+                        real_dates = known_festivals[matches[0]]
+                
+                # If we found real dates, find the closest one to the AI date
+                if real_dates:
+                    try:
+                        ai_date_obj = datetime.strptime(f_date_str, "%Y-%m-%d")
+                        # Find closest real date
+                        closest_date_str = min(real_dates, key=lambda d: abs(datetime.strptime(d, "%Y-%m-%d") - ai_date_obj))
+                        real_date = datetime.strptime(closest_date_str, "%Y-%m-%d")
+                        
+                        # If real date is in the past relative to _now, skip this festival
+                        if real_date < _now:
+                            continue
+                            
+                        # If real date is outside forecast window, skip
+                        if real_date > _end:
+                            continue
+                        
+                        # If valid, correct the AI date
+                        f["date"] = closest_date_str
+                        f["year"] = real_date.year
+                        f["month"] = real_date.strftime("%b")
+                        
+                    except ValueError:
+                        pass # Fallback to basic filter if date parsing fails
+                
+                # Basic date filter for unknown festivals or valid known ones
+                try:
+                    ai_date = datetime.strptime(f["date"], "%Y-%m-%d")
+                    if ai_date >= _now and ai_date <= _end:
+                        valid_chart.append(f)
+                except ValueError:
+                    continue
+            
+            festival_demands["chart"] = valid_chart
+            
+        # Filter out past seasons from AI output (end date before now)
+        if seasonal_demands and "chart" in seasonal_demands:
+            seasonal_demands["chart"] = [
+                s for s in seasonal_demands["chart"]
+                if datetime.strptime(s["end"], "%Y-%m-%d") >= _now
+            ]
         suggestions = forecast_data.get("suggestions") or []
         confidence_score = forecast_data.get("confidence_score")
         result = {
@@ -424,7 +500,7 @@ class DemandService:
             },
         }
 
-    def get_festival_calendar(self, year: int) -> Dict[str, Any]:
+    def get_festival_calendar(self, year: int, filter_past: bool = True) -> Dict[str, Any]:
         """Get Indian festival calendar with retail impact"""
 
         # Expanded Indian festival calendar for retail impact
@@ -551,6 +627,7 @@ class DemandService:
                     "date": f"{year}-04-14",
                     "regions": ["Assam"],
                     "impact": "Medium",
+                    "duration": "1 day",
                 },
                 {
                     "name": "Vishu",
@@ -583,6 +660,16 @@ class DemandService:
                 {"name": "Summer Shopping", "period": "March-May", "impact": "Medium"},
             ],
         }
+        # Filter out past festivals if requesting for current year
+        current_date = self._now().date()
+        is_current_year = (year == current_date.year)
+
+        if is_current_year and filter_past:
+            # Filter major festivals
+            festivals["major_festivals"] = [
+                f for f in festivals["major_festivals"]
+                if datetime.strptime(f["date"], "%Y-%m-%d").date() >= current_date
+            ]
         return festivals
 
     def get_forecast_history(
