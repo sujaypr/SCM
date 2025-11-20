@@ -191,32 +191,56 @@ class EnhancedRAGService:
             else:
                 context_str = "No uploaded documents or specific context available. Use your general knowledge to answer."
 
-            # Do not inject business profile into prompt; generate general responses
+            # Build business profile string
             business_str = ""
+            if business_context:
+                business_str = f"""
+ACTIVE BUSINESS PROFILE:
+- Name: {business_context.get('business_name', 'Unknown')}
+- Type: {business_context.get('business_type', 'Unknown')}
+- Scale: {business_context.get('business_scale', 'Unknown')}
+- Location: {business_context.get('location', 'Unknown')}, {business_context.get('state', 'Unknown')}
+- Current Sales: {business_context.get('current_sales', 'Unknown')}
+- Forecast Data Available: {'Yes' if business_context.get('has_forecast_data') else 'No'}
+
+IMPORTANT: You must tailor all recommendations and insights specifically for this {business_context.get('business_type')} business in {business_context.get('state')}.
+"""
 
             # Build chat history string
             history_str = ""
             if chat_history:
-                history_str = "\n".join([
-                    f"{msg['role']}: {msg['content']}"
-                    for msg in chat_history[-3:]  # Last 3 messages
-                ])
+                # Format: User: ... \n Assistant: ...
+                history_lines = []
+                for msg in chat_history[-5:]:  # Last 5 messages for better context
+                    role_label = "User" if msg.get('role') == 'user' else "Assistant"
+                    history_lines.append(f"{role_label}: {msg.get('content')}")
+                history_str = "\n".join(history_lines)
 
-            # Create a general-purpose prompt (not tailored to a specific business)
-            prompt = f"""You are a helpful AI assistant for supply chain, logistics, operations, and general business queries in India and globally.
+            # Create a business-aware prompt
+            prompt = f"""You are a specialized Supply Chain AI Assistant for the Indian market.
 
-Context Information:
+{business_str}
+
+Context Information from Knowledge Base:
 {context_str}
 
-{f"Previous Conversation:{history_str}" if history_str else ""}
+Previous Conversation:
+{history_str}
 
 User Query: {query}
 
 INSTRUCTIONS:
-- Answer the user's question directly and helpfully for any industry or business type.
-- Use provided context if relevant; otherwise rely on your general knowledge.
-- Provide practical, actionable steps when appropriate.
-- Be concise but comprehensive.
+1. Answer the user's question directly. DO NOT start with "Certainly!", "Sure!", "Here are...", or restate the business name/location.
+2. DO NOT provide an introductory preamble (e.g., "Given your sales...", "As a medical store...", "Christmas is coming...").
+3. NEGATIVE EXAMPLE (DO NOT DO THIS): "Given your current sales of ₹60,000 and the upcoming Christmas festival, here are some recommendations..."
+4. POSITIVE EXAMPLE (DO THIS):
+   "* Stock up on..."
+   "* Run a promotion for..."
+5. Start IMMEDIATELY with the content (e.g., the first bullet point or sentence).
+6. IF a business profile is provided above, YOU MUST customize your advice for that specific business type, scale, and location.
+7. Use the provided Context Information if relevant.
+8. If the user asks about their specific data (sales, forecast), refer to the Business Profile.
+9. Be professional, concise, and actionable.
 
 Response:"""
 

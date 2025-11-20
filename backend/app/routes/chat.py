@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Header, Depends
+from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Header, Depends, Body
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 import os
@@ -10,25 +10,112 @@ from app.services.enhanced_rag_service import EnhancedRAGService
 from app.utils.document_processor import DocumentProcessor
 from app.models.db_models import ChatSession, ChatMessage, DocumentStore, Business, DemandForecast
 from app.utils.db import get_engine, get_db
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, desc
 
 router = APIRouter()
 rag_service = EnhancedRAGService()
 doc_processor = DocumentProcessor()
 
 
-class ChatMessage(BaseModel):
-    role: str
-    content: str
-    timestamp: str
-
-
 class ChatResponse(BaseModel):
     success: bool
     response: str
+    session_id: Optional[str] = None
     sources: Optional[List[Dict[str, Any]]] = None
     confidence: Optional[float] = None
     error: Optional[str] = None
+
+
+class SessionListResponse(BaseModel):
+    success: bool
+    sessions: List[Dict[str, Any]]
+
+
+class MessageListResponse(BaseModel):
+    success: bool
+    messages: List[Dict[str, Any]]
+
+
+@router.get("/sessions", response_model=SessionListResponse)
+async def get_chat_sessions(db: Session = Depends(get_db)):
+    """Get all chat sessions"""
+    try:
+        sessions = (
+            db.query(ChatSession)
+            .filter(ChatSession.is_active == True)
+            .order_by(ChatSession.updated_at.desc())
+            .all()
+        )
+        
+        result = []
+        for s in sessions:
+            # Get last message time
+            last_msg = (
+                db.query(ChatMessage)
+                .filter(ChatMessage.session_id == s.id)
+                .order_by(ChatMessage.created_at.desc())
+                .first()
+            )
+            
+            msg_count = db.query(ChatMessage).filter(ChatMessage.session_id == s.id).count()
+            
+            result.append({
+                "id": s.session_id,  # Use the string UUID
+                "title": s.session_title or "New Conversation",
+                "lastMessage": last_msg.created_at if last_msg else s.updated_at,
+                "messageCount": msg_count,
+                "created_at": s.created_at
+            })
+            
+        return {"success": True, "sessions": result}
+    except Exception as e:
+        print(f"Error fetching sessions: {e}")
+        return {"success": False, "sessions": []}
+
+
+@router.get("/sessions/{session_id}/messages", response_model=MessageListResponse)
+async def get_session_messages(session_id: str, db: Session = Depends(get_db)):
+    """Get messages for a specific session"""
+    try:
+        # Find session by string UUID
+        session = db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
+        if not session:
+            return {"success": False, "messages": []}
+            
+        messages = (
+            db.query(ChatMessage)
+            .filter(ChatMessage.session_id == session.id)
+            .order_by(ChatMessage.created_at.asc())
+            .all()
+        )
+        
+        result = []
+        for m in messages:
+            result.append({
+                "role": m.role,
+                "content": m.content,
+                "timestamp": m.created_at,
+                "files": m.attached_files or []
+            })
+            
+        return {"success": True, "messages": result}
+    except Exception as e:
+        print(f"Error fetching messages: {e}")
+        return {"success": False, "messages": []}
+
+
+@router.delete("/sessions/{session_id}")
+async def delete_session(session_id: str, db: Session = Depends(get_db)):
+    """Delete a chat session"""
+    try:
+        session = db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
+        if session:
+            session.is_active = False  # Soft delete
+            db.commit()
+            return {"success": True, "message": "Session deleted"}
+        return {"success": False, "message": "Session not found"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 @router.post("/message", response_model=ChatResponse)
@@ -42,29 +129,51 @@ async def send_chat_message(
     Enhanced RAG chatbot with file processing, context awareness, and business-specific insights
     """
     try:
-        # Get business settings from database (prefer most recent active business)
+        # 1. Handle Session Management
+        current_session = None
+        if session_id:
+            current_session = db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
+        
+        if not current_session:
+            # Create new session
+            new_uuid = str(uuid.uuid4())
+            current_session = ChatSession(
+                session_id=new_uuid,
+                session_title=message[:40] + "..." if len(message) > 40 else message,
+                is_active=True
+            )
+            db.add(current_session)
+            db.commit()
+            db.refresh(current_session)
+            session_id = new_uuid
+
+        # 2. Save User Message
+        user_msg = ChatMessage(
+            session_id=current_session.id,
+            role="user",
+            content=message,
+            attached_files=[f.filename for f in files] if files else []
+        )
+        db.add(user_msg)
+        db.commit()
+
+        # 3. Get Business Context
         business = (
             db.query(Business)
             .filter(Business.is_active == True)
             .order_by(Business.updated_at.desc())
             .first()
         )
-        # Fallback: if no active business set, use the most recently updated or created
+        # Fallback
         if not business:
             business = (
-                db.query(Business)
-                .order_by(Business.updated_at.desc())
-                .first()
+                db.query(Business).order_by(Business.updated_at.desc()).first()
             ) or (
-                db.query(Business)
-                .order_by(Business.created_at.desc())
-                .first()
+                db.query(Business).order_by(Business.created_at.desc()).first()
             )
         
-        # Build business context for personalized responses
         business_context = None
         if business:
-            # Get most recent forecast for this business
             latest_forecast = (
                 db.query(DemandForecast)
                 .filter(DemandForecast.business_id == business.id)
@@ -89,30 +198,24 @@ async def send_chat_message(
                 })
         
         if business_context:
-            print(f"✅ Business context loaded: {business_context['business_type']} | {business_context['business_scale']} | {business_context['state']}")
-        else:
-            print(f"⚠️ No business context found - responses will be generic")
-        
-        # Process uploaded files and add to persistent RAG knowledge base
+            print(f"✅ Business context loaded: {business_context['business_type']} | {business_context['state']}")
+
+        # 4. Process Files
         processed_files = []
-        
         if files:
             upload_dir = "uploads"
             os.makedirs(upload_dir, exist_ok=True)
             
             for file in files:
                 if file.filename:
-                    # Save the file
                     file_path = os.path.join(upload_dir, file.filename)
                     with open(file_path, "wb") as f:
                         content = await file.read()
                         f.write(content)
                     
-                    # Process file with document processor
                     result = doc_processor.process_file(file_path, file.filename)
                     
                     if result["success"]:
-                        # Add to RAG knowledge base (persists for all future queries)
                         doc_id = rag_service.add_document(
                             content=result["content"],
                             metadata={
@@ -120,108 +223,82 @@ async def send_chat_message(
                                 "type": result["type"],
                                 "summary": result.get("summary", ""),
                                 "processed_at": datetime.now().isoformat(),
-                                # Business metadata for relevance filtering
                                 "business_type": business_context.get("business_type") if business_context else None,
-                                "business_scale": business_context.get("business_scale") if business_context else None,
-                                "state": business_context.get("state") if business_context else None,
-                                "location": business_context.get("location") if business_context else None,
                             }
                         )
-                        
                         processed_files.append({
                             "filename": file.filename,
-                            "type": result["type"],
-                            "doc_id": doc_id,
                             "summary": result.get("summary", "")
                         })
-                    else:
-                        processed_files.append({
-                            "filename": file.filename,
-                            "error": result.get("error", "Processing failed")
-                        })
+
+        # 5. Retrieve Chat History for Context
+        # Get last 5 messages from this session (excluding the one we just added)
+        history_msgs = (
+            db.query(ChatMessage)
+            .filter(ChatMessage.session_id == current_session.id)
+            .filter(ChatMessage.id != user_msg.id) # Exclude current
+            .order_by(ChatMessage.created_at.asc())
+            .limit(5)
+            .all()
+        )
         
-        # Generate response using enhanced RAG (retrieves from all uploaded docs)
-        if message.strip():
-            # Query with RAG - it will retrieve relevant docs from knowledge base
+        chat_history = [
+            {"role": m.role, "content": m.content} 
+            for m in history_msgs
+        ]
+
+        # 6. Generate Response
+        if message.strip() or processed_files:
             rag_response = rag_service.query(
                 query=message,
-                chat_history=None,  # Can be extended with session history
-                context_override=None,  # Let RAG retrieve naturally from all documents
-                business_context=business_context  # Pass business-specific context
+                chat_history=chat_history,
+                context_override=None,
+                business_context=business_context
             )
             
-            # Check if RAG query failed
-            if not rag_response.get("success", True):
-                error_msg = rag_response.get("error", "Unknown error")
-                print(f"❌ RAG query failed: {error_msg}")
-                return ChatResponse(
-                    success=False,
-                    response=f"AI service error: {error_msg}",
-                    error=error_msg
-                )
+            response_text = rag_response.get("response", "I couldn't generate a response.")
             
-            # Build final response (no personalization banner or warnings)
-            response_text = rag_response["response"]
-            
-            # Add file acknowledgment if files were just uploaded
+            # Prepend file info if needed
             if processed_files:
-                file_msg = f"📎 Uploaded and processed {len(processed_files)} file(s): " + ", ".join([
-                    f['filename'] for f in processed_files if 'filename' in f
-                ])
-                file_msg += f"\n✓ Documents added to knowledge base and will be used for all future queries.\n\n"
+                file_msg = f"📎 Uploaded {len(processed_files)} file(s).\n\n"
                 response_text = file_msg + response_text
+
+            # 7. Save Assistant Response
+            assistant_msg = ChatMessage(
+                session_id=current_session.id,
+                role="assistant",
+                content=response_text,
+                confidence_score=rag_response.get("confidence"),
+                sources_used=rag_response.get("sources")
+            )
+            db.add(assistant_msg)
             
-            # Add context info if using uploaded documents
-            elif rag_response.get("sources"):
-                uploaded_sources = [s for s in rag_response["sources"] if s.get("category") == "uploaded_document"]
-                if uploaded_sources:
-                    doc_count = len(rag_service.documents)
-                    response_text += f"\n\n💡 Using context from {doc_count} uploaded document(s) in knowledge base."
-            
+            # Update session timestamp
+            current_session.updated_at = datetime.now()
+            db.commit()
+
             return ChatResponse(
                 success=True,
                 response=response_text,
+                session_id=session_id,
                 sources=rag_response.get("sources", []),
                 confidence=rag_response.get("confidence", 0.5)
             )
-        
-        elif processed_files:
-            # Only files, no message
-            summaries = []
-            for f in processed_files:
-                if 'summary' in f:
-                    summaries.append(f"📄 {f['filename']}: {f['summary']}")
             
-            response_text = "I've processed your file(s):\n\n" + "\n".join(summaries)
-            response_text += "\n\nWhat would you like to know about this data?"
-            
-            return ChatResponse(
-                success=True,
-                response=response_text
-            )
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "success": False,
-                    "error": "No message or files provided"
-                }
-            )
+        return ChatResponse(success=False, response="No message provided")
     
     except Exception as e:
         print(f"Chat error: {e}")
         return ChatResponse(
             success=False,
-            response="I apologize, but I encountered an error processing your request. Please try again.",
+            response="I apologize, but I encountered an error processing your request.",
             error=str(e)
         )
 
 
 @router.get("/suggestions")
 async def get_chat_suggestions():
-    """
-    Get suggested questions/prompts for the chatbot
-    """
+    """Get suggested questions"""
     return {
         "success": True,
         "suggestions": rag_service.get_suggested_questions()
@@ -230,9 +307,7 @@ async def get_chat_suggestions():
 
 @router.get("/documents")
 async def get_uploaded_documents():
-    """
-    Get list of currently uploaded documents in RAG system
-    """
+    """Get list of currently uploaded documents"""
     return {
         "success": True,
         "documents": rag_service.get_uploaded_documents(),
@@ -242,9 +317,7 @@ async def get_uploaded_documents():
 
 @router.get("/business-context")
 async def get_business_context(db: Session = Depends(get_db)):
-    """
-    Get current business context being used for personalized responses
-    """
+    """Get current business context"""
     try:
         business = (
             db.query(Business)
@@ -254,20 +327,16 @@ async def get_business_context(db: Session = Depends(get_db)):
         )
         if not business:
             business = (
-                db.query(Business)
-                .order_by(Business.updated_at.desc())
-                .first()
+                db.query(Business).order_by(Business.updated_at.desc()).first()
             ) or (
-                db.query(Business)
-                .order_by(Business.created_at.desc())
-                .first()
+                db.query(Business).order_by(Business.created_at.desc()).first()
             )
 
         if not business:
             return {
                 "success": True,
                 "has_context": False,
-                "message": "No business settings configured. Responses will be generic. Go to Settings to configure your business profile."
+                "message": "No business settings configured."
             }
         
         latest_forecast = (
@@ -287,30 +356,17 @@ async def get_business_context(db: Session = Depends(get_db)):
                 "location": business.location,
                 "state": business.state,
                 "has_forecast": latest_forecast is not None,
-                "current_sales": latest_forecast.current_sales if latest_forecast else None,
-                "last_updated": business.updated_at.isoformat() if business.updated_at else None
             }
         }
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return {"success": False, "error": str(e)}
 
 
 @router.delete("/clear")
-async def clear_chat_history():
-    """
-    Clear uploaded documents from RAG knowledge base
-    """
+async def clear_chat_history(db: Session = Depends(get_db)):
+    """Clear uploaded documents (and optionally sessions)"""
     try:
         rag_service.clear_uploaded_documents()
-        return {
-            "success": True,
-            "message": "Chat history and uploaded documents cleared"
-        }
+        return {"success": True, "message": "Documents cleared"}
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return {"success": False, "error": str(e)}
